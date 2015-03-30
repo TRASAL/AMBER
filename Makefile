@@ -41,7 +41,7 @@ CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $
 all: bin/TransientSearch
 
 bin/TransientSearch: $(DEPS) $(KERNELS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp include/configuration.hpp src/TransientSearch.cpp
-	$(MPI) -o bin/TransientSearch src/TransientSearch.cpp bin/readConfiguration.o $(KERNELS) $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(BOOST_LIBS) $(BOOST_LDFLAGS) $(HDF5_LDFLAGS) $(CL_LDFLAGS) $(CFLAGS)
+	$(MPI) -o bin/TransientSearch src/TransientSearch.cpp $(KERNELS) $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(BOOST_LIBS) $(BOOST_LDFLAGS) $(HDF5_LDFLAGS) $(CL_LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
