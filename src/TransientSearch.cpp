@@ -286,7 +286,7 @@ int main(int argc, char * argv[]) {
   searchTime.start();
   output.sync_with_stdio(false);
   output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".trigger");
-  output << "# DM SNR" << std::endl;
+  output << "# second DM SNR" << std::endl;
 	for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
 		// Load the input
     inputHandlingTime.start();
@@ -351,7 +351,7 @@ int main(int argc, char * argv[]) {
       triggerTime.start();
       for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
         if ( snrData[dm] >= threshold ) {
-          output << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep())  << " " << snrData[dm] << std::endl;
+          output << second << " " << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep())  << " " << snrData[dm] << std::endl;
         }
       }
       triggerTime.stop();
