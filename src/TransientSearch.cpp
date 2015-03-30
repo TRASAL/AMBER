@@ -349,6 +349,7 @@ int main(int argc, char * argv[]) {
       syncPoint.wait();
       outputCopyTime.stop();
       triggerTime.start();
+#pragma omp parallel for schedule(static)
       for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
         if ( snrData[dm] >= threshold ) {
           output << second << " " << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep())  << " " << snrData[dm] << std::endl;
