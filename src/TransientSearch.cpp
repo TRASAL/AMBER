@@ -41,8 +41,6 @@
 
 int main(int argc, char * argv[]) {
   bool print = false;
-  bool noData = false;
-  bool random = false;
 	bool dataLOFAR = false;
 	bool dataSIGPROC = false;
   bool limit = false;
@@ -61,9 +59,6 @@ int main(int argc, char * argv[]) {
   isa::utils::ArgumentList args(argc, argv);
 	// Observation object
   AstroData::Observation obs;
-  // Fake pulsar
-  unsigned int width = 0;
-  float DM = 0;
   // Configurations
   AstroData::paddingConf padding;
   AstroData::vectorWidthConf vectorWidth;
@@ -106,12 +101,6 @@ int main(int argc, char * argv[]) {
       obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 			obs.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
 		} else {
-      noData = args.getSwitch("-no_data");
-      if ( !noData ) {
-        random = args.getSwitch("-random");
-        width = args.getSwitchArgument< unsigned int >("-width");
-        DM = args.getSwitchArgument< float >("-dm");
-      }
       obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
       obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
       obs.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
@@ -126,8 +115,7 @@ int main(int argc, char * argv[]) {
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -seconds ..." << std::endl;
     std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
-    std::cerr << "\t [-random] -width ... -dm ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
-    std::cerr << "\t -no_data -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
+    std::cerr << "\t -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
     return 1;
   } catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
@@ -151,14 +139,10 @@ int main(int argc, char * argv[]) {
     AstroData::readSIGPROC(obs, bytesToSkip, dataFile, *input);
     loadTime.stop();
 	} else {
-    if ( noData ) {
-      input->at(0) = new std::vector< dataType >(obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
-      std::fill(input->at(0)->begin(), input->at(0)->end(), 42);
-      for ( unsigned int second = 1; second < obs.getNrSeconds(); second++ ) {
-        input->at(second) = input->at(0);
-      }
-    } else {
-      AstroData::generatePulsar(period, width, DM, obs, *input, random);
+    input->at(0) = new std::vector< dataType >(obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
+    std::fill(input->at(0)->begin(), input->at(0)->end(), 42);
+    for ( unsigned int second = 1; second < obs.getNrSeconds(); second++ ) {
+      input->at(second) = input->at(0);
     }
   }
 	if ( DEBUG && world.rank() == 0 ) {
@@ -367,7 +351,7 @@ int main(int argc, char * argv[]) {
       triggerTime.start();
       for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
         if ( snrData[dm] >= threshold ) {
-          output << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep())  << " " << sndData[dm] << std::endl;
+          output << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep())  << " " << snrData[dm] << std::endl;
         }
       }
       triggerTime.stop();
