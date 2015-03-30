@@ -255,12 +255,12 @@ int main(int argc, char * argv[]) {
   } else {
     nrThreads = obs.getNrSamplesPerPaddedSecond();
   }
-  cl::NDRange snrDedispersedGlobal(nrThreads);
-  cl::NDRange snrDedispersedLocal(snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock());
+  cl::NDRange snrDedispersedGlobal(nrThreads, obs.getNrDMs());
+  cl::NDRange snrDedispersedLocal(snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), 1);
   if ( DEBUG && world.rank() == 0 ) {
     std::cout << "SNRDedispersed" << std::endl;
-    std::cout << "Global: " << nrThreads << std::endl;
-    std::cout << "Local: " << snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() << std::endl;
+    std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() << std::endl;
+    std::cout << "Local: " << snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() << ", 1" << std::endl;
     std::cout << "Parameters: ";
     std::cout << snrDParameters[deviceName][obs.getNrDMs()].print() << std::endl;
     std::cout << std::endl;
