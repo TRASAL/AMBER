@@ -370,7 +370,7 @@ int main(int argc, char * argv[]) {
         triggerTime[beam].start();
         for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
           if ( snrData[beam][dm] >= threshold ) {
-            output << second << " " << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep())  << " " << snrData[beam][dm] << std::endl;
+            output[beam] << second << " " << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep())  << " " << snrData[beam][dm] << std::endl;
           }
         }
         triggerTime[beam].stop();
