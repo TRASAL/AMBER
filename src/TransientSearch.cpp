@@ -240,7 +240,7 @@ int main(int argc, char * argv[]) {
   } else if ( obs.getNrSamplesPerPaddedSecond() % (dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() * dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread()) == 0 ) {
     nrThreads = obs.getNrSamplesPerPaddedSecond() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread();
   } else {
-    nrThreads = isa::utils::pad(obs.getNrSamplesPerSecond() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread(), vectorWidth[deviceName]);
+    nrThreads = isa::utils::pad(obs.getNrSamplesPerSecond() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread(), dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock());
   }
   cl::NDRange dedispersionGlobal(nrThreads, obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread());
   cl::NDRange dedispersionLocal(dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock());
@@ -257,7 +257,7 @@ int main(int argc, char * argv[]) {
   } else if ( obs.getNrSamplesPerPaddedSecond() % (snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock()) == 0 ) {
     nrThreads = obs.getNrSamplesPerPaddedSecond();
   } else {
-    nrThreads = isa::utils::pad(obs.getNrSamplesPerSecond(), vectorWidth[deviceName]);
+    nrThreads = isa::utils::pad(obs.getNrSamplesPerSecond(), snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock());
   }
   cl::NDRange snrDedispersedGlobal(nrThreads, obs.getNrDMs());
   cl::NDRange snrDedispersedLocal(snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), 1);
