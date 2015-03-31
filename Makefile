@@ -25,7 +25,11 @@ ifneq ($(debug), 1)
 		CFLAGS += -O3 -g0 -fopenmp
 	endif
 else
-	CFLAGS += -O0 -g3
+	ifneq ($(openmp), 1)
+		CFLAGS += -O0 -g3
+	else
+		CFLAGS += -O0 -g3 -fopenmp
+	endif
 endif
 
 LDFLAGS := -lm
