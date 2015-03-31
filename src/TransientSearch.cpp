@@ -396,7 +396,7 @@ int main(int argc, char * argv[]) {
   // Store statistics
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
     output[beam].open(outputFile + "_" + isa::utils::toString(world.rank()) + "_B" + isa::utils::toString(beam) + ".stats");
-    output[beam] << "# nrDMs searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionAvg err snrDedispersedTotal snrDedispersedAvg err outputCopyTotal outputCopyAvg err triggerTime[beam]Total triggerTime[beam]Avg err" << std::endl;
+    output[beam] << "# nrDMs searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionAvg err snrDedispersedTotal snrDedispersedAvg err outputCopyTotal outputCopyAvg err triggerTimeTotal triggerTimeAvg err" << std::endl;
     output[beam] << std::fixed << std::setprecision(6);
     output[beam] << obs.getNrDMs() << " ";
     output[beam] << searchTime[beam].getTotalTime() << " ";
