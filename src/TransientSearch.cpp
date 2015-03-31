@@ -217,8 +217,8 @@ int main(int argc, char * argv[]) {
 		double hostMemory = 0.0;
 		double deviceMemory = 0.0;
 
-    hostMemory += obs.getNrBeams() * dispersedData.size() * sizeof(dataType);
-    hostMemory += obs.getNrBeams() * snrData.size() * sizeof(float);
+    hostMemory += obs.getNrBeams() * dispersedData[0].size() * sizeof(dataType);
+    hostMemory += obs.getNrBeams() * snrData[0].size() * sizeof(float);
     deviceMemory += hostMemory;
     deviceMemory += shifts->size() * sizeof(float);
     deviceMemory += obs.getNrBeams() * obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType);
