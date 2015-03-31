@@ -303,6 +303,7 @@ int main(int argc, char * argv[]) {
   output = std::vector< std::ofstream >(obs.getNrBeams());
   world.barrier();
   nodeTime.start();
+  #pragma omp paralle for schedule(static, 1)
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
     output[beam].sync_with_stdio(false);
     searchTime[beam].start();
