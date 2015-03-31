@@ -140,7 +140,7 @@ int main(int argc, char * argv[]) {
 	} else if ( dataSIGPROC ) {
     input[0] = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
     loadTime.start();
-		input->resize(obs.getNrSeconds());
+		input[0]->resize(obs.getNrSeconds());
     AstroData::readSIGPROC(obs, bytesToSkip, dataFile, *(input[0]));
     loadTime.stop();
 	} else {
