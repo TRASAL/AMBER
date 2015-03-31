@@ -337,8 +337,7 @@ int main(int argc, char * argv[]) {
           }
         }
       } catch ( cl::Error & err ) {
-        std::cerr << err.what() << std::endl;
-        return 1;
+        std::cerr << "Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
       }
       inputHandlingTime[beam].stop();
 
@@ -387,8 +386,7 @@ int main(int argc, char * argv[]) {
           }
         }
       } catch ( cl::Error & err ) {
-        std::cerr << err.what() <<" "  << err.err() << std::endl;
-        return 1;
+        std::cerr << "Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
       }
     }
     output[beam].close();
