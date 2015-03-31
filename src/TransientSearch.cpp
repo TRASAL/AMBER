@@ -296,11 +296,13 @@ int main(int argc, char * argv[]) {
   }
 
 	// Search loop
+  isa::utils::Timer nodeTime;
   std::vector< cl::Event > syncPoint(obs.getNrBeams());
   std::vector< isa::utils::Timer > searchTime(obs.getNrBeams()), inputHandlingTime(obs.getNrBeams()), inputCopyTime(obs.getNrBeams()), dedispTime(obs.getNrBeams()), snrDedispersedTime(obs.getNrBeams()), outputCopyTime(obs.getNrBeams()), triggerTime(obs.getNrBeams());
 
   output = std::vector< std::ofstream >(obs.getNrBeams());
   world.barrier();
+  nodeTime.start();
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
     output[beam].sync_with_stdio(false);
     searchTime[beam].start();
@@ -392,13 +394,15 @@ int main(int argc, char * argv[]) {
     searchTime[beam].stop();
   }
   world.barrier();
+  nodeTime.stop();
 
   // Store statistics
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
     output[beam].open(outputFile + "_" + isa::utils::toString(world.rank()) + "_B" + isa::utils::toString(beam) + ".stats");
-    output[beam] << "# nrDMs searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionAvg err snrDedispersedTotal snrDedispersedAvg err outputCopyTotal outputCopyAvg err triggerTimeTotal triggerTimeAvg err" << std::endl;
+    output[beam] << "# nrDMs nodeTime searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionAvg err snrDedispersedTotal snrDedispersedAvg err outputCopyTotal outputCopyAvg err triggerTimeTotal triggerTimeAvg err" << std::endl;
     output[beam] << std::fixed << std::setprecision(6);
     output[beam] << obs.getNrDMs() << " ";
+    output[beam] << nodeTime.getTotalTime() << " ";
     output[beam] << searchTime[beam].getTotalTime() << " ";
     output[beam] << inputHandlingTime[beam].getTotalTime() << " " << inputHandlingTime[beam].getAverageTime() << " " << inputHandlingTime[beam].getStandardDeviation() << " ";
     output[beam] << inputCopyTime[beam].getTotalTime() << " " << inputCopyTime[beam].getAverageTime() << " " << inputCopyTime[beam].getStandardDeviation() << " ";
