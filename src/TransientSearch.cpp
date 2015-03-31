@@ -55,7 +55,7 @@ int main(int argc, char * argv[]) {
 	std::string dataFile;
 	std::string headerFile;
 	std::string outputFile;
-	std::ofstream output;
+  std::vector< std::ofstream > output;
   isa::utils::ArgumentList args(argc, argv);
 	// Observation object
   AstroData::Observation obs;
@@ -88,6 +88,7 @@ int main(int argc, char * argv[]) {
 			std::cerr << "-lofar and -sigproc are mutually exclusive." << std::endl;
 			throw std::exception();
 		} else if ( dataLOFAR ) {
+      obs.setNrBeams(1);
 			headerFile = args.getSwitchArgument< std::string >("-header");
 			dataFile = args.getSwitchArgument< std::string >("-data");
       limit = args.getSwitch("-limit");
@@ -95,12 +96,14 @@ int main(int argc, char * argv[]) {
         obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
       }
 		} else if ( dataSIGPROC ) {
+      obs.setNrBeams(1);
 			bytesToSkip = args.getSwitchArgument< unsigned int >("-header");
 			dataFile = args.getSwitchArgument< std::string >("-data");
 			obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
       obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 			obs.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
 		} else {
+      obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
       obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
       obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
       obs.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
@@ -115,7 +118,7 @@ int main(int argc, char * argv[]) {
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -seconds ..." << std::endl;
     std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
-    std::cerr << "\t -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
+    std::cerr << "\t -beams ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
     return 1;
   } catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
@@ -124,25 +127,30 @@ int main(int argc, char * argv[]) {
 
 	// Load observation data
   isa::utils::Timer loadTime;
-	std::vector< std::vector< dataType > * > * input = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
+  std::vector< std::vector< std::vector< dataType > * > * > input(obs.getNrBeams());
 	if ( dataLOFAR ) {
+    input[0] = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
     loadTime.start();
     if ( limit ) {
-      AstroData::readLOFAR(headerFile, dataFile, obs, *input, obs.getNrSeconds());
+      AstroData::readLOFAR(headerFile, dataFile, obs, *(input[0]), obs.getNrSeconds());
     } else {
-      AstroData::readLOFAR(headerFile, dataFile, obs, *input);
+      AstroData::readLOFAR(headerFile, dataFile, obs, *(input[0]));
     }
     loadTime.stop();
 	} else if ( dataSIGPROC ) {
+    input[0] = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
     loadTime.start();
 		input->resize(obs.getNrSeconds());
-    AstroData::readSIGPROC(obs, bytesToSkip, dataFile, *input);
+    AstroData::readSIGPROC(obs, bytesToSkip, dataFile, *(input[0]));
     loadTime.stop();
 	} else {
-    input->at(0) = new std::vector< dataType >(obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
-    std::fill(input->at(0)->begin(), input->at(0)->end(), 42);
-    for ( unsigned int second = 1; second < obs.getNrSeconds(); second++ ) {
-      input->at(second) = input->at(0);
+    auto pointer = new std::vector< dataType >(obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
+    std::fill(pointer->begin(), pointer->end(), 42);
+    for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+      input[beam] = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
+      for ( unsigned int second = 0; second < obs.getNrSeconds(); second++ ) {
+        input[beam]->at(second) = pointer;
+      }
     }
   }
 	if ( DEBUG && world.rank() == 0 ) {
@@ -150,6 +158,7 @@ int main(int argc, char * argv[]) {
     std::cout << "Padding: " << padding[deviceName] << std::endl;
     std::cout << "Vector: " << vectorWidth[deviceName] << std::endl;
     std::cout << std::endl;
+    std::cout << "Beams: " << obs.getNrBeams() << std::endl;
     std::cout << "Seconds: " << obs.getNrSeconds() << std::endl;
     std::cout << "Samples: " << obs.getNrSamplesPerSecond() << std::endl;
     std::cout << "Frequency range: " << obs.getMinFreq() << " MHz, " << obs.getMaxFreq() << " MHz" << std::endl;
@@ -166,7 +175,7 @@ int main(int argc, char * argv[]) {
 	std::vector< std::vector< cl::CommandQueue > > * clQueues = new std::vector< std::vector < cl::CommandQueue > >();
 
 	try {
-    isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
+    isa::OpenCL::initializeOpenCL(clPlatformID, obs.getNrBeams(), clPlatforms, clContext, clDevices, clQueues);
 	} catch ( isa::OpenCL::OpenCLError & err ) {
 		std::cerr << err.what() << std::endl;
 		return 1;
@@ -177,20 +186,27 @@ int main(int argc, char * argv[]) {
   obs.setNrSamplesPerDispersedChannel(obs.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()))));
   secondsToBuffer = obs.getNrSamplesPerDispersedChannel() / obs.getNrSamplesPerSecond();
   remainingSamples = obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond();
-  std::vector< dataType > dispersedData(obs.getNrChannels() * obs.getNrSamplesPerDispersedChannel());
-  std::vector< dataType > dedispersedData(obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond());
-  std::vector< float > snrData(obs.getNrPaddedDMs());
+  std::vector< std::vector< dataType > > dispersedData(obs.getNrBeams());
+  std::vector< std::vector< dataType > > dedispersedData(obs.getNrBeams());
+  std::vector< std::vector< float > > snrData(obs.getNrBeams());
+
+  for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+    dispersedData[beam] = std::vector< dataType >(obs.getNrChannels() * obs.getNrSamplesPerDispersedChannel());
+    dedispersedData[beam] = std::vector< dataType >(obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
+    snrData[beam] = std::vector< float >(obs.getNrPaddedDMs());
+  }
 
   // Device memory allocation and data transfers
-  cl::Buffer shifts_d, dispersedData_d, dedispersedData_d, snrData_d;
+  cl::Buffer shifts_d;
+  std::vector< cl::Buffer > dispersedData_d(obs.getNrBeams()), dedispersedData_d(obs.getNrBeams()), snrData_d(obs.getNrBeams());
 
   try {
     shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(float), 0, 0);
-    dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(dataType), 0, 0);
-    dedispersedData_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType), 0, 0);
-    snrData_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPaddedDMs() * sizeof(float), 0, 0);
-
-    // shifts_d
+    for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+      dispersedData_d[beam] = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData[beam].size() * sizeof(dataType), 0, 0);
+      dedispersedData_d[beam] = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType), 0, 0);
+      snrData_d[beam] = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, snrData[beam].size() * sizeof(float), 0, 0);
+    }
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_TRUE, 0, shifts->size() * sizeof(float), reinterpret_cast< void * >(shifts->data()));
   } catch ( cl::Error & err ) {
     std::cerr << err.what() << std::endl;
@@ -201,11 +217,11 @@ int main(int argc, char * argv[]) {
 		double hostMemory = 0.0;
 		double deviceMemory = 0.0;
 
-    hostMemory += dispersedData.size() * sizeof(dataType);
-    hostMemory += snrData.size() * sizeof(float);
+    hostMemory += obs.getNrBeams() * dispersedData.size() * sizeof(dataType);
+    hostMemory += obs.getNrBeams() * snrData.size() * sizeof(float);
     deviceMemory += hostMemory;
     deviceMemory += shifts->size() * sizeof(float);
-    deviceMemory += obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType);
+    deviceMemory += obs.getNrBeams() * obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType);
 
 		std::cout << "Allocated host memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(hostMemory) << " GB." << std::endl;
 		std::cout << "Allocated device memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(deviceMemory) << "GB." << std::endl;
@@ -214,11 +230,16 @@ int main(int argc, char * argv[]) {
 
 	// Generate OpenCL kernels
   std::string * code;
-  cl::Kernel * dedispersionK, * snrDedispersedK;
+  std::vector< cl::Kernel * > dedispersionK(obs.getNrBeams()), snrDedispersedK(obs.getNrBeams());
 
   code = PulsarSearch::getDedispersionOpenCL(dedispersionParameters[deviceName][obs.getNrDMs()], dataName, obs, *shifts);
 	try {
-    dedispersionK = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+    for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+      dedispersionK[beam] = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+      dedispersionK[beam]->setArg(0, dispersedData_d[beam]);
+      dedispersionK[beam]->setArg(1, dedispersedData_d[beam]);
+      dedispersionK[beam]->setArg(2, shifts_d);
+    }
 	} catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
 		return 1;
@@ -227,7 +248,11 @@ int main(int argc, char * argv[]) {
   delete code;
   code = PulsarSearch::getSNRDedispersedOpenCL(snrDParameters[deviceName][obs.getNrDMs()], dataName, obs);
   try {
-    snrDedispersedK = isa::OpenCL::compile("snrDedispersed", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+    for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+      snrDedispersedK[beam] = isa::OpenCL::compile("snrDedispersed", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+      snrDedispersedK[beam]->setArg(0, dedispersedData_d[beam]);
+      snrDedispersedK[beam]->setArg(1, snrData_d[beam]);
+    }
   } catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
@@ -270,128 +295,120 @@ int main(int argc, char * argv[]) {
     std::cout << std::endl;
   }
 
-  dedispersionK->setArg(0, dispersedData_d);
-  dedispersionK->setArg(1, dedispersedData_d);
-  dedispersionK->setArg(2, shifts_d);
-  snrDedispersedK->setArg(0, dedispersedData_d);
-  snrDedispersedK->setArg(1, snrData_d);
-
 	// Search loop
-  cl::Event syncPoint;
-  isa::utils::Timer searchTime;
-  isa::utils::Timer inputHandlingTime;
-  isa::utils::Timer inputCopyTime;
-  isa::utils::Timer dedispTime;
-  isa::utils::Timer snrDedispersedTime;
-  isa::utils::Timer outputCopyTime;
-  isa::utils::Timer triggerTime;
+  std::vector< cl::Event > syncPoint(obs.getNrBeams());
+  std::vector< isa::utils::Timer > searchTime(obs.getNrBeams()), inputHandlingTime(obs.getNrBeams()), inputCopyTime(obs.getNrBeams()), dedispTime(obs.getNrBeams()), snrDedispersedTime(obs.getNrBeams()), outputCopyTime(obs.getNrBeams()), triggerTime(obs.getNrBeams());
 
+  output = std::vector< std::ofstream >(obs.getNrBeams());
   world.barrier();
-  searchTime.start();
-  output.sync_with_stdio(false);
-  output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".trigger");
-  output << "# second DM SNR" << std::endl;
-	for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
-		// Load the input
-    inputHandlingTime.start();
-		for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-			for ( unsigned int chunk = 0; chunk < secondsToBuffer; chunk++ ) {
-        memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (chunk * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input->at(second + chunk))->at(channel * obs.getNrSamplesPerPaddedSecond()))), obs.getNrSamplesPerSecond() * sizeof(dataType));
-			}
-      memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (secondsToBuffer * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input->at(second + secondsToBuffer))->at(channel * obs.getNrSamplesPerPaddedSecond()))), remainingSamples * sizeof(dataType));
-		}
-    try {
-      inputCopyTime.start();
-      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()), 0, &syncPoint);
-      syncPoint.wait();
-      inputCopyTime.stop();
-      if ( DEBUG ) {
-        if ( print && world.rank() == 0 ) {
-          std::cout << std::fixed << std::setprecision(3);
-          for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-            std::cout << channel << " : ";
-            for ( unsigned int sample = 0; sample < obs.getNrSamplesPerDispersedChannel(); sample++ ) {
-              std::cout << dispersedData[(channel * obs.getNrSamplesPerDispersedChannel()) + sample] << " ";
+  for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+    output[beam].sync_with_stdio(false);
+    searchTime[beam].start();
+    output[beam].open(outputFile + "_" + isa::utils::toString(world.rank()) + "_B" + isa::utils::toString(beam) + ".trigger");
+    output[beam] << "# second DM SNR" << std::endl;
+    for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
+      // Load the input
+      inputHandlingTime[beam].start();
+      for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
+        for ( unsigned int chunk = 0; chunk < secondsToBuffer; chunk++ ) {
+          memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (chunk * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * obs.getNrSamplesPerPaddedSecond()))), obs.getNrSamplesPerSecond() * sizeof(dataType));
+        }
+        memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (secondsToBuffer * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + secondsToBuffer))->at(channel * obs.getNrSamplesPerPaddedSecond()))), remainingSamples * sizeof(dataType));
+      }
+      try {
+        inputCopyTime[beam].start();
+        clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam], CL_TRUE, 0, dispersedData[beam].size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData[beam].data()), 0, &syncPoint[beam]);
+        syncPoint[beam].wait();
+        inputCopyTime[beam].stop();
+        if ( DEBUG ) {
+          if ( print && world.rank() == 0 ) {
+            std::cout << std::fixed << std::setprecision(3);
+            for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
+              std::cout << channel << " : ";
+              for ( unsigned int sample = 0; sample < obs.getNrSamplesPerDispersedChannel(); sample++ ) {
+                std::cout << dispersedData[beam][(channel * obs.getNrSamplesPerDispersedChannel()) + sample] << " ";
+              }
+              std::cout << std::endl;
             }
             std::cout << std::endl;
           }
-          std::cout << std::endl;
         }
+      } catch ( cl::Error & err ) {
+        std::cerr << err.what() << std::endl;
+        return 1;
       }
-    } catch ( cl::Error & err ) {
-      std::cerr << err.what() << std::endl;
-      return 1;
+      inputHandlingTime[beam].stop();
+
+      // Run the kernels
+      try {
+        dedispTime[beam].start();
+        clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*dedispersionK[beam], cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint[beam]);
+        syncPoint[beam].wait();
+        dedispTime[beam].stop();
+        if ( DEBUG ) {
+          if ( print && world.rank() == 0 ) {
+            clQueues->at(clDeviceID)[beam].enqueueReadBuffer(dedispersedData_d[beam], CL_TRUE, 0, dedispersedData[beam].size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData[beam].data()));
+            std::cout << std::fixed << std::setprecision(3);
+            for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+              std::cout << dm << " : ";
+              for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
+                std::cout << dedispersedData[beam][(dm * obs.getNrSamplesPerPaddedSecond()) + sample] << " ";
+              }
+              std::cout << std::endl;
+            }
+            std::cout << std::endl;
+          }
+        }
+        snrDedispersedTime[beam].start();
+        clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDedispersedK[beam], cl::NullRange, snrDedispersedGlobal, snrDedispersedLocal, 0, &syncPoint[beam]);
+        syncPoint[beam].wait();
+        snrDedispersedTime[beam].stop();
+        outputCopyTime[beam].start();
+        clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_TRUE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()), 0, &syncPoint[beam]);
+        syncPoint[beam].wait();
+        outputCopyTime[beam].stop();
+        triggerTime[beam].start();
+        for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+          if ( snrData[beam][dm] >= threshold ) {
+            output << second << " " << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep())  << " " << snrData[beam][dm] << std::endl;
+          }
+        }
+        triggerTime[beam].stop();
+        if ( DEBUG ) {
+          if ( print && world.rank() == 0 ) {
+            std::cout << std::fixed << std::setprecision(6);
+            for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+              std::cout << dm << ": " << snrData[beam][dm] << std::endl;
+            }
+            std::cout << std::endl;
+          }
+        }
+      } catch ( cl::Error & err ) {
+        std::cerr << err.what() <<" "  << err.err() << std::endl;
+        return 1;
+      }
     }
-    inputHandlingTime.stop();
-
-		// Run the kernels
-		try {
-      dedispTime.start();
-      clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint);
-      syncPoint.wait();
-      dedispTime.stop();
-      if ( DEBUG ) {
-        if ( print && world.rank() == 0 ) {
-          clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData.data()));
-          std::cout << std::fixed << std::setprecision(3);
-          for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-            std::cout << dm << " : ";
-            for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
-              std::cout << dedispersedData[(dm * obs.getNrSamplesPerPaddedSecond()) + sample] << " ";
-            }
-            std::cout << std::endl;
-          }
-          std::cout << std::endl;
-        }
-      }
-      snrDedispersedTime.start();
-      clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrDedispersedK, cl::NullRange, snrDedispersedGlobal, snrDedispersedLocal, 0, &syncPoint);
-      syncPoint.wait();
-      snrDedispersedTime.stop();
-      outputCopyTime.start();
-      clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrData_d, CL_TRUE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()), 0, &syncPoint);
-      syncPoint.wait();
-      outputCopyTime.stop();
-      triggerTime.start();
-#pragma omp parallel for schedule(static)
-      for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-        if ( snrData[dm] >= threshold ) {
-          output << second << " " << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep())  << " " << snrData[dm] << std::endl;
-        }
-      }
-      triggerTime.stop();
-      if ( DEBUG ) {
-        if ( print && world.rank() == 0 ) {
-          std::cout << std::fixed << std::setprecision(6);
-          for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-            std::cout << dm << ": " << snrData[dm] << std::endl;
-          }
-          std::cout << std::endl;
-        }
-      }
-		} catch ( cl::Error & err ) {
-			std::cerr << err.what() <<" "  << err.err() << std::endl;
-			return 1;
-		}
-	}
-  output.close();
+    output[beam].close();
+    searchTime[beam].stop();
+  }
   world.barrier();
-  searchTime.stop();
 
   // Store statistics
-	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".stats");
-  output << "# nrDMs searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionAvg err snrDedispersedTotal snrDedispersedAvg err outputCopyTotal outputCopyAvg err triggerTimeTotal triggerTimeAvg err" << std::endl;
-  output << std::fixed << std::setprecision(6);
-  output << obs.getNrDMs() << " ";
-  output << searchTime.getTotalTime() << " ";
-  output << inputHandlingTime.getTotalTime() << " " << inputHandlingTime.getAverageTime() << " " << inputHandlingTime.getStandardDeviation() << " ";
-  output << inputCopyTime.getTotalTime() << " " << inputCopyTime.getAverageTime() << " " << inputCopyTime.getStandardDeviation() << " ";
-  output << dedispTime.getTotalTime() << " " << dedispTime.getAverageTime() << " " << dedispTime.getStandardDeviation() << " ";
-  output << snrDedispersedTime.getTotalTime() << " " << snrDedispersedTime.getAverageTime() << " " << snrDedispersedTime.getStandardDeviation() << " ";
-  output << outputCopyTime.getTotalTime() << " " << outputCopyTime.getAverageTime() << " " << outputCopyTime.getStandardDeviation() << " ";
-  output << triggerTime.getTotalTime() << " " << triggerTime.getAverageTime() << " " << triggerTime.getStandardDeviation() << " ";
-  output << std::endl;
-  output.close();
+  for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+    output[beam].open(outputFile + "_" + isa::utils::toString(world.rank()) + "_B" + isa::utils::toString(beam) + ".stats");
+    output << "# nrDMs searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionAvg err snrDedispersedTotal snrDedispersedAvg err outputCopyTotal outputCopyAvg err triggerTime[beam]Total triggerTime[beam]Avg err" << std::endl;
+    output << std::fixed << std::setprecision(6);
+    output << obs.getNrDMs() << " ";
+    output << searchTime[beam].getTotalTime() << " ";
+    output << inputHandlingTime[beam].getTotalTime() << " " << inputHandlingTime[beam].getAverageTime() << " " << inputHandlingTime[beam].getStandardDeviation() << " ";
+    output << inputCopyTime[beam].getTotalTime() << " " << inputCopyTime[beam].getAverageTime() << " " << inputCopyTime[beam].getStandardDeviation() << " ";
+    output << dedispTime[beam].getTotalTime() << " " << dedispTime[beam].getAverageTime() << " " << dedispTime[beam].getStandardDeviation() << " ";
+    output << snrDedispersedTime[beam].getTotalTime() << " " << snrDedispersedTime[beam].getAverageTime() << " " << snrDedispersedTime[beam].getStandardDeviation() << " ";
+    output << outputCopyTime[beam].getTotalTime() << " " << outputCopyTime[beam].getAverageTime() << " " << outputCopyTime[beam].getStandardDeviation() << " ";
+    output << triggerTime[beam].getTotalTime() << " " << triggerTime[beam].getAverageTime() << " " << triggerTime[beam].getStandardDeviation() << " ";
+    output << std::endl;
+    output[beam].close();
+  }
 
 	return 0;
 }
