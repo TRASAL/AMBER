@@ -19,17 +19,12 @@ BOOST_LIBS := -L"$(BOOST)/lib"
 
 CFLAGS := -std=c++11 -Wall
 ifneq ($(debug), 1)
-	ifneq ($(openmp), 1)
-		CFLAGS += -O3 -g0
-	else
-		CFLAGS += -O3 -g0 -fopenmp
-	endif
+	CFLAGS += -O3 -g0
 else
-	ifneq ($(openmp), 1)
-		CFLAGS += -O0 -g3
-	else
-		CFLAGS += -O0 -g3 -fopenmp
-	endif
+	CFLAGS += -O0 -g3
+endif
+ifneq ($(openmp), 1)
+	CFLAGS += -fopenmp
 endif
 
 LDFLAGS := -lm
