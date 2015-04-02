@@ -34,10 +34,6 @@
 #include <InitializeOpenCL.hpp>
 #include <Kernel.hpp>
 
-#include <Shifts.hpp>
-#include <Dedispersion.hpp>
-#include <SNR.hpp>
-
 
 int main(int argc, char * argv[]) {
   bool print = false;

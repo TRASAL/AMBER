@@ -1,4 +1,5 @@
 
+#include <Shifts.hpp>
 #include <Dedispersion.hpp>
 #include <SNR.hpp>
 
