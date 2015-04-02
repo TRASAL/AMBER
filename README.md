@@ -11,7 +11,6 @@ A many-core transient searching pipeline.
 * [Dedispersion](https://github.com/isazi/Dedispersion) - master branch
 * [SNR](https://github.com/isazi/SNR) - master branch
 * [Boost](http://www.boost.org/) - MPI
-* [CImg](http://cimg.sourceforge.net/) - Folded SNR image generation
 * [HDF5](http://www.hdfgroup.org/HDF5/) - Reading LOFAR data
 
 ## License
