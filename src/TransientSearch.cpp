@@ -297,14 +297,16 @@ int main(int argc, char * argv[]) {
   std::vector< isa::utils::Timer > searchTime(obs.getNrBeams()), inputHandlingTime(obs.getNrBeams()), inputCopyTime(obs.getNrBeams()), dedispTime(obs.getNrBeams()), snrDedispersedTime(obs.getNrBeams()), outputCopyTime(obs.getNrBeams()), triggerTime(obs.getNrBeams());
 
   output = std::vector< std::ofstream >(obs.getNrBeams());
-  world.barrier();
-  nodeTime.start();
-  #pragma omp parallel for schedule(static, 1)
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-    searchTime[beam].start();
     output[beam].open(outputFile + "_" + isa::utils::toString(world.rank()) + "_B" + isa::utils::toString(beam) + ".trigger");
     output[beam] << "# second DM SNR" << std::endl;
-    for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
+  }
+  world.barrier();
+  nodeTime.start();
+  for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
+    #pragma omp parallel for schedule(static, 1)
+    for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+      searchTime[beam].start();
       // Load the input
       inputHandlingTime[beam].start();
       for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
@@ -383,12 +385,15 @@ int main(int argc, char * argv[]) {
       } catch ( cl::Error & err ) {
         std::cerr << "Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
       }
+      searchTime[beam].stop();
     }
-    output[beam].close();
-    searchTime[beam].stop();
   }
   world.barrier();
   nodeTime.stop();
+
+  for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+    output[beam].close();
+  }
 
   // Store statistics
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
