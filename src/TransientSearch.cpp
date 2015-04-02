@@ -301,7 +301,6 @@ int main(int argc, char * argv[]) {
   nodeTime.start();
   #pragma omp parallel for schedule(static, 1)
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-    output[beam].sync_with_stdio(false);
     searchTime[beam].start();
     output[beam].open(outputFile + "_" + isa::utils::toString(world.rank()) + "_B" + isa::utils::toString(beam) + ".trigger");
     output[beam] << "# second DM SNR" << std::endl;
