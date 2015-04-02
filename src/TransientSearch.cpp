@@ -388,8 +388,8 @@ int main(int argc, char * argv[]) {
       searchTime[beam].stop();
     }
   }
-  world.barrier();
   nodeTime.stop();
+  world.barrier();
 
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
     output[beam].close();
