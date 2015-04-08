@@ -273,13 +273,7 @@ int main(int argc, char * argv[]) {
     std::cout << dedispersionParameters[deviceName][obs.getNrDMs()].print() << std::endl;
     std::cout << std::endl;
   }
-  if ( obs.getNrSamplesPerSecond() % (snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock()) == 0 ) {
-    nrThreads = obs.getNrSamplesPerSecond();
-  } else if ( obs.getNrSamplesPerPaddedSecond() % (snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock()) == 0 ) {
-    nrThreads = obs.getNrSamplesPerPaddedSecond();
-  } else {
-    nrThreads = isa::utils::pad(obs.getNrSamplesPerSecond(), snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock());
-  }
+  nrThreads = snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock();
   cl::NDRange snrDedispersedGlobal(nrThreads, obs.getNrDMs());
   cl::NDRange snrDedispersedLocal(snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), 1);
   if ( DEBUG && world.rank() == 0 ) {
