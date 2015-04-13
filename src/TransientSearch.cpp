@@ -310,10 +310,14 @@ int main(int argc, char * argv[]) {
         memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (secondsToBuffer * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + secondsToBuffer))->at(channel * obs.getNrSamplesPerPaddedSecond()))), remainingSamples * sizeof(dataType));
       }
       try {
-        inputCopyTime[beam].start();
-        clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam], CL_TRUE, 0, dispersedData[beam].size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData[beam].data()), 0, &syncPoint[beam]);
-        syncPoint[beam].wait();
-        inputCopyTime[beam].stop();
+        if ( SYNC ) {
+          inputCopyTime[beam].start();
+          clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam], CL_TRUE, 0, dispersedData[beam].size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData[beam].data()), 0, &syncPoint[beam]);
+          syncPoint[beam].wait();
+          inputCopyTime[beam].stop();
+        } else {
+          clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam], CL_FALSE, 0, dispersedData[beam].size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData[beam].data()));
+        }
         if ( DEBUG ) {
           if ( print && world.rank() == 0 ) {
             std::cout << std::fixed << std::setprecision(3);
@@ -334,10 +338,14 @@ int main(int argc, char * argv[]) {
 
       // Run the kernels
       try {
-        dedispTime[beam].start();
-        clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*dedispersionK[beam], cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint[beam]);
-        syncPoint[beam].wait();
-        dedispTime[beam].stop();
+        if ( SYNC ) {
+          dedispTime[beam].start();
+          clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*dedispersionK[beam], cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint[beam]);
+          syncPoint[beam].wait();
+          dedispTime[beam].stop();
+        } else {
+          clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*dedispersionK[beam], cl::NullRange, dedispersionGlobal, dedispersionLocal);
+        }
         if ( DEBUG ) {
           if ( print && world.rank() == 0 ) {
             clQueues->at(clDeviceID)[beam].enqueueReadBuffer(dedispersedData_d[beam], CL_TRUE, 0, dedispersedData[beam].size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData[beam].data()));
@@ -352,10 +360,14 @@ int main(int argc, char * argv[]) {
             std::cout << std::endl;
           }
         }
-        snrDedispersedTime[beam].start();
-        clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDedispersedK[beam], cl::NullRange, snrDedispersedGlobal, snrDedispersedLocal, 0, &syncPoint[beam]);
-        syncPoint[beam].wait();
-        snrDedispersedTime[beam].stop();
+        if ( SYNC ) {
+          snrDedispersedTime[beam].start();
+          clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDedispersedK[beam], cl::NullRange, snrDedispersedGlobal, snrDedispersedLocal, 0, &syncPoint[beam]);
+          syncPoint[beam].wait();
+          snrDedispersedTime[beam].stop();
+        } else {
+          clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDedispersedK[beam], cl::NullRange, snrDedispersedGlobal, snrDedispersedLocal);
+        }
         outputCopyTime[beam].start();
         clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_TRUE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()), 0, &syncPoint[beam]);
         syncPoint[beam].wait();
