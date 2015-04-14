@@ -365,13 +365,15 @@ int main(int argc, char * argv[]) {
           clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDedispersedK[beam], cl::NullRange, snrDedispersedGlobal, snrDedispersedLocal, 0, &syncPoint[beam]);
           syncPoint[beam].wait();
           snrDedispersedTime[beam].stop();
+          outputCopyTime[beam].start();
+          clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_TRUE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()), 0, &syncPoint[beam]);
+          syncPoint[beam].wait();
+          outputCopyTime[beam].stop();
         } else {
           clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDedispersedK[beam], cl::NullRange, snrDedispersedGlobal, snrDedispersedLocal);
+          clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_FALSE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()));
+          clQueues->at(clDeviceID)[beam].finish();
         }
-        outputCopyTime[beam].start();
-        clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_TRUE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()), 0, &syncPoint[beam]);
-        syncPoint[beam].wait();
-        outputCopyTime[beam].stop();
         triggerTime[beam].start();
         for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
           if ( snrData[beam][dm] >= threshold ) {
