@@ -287,7 +287,7 @@ int main(int argc, char * argv[]) {
 
   output = std::vector< std::ofstream >(obs.getNrBeams());
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-    output[beam].open(outputFile + "_" + isa::utils::toString("_B") + isa::utils::toString(beam) + ".trigger");
+    output[beam].open(outputFile + "_B" + isa::utils::toString(beam) + ".trigger");
     output[beam] << "# second DM SNR" << std::endl;
   }
   nodeTime.start();
@@ -398,7 +398,7 @@ int main(int argc, char * argv[]) {
 
   // Store statistics
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-    output[beam].open(outputFile + "_" + isa::utils::toString("_B") + isa::utils::toString(beam) + ".stats");
+    output[beam].open(outputFile + "_B" + isa::utils::toString(beam) + ".stats");
     output[beam] << "# nrDMs nodeTime searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionAvg err snrDedispersedTotal snrDedispersedAvg err outputCopyTotal outputCopyAvg err triggerTimeTotal triggerTimeAvg err" << std::endl;
     output[beam] << std::fixed << std::setprecision(6);
     output[beam] << obs.getNrDMs() << " ";
