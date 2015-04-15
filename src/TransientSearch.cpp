@@ -20,7 +20,6 @@
 #include <iomanip>
 #include <algorithm>
 #include <cmath>
-#include <boost/mpi.hpp>
 
 #include <configuration.hpp>
 
@@ -60,10 +59,6 @@ int main(int argc, char * argv[]) {
   AstroData::vectorWidthConf vectorWidth;
   PulsarSearch::tunedDedispersionConf dedispersionParameters;
   PulsarSearch::tunedSNRDedispersedConf snrDParameters;
-
-	// Initialize MPI
-	boost::mpi::environment envMPI(argc, argv);
-  boost::mpi::communicator world;
 
 	try {
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
@@ -107,7 +102,7 @@ int main(int argc, char * argv[]) {
 		outputFile = args.getSwitchArgument< std::string >("-output");
     unsigned int tempUInts[3] = {args.getSwitchArgument< unsigned int >("-dm_node"), 0, 0};
     float tempFloats[2] = {args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step")};
-    obs.setDMRange(tempUInts[0], tempFloats[0] + (world.rank() * tempUInts[0] * tempFloats[1]), tempFloats[1]);
+    obs.setDMRange(tempUInts[0], tempFloats[0], tempFloats[1]);
     threshold = args.getSwitchArgument< float >("-threshold");
 	} catch ( isa::utils::EmptyCommandLine & err ) {
     std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -snr_file ... [-print] [-lofar] [-sigproc] -output ... -dm_node ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
@@ -149,7 +144,7 @@ int main(int argc, char * argv[]) {
       }
     }
   }
-	if ( DEBUG && world.rank() == 0 ) {
+	if ( DEBUG ) {
     std::cout << "Device: " << deviceName << std::endl;
     std::cout << "Padding: " << padding[deviceName] << std::endl;
     std::cout << "Vector: " << vectorWidth[deviceName] << std::endl;
@@ -209,7 +204,7 @@ int main(int argc, char * argv[]) {
     return 1;
   }
 
-	if ( DEBUG && world.rank() == 0 ) {
+	if ( DEBUG ) {
 		double hostMemory = 0.0;
 		double deviceMemory = 0.0;
 
@@ -265,7 +260,7 @@ int main(int argc, char * argv[]) {
   }
   cl::NDRange dedispersionGlobal(nrThreads, obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread());
   cl::NDRange dedispersionLocal(dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock());
-  if ( DEBUG && world.rank() == 0 ) {
+  if ( DEBUG ) {
     std::cout << "Dedispersion" << std::endl;
     std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread() << std::endl;
     std::cout << "Local: " << dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() << ", " << dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock() << std::endl;
@@ -276,7 +271,7 @@ int main(int argc, char * argv[]) {
   nrThreads = snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock();
   cl::NDRange snrDedispersedGlobal(nrThreads, obs.getNrDMs());
   cl::NDRange snrDedispersedLocal(snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), 1);
-  if ( DEBUG && world.rank() == 0 ) {
+  if ( DEBUG ) {
     std::cout << "SNRDedispersed" << std::endl;
     std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() << std::endl;
     std::cout << "Local: " << snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() << ", 1" << std::endl;
@@ -292,10 +287,9 @@ int main(int argc, char * argv[]) {
 
   output = std::vector< std::ofstream >(obs.getNrBeams());
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-    output[beam].open(outputFile + "_" + isa::utils::toString(world.rank()) + "_B" + isa::utils::toString(beam) + ".trigger");
+    output[beam].open(outputFile + "_" + isa::utils::toString("_B") + isa::utils::toString(beam) + ".trigger");
     output[beam] << "# second DM SNR" << std::endl;
   }
-  world.barrier();
   nodeTime.start();
   for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
     #pragma omp parallel for schedule(static, 1)
@@ -319,7 +313,7 @@ int main(int argc, char * argv[]) {
           clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam], CL_FALSE, 0, dispersedData[beam].size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData[beam].data()));
         }
         if ( DEBUG ) {
-          if ( print && world.rank() == 0 ) {
+          if ( print ) {
             std::cout << std::fixed << std::setprecision(3);
             for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
               std::cout << channel << " : ";
@@ -347,7 +341,7 @@ int main(int argc, char * argv[]) {
           clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*dedispersionK[beam], cl::NullRange, dedispersionGlobal, dedispersionLocal);
         }
         if ( DEBUG ) {
-          if ( print && world.rank() == 0 ) {
+          if ( print ) {
             clQueues->at(clDeviceID)[beam].enqueueReadBuffer(dedispersedData_d[beam], CL_TRUE, 0, dedispersedData[beam].size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData[beam].data()));
             std::cout << std::fixed << std::setprecision(3);
             for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
@@ -377,12 +371,12 @@ int main(int argc, char * argv[]) {
         triggerTime[beam].start();
         for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
           if ( snrData[beam][dm] >= threshold ) {
-            output[beam] << second << " " << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep())  << " " << snrData[beam][dm] << std::endl;
+            output[beam] << second << " " << obs.getFirstDM() + (dm * obs.getDMStep())  << " " << snrData[beam][dm] << std::endl;
           }
         }
         triggerTime[beam].stop();
         if ( DEBUG ) {
-          if ( print && world.rank() == 0 ) {
+          if ( print ) {
             std::cout << std::fixed << std::setprecision(6);
             for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
               std::cout << dm << ": " << snrData[beam][dm] << std::endl;
@@ -397,7 +391,6 @@ int main(int argc, char * argv[]) {
     }
   }
   nodeTime.stop();
-  world.barrier();
 
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
     output[beam].close();
@@ -405,7 +398,7 @@ int main(int argc, char * argv[]) {
 
   // Store statistics
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-    output[beam].open(outputFile + "_" + isa::utils::toString(world.rank()) + "_B" + isa::utils::toString(beam) + ".stats");
+    output[beam].open(outputFile + "_" + isa::utils::toString("_B") + isa::utils::toString(beam) + ".stats");
     output[beam] << "# nrDMs nodeTime searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionAvg err snrDedispersedTotal snrDedispersedAvg err outputCopyTotal outputCopyAvg err triggerTimeTotal triggerTimeAvg err" << std::endl;
     output[beam] << std::fixed << std::setprecision(6);
     output[beam] << obs.getNrDMs() << " ";

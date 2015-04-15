@@ -9,13 +9,10 @@ ASTRODATA := $(HOME)/src/AstroData
 DEDISPERSION := $(HOME)/src/Dedispersion
 # https://github.com/isazi/SNR
 SNR := $(HOME)/src/SNR
-# Boost
-BOOST := $(HOME)/src/boost
 
 INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include" -I"$(DEDISPERSION)/include" -I"$(SNR)/include"
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
 CL_LIBS := -L"$(OPENCL_LIB)"
-BOOST_LIBS := -L"$(BOOST)/lib" 
 
 CFLAGS := -std=c++11 -Wall
 ifneq ($(debug), 1)
@@ -29,11 +26,9 @@ endif
 
 LDFLAGS := -lm
 CL_LDFLAGS := $(LDFLAGS) -lOpenCL
-BOOST_LDFLAGS := -lboost_mpi -lboost_serialization 
 HDF5_LDFLAGS := -lhdf5 -lhdf5_cpp
 
 CC := g++
-MPI := mpicxx
 
 # Dependencies
 KERNELS := $(DEDISPERSION)/bin/Shifts.o $(DEDISPERSION)/bin/Dedispersion.o $(SNR)/bin/SNR.o
@@ -44,7 +39,7 @@ CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $
 all: bin/TransientSearch
 
 bin/TransientSearch: $(DEPS) $(KERNELS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp include/configuration.hpp src/TransientSearch.cpp
-	$(MPI) -o bin/TransientSearch src/TransientSearch.cpp $(KERNELS) $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(BOOST_LIBS) $(BOOST_LDFLAGS) $(HDF5_LDFLAGS) $(CL_LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/TransientSearch src/TransientSearch.cpp $(KERNELS) $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(HDF5_LDFLAGS) $(CL_LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*

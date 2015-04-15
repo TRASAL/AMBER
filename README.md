@@ -10,8 +10,7 @@ A many-core transient searching pipeline.
 * [utils](https://github.com/isazi/utils) - master branch
 * [Dedispersion](https://github.com/isazi/Dedispersion) - master branch
 * [SNR](https://github.com/isazi/SNR) - master branch
-* [Boost](http://www.boost.org/) - MPI
-* [HDF5](http://www.hdfgroup.org/HDF5/) - Reading LOFAR data
+* [HDF5](http://www.hdfgroup.org/HDF5/) - (to read LOFAR data)
 
 ## License
 
