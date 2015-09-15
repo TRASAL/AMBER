@@ -382,10 +382,21 @@ int main(int argc, char * argv[]) {
           clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_FALSE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()));
           clQueues->at(clDeviceID)[beam].finish();
         }
+        // Triggering
         triggerTime[beam].start();
+        bool previous = false;
+        double maxSNR = 0.0;
+
         for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
           if ( snrData[beam][dm] >= threshold ) {
-            output[beam] << second << " " << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep())  << " " << snrData[beam][dm] << std::endl;
+            if ( !previous || snrData[beam][dm] > maxSNR ) {
+              previous = true;
+              maxSNR = snrData[beam][dm];
+            }
+          } else if ( previous ) {
+            output[beam] << second << " " << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep()) << " " << snrData[beam][dm] << std::endl;
+            previous = false;
+            maxSNR = 0.0;
           }
         }
         triggerTime[beam].stop();
