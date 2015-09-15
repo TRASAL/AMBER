@@ -389,7 +389,7 @@ int main(int argc, char * argv[]) {
               maxSNR = snrData[beam][dm];
             }
           } else if ( previous ) {
-            output[beam] << second << " " << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep()) << " " << snrData[beam][dm] << std::endl;
+            output[beam] << second << " " << obs.getFirstDM() + (dm * obs.getDMStep()) << " " << maxSNR << std::endl;
             previous = false;
             maxSNR = 0.0;
           }
