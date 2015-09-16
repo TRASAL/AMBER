@@ -20,7 +20,8 @@
 #include <iomanip>
 #include <algorithm>
 #include <cmath>
-#include <boost/mpi.hpp>
+#include <chrono>
+#include <random>
 
 #include <configuration.hpp>
 
@@ -140,8 +141,15 @@ int main(int argc, char * argv[]) {
     AstroData::readSIGPROC(obs, bytesToSkip, dataFile, *(input[0]));
     loadTime.stop();
 	} else {
+    std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count());
     auto pointer = new std::vector< dataType >(obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
+
     std::fill(pointer->begin(), pointer->end(), 42);
+    for ( auto item = pointer->begin(); item != pointer->end(); ++item ) {
+      if ( generator() % 2 == 0 ) {
+        *item = generator();
+      }
+    }
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       input[beam] = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
       for ( unsigned int second = 0; second < obs.getNrSeconds(); second++ ) {
