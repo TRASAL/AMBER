@@ -147,7 +147,7 @@ int main(int argc, char * argv[]) {
     std::fill(pointer->begin(), pointer->end(), 42);
     for ( auto item = pointer->begin(); item != pointer->end(); ++item ) {
       if ( generator() % 2 == 0 ) {
-        *item = generator();
+        *item = generator() % 100;
       }
     }
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
