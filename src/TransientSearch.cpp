@@ -385,17 +385,20 @@ int main(int argc, char * argv[]) {
         // Triggering
         triggerTime[beam].start();
         bool previous = false;
+        unsigned int maxDM = 0;
         double maxSNR = 0.0;
 
         for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
           if ( snrData[beam][dm] >= threshold ) {
             if ( !previous || snrData[beam][dm] > maxSNR ) {
               previous = true;
+              maxDM = dm;
               maxSNR = snrData[beam][dm];
             }
           } else if ( previous ) {
-            output[beam] << second << " " << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + dm) * obs.getDMStep()) << " " << maxSNR << std::endl;
+            output[beam] << second << " " << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
             previous = false;
+            maxDM = 0;
             maxSNR = 0.0;
           }
         }
