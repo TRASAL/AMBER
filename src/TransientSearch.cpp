@@ -149,7 +149,6 @@ int main(int argc, char * argv[]) {
 	} else {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       AstroData::generateSinglePulse(width, DM, obs, *(input[beam]), random);
-      input[beam] = input;
     }
   }
 	if ( DEBUG && world.rank() == 0 ) {
