@@ -147,9 +147,8 @@ int main(int argc, char * argv[]) {
     AstroData::readSIGPROC(obs, bytesToSkip, dataFile, *(input[0]));
     loadTime.stop();
 	} else {
-    AstroData::generateSinglePulse(width, DM, obs, *(input[0]), random);
-
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+      AstroData::generateSinglePulse(width, DM, obs, *(input[beam]), random);
       input[beam] = input;
     }
   }
