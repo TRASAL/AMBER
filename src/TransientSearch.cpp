@@ -21,7 +21,6 @@
 #include <algorithm>
 #include <cmath>
 #include <chrono>
-#include <random>
 
 #include <configuration.hpp>
 
@@ -54,6 +53,10 @@ int main(int argc, char * argv[]) {
 	std::string outputFile;
   std::vector< std::ofstream > output;
   isa::utils::ArgumentList args(argc, argv);
+  // Fake single pulse
+  bool random = false;
+  unsigned int width = 0;
+  float DM = 0.0f;
 	// Observation object
   AstroData::Observation obs;
   // Configurations
@@ -104,6 +107,9 @@ int main(int argc, char * argv[]) {
       obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
       obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
       obs.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
+      random = args.getSwitch("-random");
+      width = args.getSwitchArgument< unsigned int >("-width");
+      DM = args.getSwitchArgument< float >("-dm");
 		}
 		outputFile = args.getSwitchArgument< std::string >("-output");
     unsigned int tempUInts[3] = {args.getSwitchArgument< unsigned int >("-dm_node"), 0, 0};
@@ -115,7 +121,7 @@ int main(int argc, char * argv[]) {
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -seconds ..." << std::endl;
     std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
-    std::cerr << "\t -beams ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
+    std::cerr << "\t [-random] -width ... -dm ... -beams ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
     return 1;
   } catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
@@ -141,20 +147,10 @@ int main(int argc, char * argv[]) {
     AstroData::readSIGPROC(obs, bytesToSkip, dataFile, *(input[0]));
     loadTime.stop();
 	} else {
-    std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count());
-    auto pointer = new std::vector< dataType >(obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
+    AstroData::generateSinglePulse(width, DM, obs, *(input[0]), random);
 
-    std::fill(pointer->begin(), pointer->end(), 42);
-    for ( auto item = pointer->begin(); item != pointer->end(); ++item ) {
-      if ( generator() % 2 == 0 ) {
-        *item = generator() % 100;
-      }
-    }
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-      input[beam] = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
-      for ( unsigned int second = 0; second < obs.getNrSeconds(); second++ ) {
-        input[beam]->at(second) = pointer;
-      }
+      input[beam] = input;
     }
   }
 	if ( DEBUG && world.rank() == 0 ) {
