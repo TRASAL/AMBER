@@ -39,6 +39,7 @@ int main(int argc, char * argv[]) {
   bool print = false;
 	bool dataLOFAR = false;
 	bool dataSIGPROC = false;
+  bool dataPSRDada = false;
   bool limit = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
@@ -64,6 +65,9 @@ int main(int argc, char * argv[]) {
   AstroData::vectorWidthConf vectorWidth;
   PulsarSearch::tunedDedispersionConf dedispersionParameters;
   PulsarSearch::tunedSNRDedispersedConf snrDParameters;
+  // PSRDada
+  key_t dadaKey;
+  dada_hdu_t * ringBuffer;
 
 	try {
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
@@ -80,8 +84,9 @@ int main(int argc, char * argv[]) {
 
 		dataLOFAR = args.getSwitch("-lofar");
 		dataSIGPROC = args.getSwitch("-sigproc");
-		if ( dataLOFAR && dataSIGPROC ) {
-			std::cerr << "-lofar and -sigproc are mutually exclusive." << std::endl;
+    dataPSRDada = args.getSwitch("-dada");
+		if ( !(((!(dataLOFAR && dataSIGPROC) && dataPSRDada) || (!(dataLOFAR && dataPSRDada) && dataSIGPROC)) || (!(dataSIGPROC && dataPSRDada) && dataLOFAR)) ) {
+			std::cerr << "-lofar -sigproc and -dada are mutually exclusive." << std::endl;
 			throw std::exception();
 		} else if ( dataLOFAR ) {
       obs.setNrBeams(1);
@@ -98,6 +103,10 @@ int main(int argc, char * argv[]) {
 			obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
       obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 			obs.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
+    } else if ( dataPSRDada ) {
+      dadaKey = args.getSwitchArgument< key_t >("-dada_key");
+      obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
+      obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
 		} else {
       obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
       obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
@@ -113,10 +122,11 @@ int main(int argc, char * argv[]) {
     obs.setDMRange(tempUInts[0], tempFloats[0], tempFloats[1]);
     threshold = args.getSwitchArgument< float >("-threshold");
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -snr_file ... [-print] [-lofar] [-sigproc] -output ... -dm_node ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
+    std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -snr_file ... [-print] [-lofar] [-sigproc] [-dada] -output ... -dm_node ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -seconds ..." << std::endl;
     std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
+    std::cerr << "\t -dada -dada_key ... -beams ... -seconds ..." << std::endl;
     std::cerr << "\t [-random] -width ... -dm ... -beams ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
     return 1;
   } catch ( std::exception & err ) {
@@ -142,6 +152,11 @@ int main(int argc, char * argv[]) {
 		input[0]->resize(obs.getNrSeconds());
     AstroData::readSIGPROC(obs, bytesToSkip, dataFile, *(input[0]));
     loadTime.stop();
+  } else if ( dataPSRDada ) {
+    ringBuffer = dada_hdu_create(0);
+    dada_hdu_set_key(ringBuffer, dadaKey);
+    dada_hdu_connect(ringBuffer);
+    dada_hdu_lock_read(ringBuffer);
 	} else {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       input[beam] = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
@@ -412,6 +427,11 @@ int main(int argc, char * argv[]) {
 
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
     output[beam].close();
+  }
+
+  if ( dataPSRDada ) {
+    dada_hdu_unlock_read(ringBuffer);
+    dada_hdu_disconnect(ringBuffer);
   }
 
   // Store statistics
