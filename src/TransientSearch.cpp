@@ -85,7 +85,7 @@ int main(int argc, char * argv[]) {
 		dataLOFAR = args.getSwitch("-lofar");
 		dataSIGPROC = args.getSwitch("-sigproc");
     dataPSRDada = args.getSwitch("-dada");
-		if ( !(((!(dataLOFAR && dataSIGPROC) && dataPSRDada) || (!(dataLOFAR && dataPSRDada) && dataSIGPROC)) || (!(dataSIGPROC && dataPSRDada) && dataLOFAR)) ) {
+		if ( !((((!(dataLOFAR && dataSIGPROC) && dataPSRDada) || (!(dataLOFAR && dataPSRDada) && dataSIGPROC)) || (!(dataSIGPROC && dataPSRDada) && dataLOFAR)) || ((!dataLOFAR && !dataSIGPROC) && !dataPSRDada)) ) {
 			std::cerr << "-lofar -sigproc and -dada are mutually exclusive." << std::endl;
 			throw std::exception();
 		} else if ( dataLOFAR ) {
