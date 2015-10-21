@@ -1,1 +1,1 @@
-# device DMs localMem unroll nrSamplesPerBlock nrDMsPerBlock nrSamplesPerThread nrDMsPerThread
+# device DMs splitSeconds localMem unroll nrSamplesPerBlock nrDMsPerBlock nrSamplesPerThread nrDMsPerThread
