@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// TODO: PSRDada multibeam
 
 #include <iostream>
 #include <string>
@@ -21,6 +22,7 @@
 #include <algorithm>
 #include <cmath>
 #include <chrono>
+#include <boost/mpi.hpp>
 
 #include <configuration.hpp>
 
@@ -41,12 +43,11 @@ int main(int argc, char * argv[]) {
 	bool dataSIGPROC = false;
   bool dataPSRDada = false;
   bool limit = false;
+  uint8_t inputBits = 0;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
 	unsigned int bytesToSkip = 0;
-  unsigned int secondsToBuffer = 0;
   unsigned int nrThreads = 0;
-  unsigned int remainingSamples = 0;
   float threshold = 0.0f;
 	std::string deviceName;
 	std::string dataFile;
@@ -68,6 +69,9 @@ int main(int argc, char * argv[]) {
   // PSRDada
   key_t dadaKey;
   dada_hdu_t * ringBuffer;
+  // MPI
+  boost::mpi::environment envMPI(argc, argv);
+  boost::mpi::communicator workers;
 
 	try {
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
@@ -116,13 +120,14 @@ int main(int argc, char * argv[]) {
       width = args.getSwitchArgument< unsigned int >("-width");
       DM = args.getSwitchArgument< float >("-dm");
 		}
+    inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
 		outputFile = args.getSwitchArgument< std::string >("-output");
     unsigned int tempUInts[3] = {args.getSwitchArgument< unsigned int >("-dm_node"), 0, 0};
     float tempFloats[2] = {args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step")};
-    obs.setDMRange(tempUInts[0], tempFloats[0], tempFloats[1]);
+    obs.setDMRange(tempUInts[0], tempFloats[0] + (workers.rank() * tempUInts[0] * tempFloats[1]), tempFloats[1]);
     threshold = args.getSwitchArgument< float >("-threshold");
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -snr_file ... [-print] [-lofar] [-sigproc] [-dada] -output ... -dm_node ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
+    std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -snr_file ... [-print] [-lofar] [-sigproc] [-dada] -input_bits ... -output ... -dm_node ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -seconds ..." << std::endl;
     std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
@@ -136,9 +141,9 @@ int main(int argc, char * argv[]) {
 
 	// Load observation data
   isa::utils::Timer loadTime;
-  std::vector< std::vector< std::vector< dataType > * > * > input(obs.getNrBeams());
+  std::vector< std::vector< std::vector< inputDataType > * > * > input(obs.getNrBeams());
 	if ( dataLOFAR ) {
-    input[0] = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
+    input[0] = new std::vector< std::vector< inputDataType > * >(obs.getNrSeconds());
     loadTime.start();
     if ( limit ) {
       AstroData::readLOFAR(headerFile, dataFile, obs, *(input[0]), obs.getNrSeconds());
@@ -147,10 +152,9 @@ int main(int argc, char * argv[]) {
     }
     loadTime.stop();
 	} else if ( dataSIGPROC ) {
-    input[0] = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
+    input[0] = new std::vector< std::vector< inputDataType > * >(obs.getNrSeconds());
     loadTime.start();
-		input[0]->resize(obs.getNrSeconds());
-    AstroData::readSIGPROC(obs, bytesToSkip, dataFile, *(input[0]));
+    AstroData::readSIGPROC(obs, inputBits, bytesToSkip, dataFile, *(input[0]));
     loadTime.stop();
   } else if ( dataPSRDada ) {
     ringBuffer = dada_hdu_create(0);
@@ -159,11 +163,11 @@ int main(int argc, char * argv[]) {
     dada_hdu_lock_read(ringBuffer);
 	} else {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-      input[beam] = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
+      input[beam] = new std::vector< std::vector< inputDataType > * >(obs.getNrSeconds());
       AstroData::generateSinglePulse(width, DM, obs, *(input[beam]), random);
     }
   }
-	if ( DEBUG ) {
+	if ( DEBUG && workers.rank() == 0 ) {
     std::cout << "Device: " << deviceName << std::endl;
     std::cout << "Padding: " << padding[deviceName] << std::endl;
     std::cout << "Vector: " << vectorWidth[deviceName] << std::endl;
@@ -174,8 +178,10 @@ int main(int argc, char * argv[]) {
     std::cout << "Frequency range: " << obs.getMinFreq() << " MHz, " << obs.getMaxFreq() << " MHz" << std::endl;
     std::cout << "Channels: " << obs.getNrChannels() << " (" << obs.getChannelBandwidth() << " MHz)" << std::endl;
     std::cout << std::endl;
-		std::cout << "Time to load the input: " << std::fixed << std::setprecision(6) << loadTime.getTotalTime() << " seconds." << std::endl;
-    std::cout << std::endl;
+    if ( (dataLOFAR || dataSIGPROC) ) {
+      std::cout << "Time to load the input: " << std::fixed << std::setprecision(6) << loadTime.getTotalTime() << " seconds." << std::endl;
+      std::cout << std::endl;
+    }
 	}
 
 	// Initialize OpenCL
@@ -194,27 +200,59 @@ int main(int argc, char * argv[]) {
 	// Host memory allocation
   std::vector< float > * shifts = PulsarSearch::getShifts(obs);
   obs.setNrSamplesPerDispersedChannel(obs.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()))));
-  secondsToBuffer = obs.getNrSamplesPerDispersedChannel() / obs.getNrSamplesPerSecond();
-  remainingSamples = obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond();
-  std::vector< std::vector< dataType > > dispersedData(obs.getNrBeams());
-  std::vector< std::vector< dataType > > dedispersedData(obs.getNrBeams());
+  obs.setNrDelaySeconds(static_cast< unsigned int >(std::ceil(obs.getNrSamplesPerDispersedChannel() / obs.getNrSamplesPerSecond())));
+  std::vector< std::vector< inputDataType > > dispersedData(obs.getNrBeams());
+  std::vector< std::vector< outputDataType > > dedispersedData(obs.getNrBeams());
   std::vector< std::vector< float > > snrData(obs.getNrBeams());
 
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-    dispersedData[beam] = std::vector< dataType >(obs.getNrChannels() * obs.getNrSamplesPerDispersedChannel());
-    dedispersedData[beam] = std::vector< dataType >(obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond());
+    if ( !dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+      if ( inputBits >= 8 ) {
+        dispersedData[beam] = std::vector< inputDataType >(obs.getNrChannels() * obs.getNrSamplesPerDispersedChannel());
+      } else {
+        dispersedData[beam] = std::vector< inputDataType >(obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding()));
+      }
+    }
+    dedispersedData[beam] = std::vector< outputDataType >(obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond());
     snrData[beam] = std::vector< float >(obs.getNrPaddedDMs());
   }
 
   // Device memory allocation and data transfers
   cl::Buffer shifts_d;
-  std::vector< cl::Buffer > dispersedData_d(obs.getNrBeams()), dedispersedData_d(obs.getNrBeams()), snrData_d(obs.getNrBeams());
+  std::vector< std::vector< cl::Buffer > > dedispersedData_d(obs.getNrBeams());
+  std::vector< cl::Buffer > dedispersedData_d(obs.getNrBeams()), snrData_d(obs.getNrBeams());
 
   try {
     shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(float), 0, 0);
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-      dispersedData_d[beam] = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData[beam].size() * sizeof(dataType), 0, 0);
-      dedispersedData_d[beam] = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData[beam].size() * sizeof(dataType), 0, 0);
+      dispersedData_d[beam] = std::vector< cl::Buffer >(obs.getNrDelaySeconds() + 1);
+      if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+        if ( inputBits >= 8 ) {
+          dispersedData_d[beam][obs.getNrDelaySeconds()] = cl::Buffer(*clContext, CL_MEM_READ_ONLY, obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType), 0, 0);
+        } else {
+          dispersedData_d[beam][obs.getNrDelaySeconds()] = cl::Buffer(*clContext, CL_MEM_READ_ONLY, obs.getNrDelaySeconds() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType), 0, 0);
+        }
+        for ( unsigned int second = 0; second < obs.getNrDelaySeconds(); second++ ) {
+          cl_buffer_region offsets;
+          cl_int err = 0;
+
+          if ( inputBits >= 8 ) {
+            offsets.origin = second * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType);
+            offsets.size = obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType);
+          } else {
+            offsets.origin = second * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType);
+            offsets.size = obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType);
+          }
+          dispersedData_d[beam][second] = dispersedData_d[beam][obs.getNrDelaySeconds()].createSubBuffer(CL_MEM_READ_ONLY, CL_BUFFER_CREATE_TYPE_REGION, reinterpret_cast< void * >(&offsets), &err);
+          if ( err != CL_SUCCESS ) {
+            std::cerr << "Error allocating sub buffers." << std::endl;
+            return 1;
+          }
+        }
+      } else {
+        dispersedData_d[beam][obs.getNrDelaySeconds()] = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData[beam].size() * sizeof(inputDataType), 0, 0);
+      }
+      dedispersedData_d[beam] = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData[beam].size() * sizeof(outputDataType), 0, 0);
       snrData_d[beam] = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, snrData[beam].size() * sizeof(float), 0, 0);
     }
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_TRUE, 0, shifts->size() * sizeof(float), reinterpret_cast< void * >(shifts->data()));
@@ -223,15 +261,23 @@ int main(int argc, char * argv[]) {
     return 1;
   }
 
-	if ( DEBUG ) {
+	if ( DEBUG && workers.rank() == 0 ) {
 		double hostMemory = 0.0;
 		double deviceMemory = 0.0;
 
-    hostMemory += obs.getNrBeams() * dispersedData[0].size() * sizeof(dataType);
+    if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+      if ( inputBits >= 8 ) {
+        deviceMemory += obs.getNrBeams() obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType);
+      } else {
+        deviceMemory += obs.getNrBeams() obs.getNrDelaySeconds() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType);
+      }
+    } else {
+      hostMemory += obs.getNrBeams() * dispersedData[0].size() * sizeof(inputDataType);
+    }
     hostMemory += obs.getNrBeams() * snrData[0].size() * sizeof(float);
     deviceMemory += hostMemory;
     deviceMemory += shifts->size() * sizeof(float);
-    deviceMemory += obs.getNrBeams() * obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType);
+    deviceMemory += obs.getNrBeams() * obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(outputDataType);
 
 		std::cout << "Allocated host memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(hostMemory) << " GB." << std::endl;
 		std::cout << "Allocated device memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(deviceMemory) << "GB." << std::endl;
@@ -242,13 +288,19 @@ int main(int argc, char * argv[]) {
   std::string * code;
   std::vector< cl::Kernel * > dedispersionK(obs.getNrBeams()), snrDedispersedK(obs.getNrBeams());
 
-  code = PulsarSearch::getDedispersionOpenCL(dedispersionParameters[deviceName][obs.getNrDMs()], dataName, obs, *shifts);
+  code = PulsarSearch::getDedispersionOpenCL(dedispersionParameters[deviceName][obs.getNrDMs()], inputBits, inputTypeName, intermediateTypeName, outputTypeName, obs, *shifts);
 	try {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       dedispersionK[beam] = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
-      dedispersionK[beam]->setArg(0, dispersedData_d[beam]);
-      dedispersionK[beam]->setArg(1, dedispersedData_d[beam]);
-      dedispersionK[beam]->setArg(2, shifts_d);
+      if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+        dedispersionK[beam]->setArg(1, dispersedData_d[beam][obs.getNrDelaySeconds()]);
+        dedispersionK[beam]->setArg(2, dedispersedData_d[beam]);
+        dedispersionK[beam]->setArg(3, shifts_d);
+      } else {
+        dedispersionK[beam]->setArg(0, dispersedData_d[beam][obs.getNrDelaySeconds()]);
+        dedispersionK[beam]->setArg(1, dedispersedData_d[beam]);
+        dedispersionK[beam]->setArg(2, shifts_d);
+      }
     }
 	} catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
@@ -256,7 +308,7 @@ int main(int argc, char * argv[]) {
 	}
   delete shifts;
   delete code;
-  code = PulsarSearch::getSNRDedispersedOpenCL(snrDParameters[deviceName][obs.getNrDMs()], dataName, obs);
+  code = PulsarSearch::getSNRDedispersedOpenCL(snrDParameters[deviceName][obs.getNrDMs()], inputTypeName, obs);
   try {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       snrDedispersedK[beam] = isa::OpenCL::compile("snrDedispersed", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
@@ -270,6 +322,7 @@ int main(int argc, char * argv[]) {
   delete code;
 
   // Set execution parameters
+  // TODO: Avoid overpadding of threads
   if ( obs.getNrSamplesPerSecond() % (dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() * dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread()) == 0 ) {
     nrThreads = obs.getNrSamplesPerSecond() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread();
   } else if ( obs.getNrSamplesPerPaddedSecond() % (dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() * dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread()) == 0 ) {
@@ -279,7 +332,7 @@ int main(int argc, char * argv[]) {
   }
   cl::NDRange dedispersionGlobal(nrThreads, obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread());
   cl::NDRange dedispersionLocal(dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock());
-  if ( DEBUG ) {
+  if ( DEBUG && workers.rank() == 0 ) {
     std::cout << "Dedispersion" << std::endl;
     std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread() << std::endl;
     std::cout << "Local: " << dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() << ", " << dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock() << std::endl;
@@ -290,7 +343,7 @@ int main(int argc, char * argv[]) {
   nrThreads = snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock();
   cl::NDRange snrDedispersedGlobal(nrThreads, obs.getNrDMs());
   cl::NDRange snrDedispersedLocal(snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), 1);
-  if ( DEBUG ) {
+  if ( DEBUG && workers.rank() == 0 ) {
     std::cout << "SNRDedispersed" << std::endl;
     std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() << std::endl;
     std::cout << "Local: " << snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() << ", 1" << std::endl;
@@ -306,33 +359,62 @@ int main(int argc, char * argv[]) {
 
   output = std::vector< std::ofstream >(obs.getNrBeams());
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-    output[beam].open(outputFile + "_B" + isa::utils::toString(beam) + ".trigger");
+    output[beam].open(outputFile + isa::utils::toString(workers.rank()) + "_B" + isa::utils::toString(beam) + ".trigger");
     output[beam] << "# second DM SNR" << std::endl;
   }
+  workers.barrier();
   nodeTime.start();
-  for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
+  for ( unsigned int second = 0; second < obs.getNrSeconds() - obs.getNrDelaySeconds(); second++ ) {
     #pragma omp parallel for schedule(static, 1)
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       searchTime[beam].start();
       // Load the input
-      inputHandlingTime[beam].start();
-      for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-        for ( unsigned int chunk = 0; chunk < secondsToBuffer; chunk++ ) {
-          memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (chunk * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * obs.getNrSamplesPerPaddedSecond()))), obs.getNrSamplesPerSecond() * sizeof(dataType));
+      if ( !dedispersionParamters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+        inputHandlingTime[beam].start();
+        for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
+          for ( unsigned int chunk = 0; chunk < obs.getNrDelaySeconds(); chunk++ ) {
+            if ( inputBits >= 8 ) {
+              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (chunk * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * obs.getNrSamplesPerPaddedSecond()))), obs.getNrSamplesPerSecond() * sizeof(inputDataType));
+            } else {
+              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + (chunk * (obs.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding())))), (obs.getNrSamplesPerSecond() / (8 / inputBits)) * sizeof(inputDataType));
+            }
+          }
+          if ( inputBits >= 8 ) {
+            memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (obs.getNrDelaySeconds() * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + obs.getNrDelaySeconds()))->at(channel * obs.getNrSamplesPerPaddedSecond()))), (obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond()) * sizeof(inputDataType));
+          } else {
+            memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + (obs.getNrDelaySeconds() * (obs.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + obs.getNrDelaySeconds()))->at(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())))), ((obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond()) / (8 / inputBits)) * sizeof(inputDataType));
+          }
         }
-        memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (secondsToBuffer * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + secondsToBuffer))->at(channel * obs.getNrSamplesPerPaddedSecond()))), remainingSamples * sizeof(dataType));
+        inputHandlingTime[beam].stop();
       }
       try {
         if ( SYNC ) {
           inputCopyTime[beam].start();
-          clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam], CL_TRUE, 0, dispersedData[beam].size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData[beam].data()), 0, &syncPoint[beam]);
+          if ( dedispersionParamenters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+            if ( inputBits >= 8 ) {
+              clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_TRUE, 0, obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()), 0, &syncPoint[beam]);
+            } else {
+              clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_TRUE, 0, obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()), 0, &syncPoint[beam]);
+            }
+          } else {
+            clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][obs.getNrDelaySeconds()], CL_TRUE, 0, dispersedData[beam].size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData[beam].data()), 0, &syncPoint[beam]);
+          }
           syncPoint[beam].wait();
           inputCopyTime[beam].stop();
         } else {
-          clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam], CL_FALSE, 0, dispersedData[beam].size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData[beam].data()));
+          if ( dedispersionParamenters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+            if ( inputBits >= 8 ) {
+              clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_FALSE, 0, obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()));
+            } else {
+              clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_FALSE, 0, obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()));
+            }
+          } else {
+            clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][obs.getNrDelaySeconds()], CL_FALSE, 0, dispersedData[beam].size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData[beam].data()));
+          }
         }
-        if ( DEBUG ) {
+        if ( DEBUG && workers.rank() == 0 ) {
           if ( print ) {
+            // TODO: add support for splitSeconds and inputBits < 8
             std::cout << std::fixed << std::setprecision(3);
             for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
               std::cout << channel << " : ";
@@ -347,10 +429,16 @@ int main(int argc, char * argv[]) {
       } catch ( cl::Error & err ) {
         std::cerr << "Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
       }
-      inputHandlingTime[beam].stop();
+      if ( dedispersionParamenters[deviceName][obs.getNrDMs()].getSplitSeconds() && (second < obs.getNrDelaySeconds()) ) {
+        // Not enough seconds in the buffer
+        continue;
+      }
 
       // Run the kernels
       try {
+        if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+          dedispersionK[beam]->setArg(0, second % obs.getNrDelaySeconds());
+        }
         if ( SYNC ) {
           dedispTime[beam].start();
           clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*dedispersionK[beam], cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint[beam]);
@@ -359,9 +447,9 @@ int main(int argc, char * argv[]) {
         } else {
           clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*dedispersionK[beam], cl::NullRange, dedispersionGlobal, dedispersionLocal);
         }
-        if ( DEBUG ) {
+        if ( DEBUG && workers.rank() == 0 ) {
           if ( print ) {
-            clQueues->at(clDeviceID)[beam].enqueueReadBuffer(dedispersedData_d[beam], CL_TRUE, 0, dedispersedData[beam].size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData[beam].data()));
+            clQueues->at(clDeviceID)[beam].enqueueReadBuffer(dedispersedData_d[beam], CL_TRUE, 0, dedispersedData[beam].size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData[beam].data()));
             std::cout << std::fixed << std::setprecision(3);
             for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
               std::cout << dm << " : ";
@@ -401,14 +489,14 @@ int main(int argc, char * argv[]) {
               maxSNR = snrData[beam][dm];
             }
           } else if ( previous ) {
-            output[beam] << second << " " << obs.getFirstDM() + (((world.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
+            output[beam] << second << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
             previous = false;
             maxDM = 0;
             maxSNR = 0.0;
           }
         }
         triggerTime[beam].stop();
-        if ( DEBUG ) {
+        if ( DEBUG && workers.rank() == 0 ) {
           if ( print ) {
             std::cout << std::fixed << std::setprecision(6);
             for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
@@ -424,19 +512,17 @@ int main(int argc, char * argv[]) {
     }
   }
   nodeTime.stop();
-
-  for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-    output[beam].close();
-  }
+  workers.barrier();
 
   if ( dataPSRDada ) {
     dada_hdu_unlock_read(ringBuffer);
     dada_hdu_disconnect(ringBuffer);
   }
 
-  // Store statistics
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-    output[beam].open(outputFile + "_B" + isa::utils::toString(beam) + ".stats");
+    output[beam].close();
+    // Store statistics before shutting down
+    output[beam].open(outputFile + isa::utils::toString(workers.rank()) + "_B" + isa::utils::toString(beam) + ".stats");
     output[beam] << "# nrDMs nodeTime searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionAvg err snrDedispersedTotal snrDedispersedAvg err outputCopyTotal outputCopyAvg err triggerTimeTotal triggerTimeAvg err" << std::endl;
     output[beam] << std::fixed << std::setprecision(6);
     output[beam] << obs.getNrDMs() << " ";

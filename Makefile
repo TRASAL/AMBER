@@ -9,8 +9,10 @@ ASTRODATA := $(HOME)/src/AstroData
 DEDISPERSION := $(HOME)/src/Dedispersion
 # https://github.com/isazi/SNR
 SNR := $(HOME)/src/SNR
+# http://psrdada.sourceforge.net/
+PSRDADA  := $(HOME)/src/psrdada
 
-INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include" -I"$(DEDISPERSION)/include" -I"$(SNR)/include"
+INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include" -I"$(DEDISPERSION)/include" -I"$(SNR)/include" -I"$(PSRDADA)/src/"
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
 CL_LIBS := -L"$(OPENCL_LIB)"
 
@@ -34,12 +36,13 @@ CC := g++
 KERNELS := $(DEDISPERSION)/bin/Shifts.o $(DEDISPERSION)/bin/Dedispersion.o $(SNR)/bin/SNR.o
 DEPS := $(ASTRODATA)/bin/Observation.o $(ASTRODATA)/bin/Platform.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/Timer.o $(UTILS)/bin/utils.o
 CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o 
+DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o
 
 
 all: bin/TransientSearch
 
-bin/TransientSearch: $(DEPS) $(KERNELS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp include/configuration.hpp src/TransientSearch.cpp
-	$(CC) -o bin/TransientSearch src/TransientSearch.cpp $(KERNELS) $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(HDF5_LDFLAGS) $(CL_LDFLAGS) $(CFLAGS)
+bin/TransientSearch: $(CL_DEPS) $(DADA_DEPS) $(KERNELS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp include/configuration.hpp src/TransientSearch.cpp
+	$(CC) -o bin/TransientSearch src/TransientSearch.cpp $(KERNELS) $(CL_DEPS) $(DADA_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(HDF5_LDFLAGS) $(CL_LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*

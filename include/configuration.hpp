@@ -7,8 +7,12 @@
 #define CONFIGURATION_HPP
 
 // Types for the data
-typedef float dataType;
-const std::string dataName("float");
+typedef float inputDataType;
+const std::string inputDataName("float");
+typedef float intermediateTypeName;
+const std::string intermediateDataName("float");
+typedef float outputTypeName;
+const std::string outputDataName("float");
 
 // DEBUG mode, prints to screen some useful information
 const bool DEBUG = true;
