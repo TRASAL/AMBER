@@ -9,12 +9,16 @@ ASTRODATA := $(HOME)/src/AstroData
 DEDISPERSION := $(HOME)/src/Dedispersion
 # https://github.com/isazi/SNR
 SNR := $(HOME)/src/SNR
+# HDF5
+HDF5 := $(HOME)/src/HDF5
 # http://psrdada.sourceforge.net/
 PSRDADA  := $(HOME)/src/psrdada
 # Boost
 BOOST := $(HOME)/src/boost
+# MPI
+MPI := $(HOME)/src/mpi
 
-INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include" -I"$(DEDISPERSION)/include" -I"$(SNR)/include" -I"$(PSRDADA)/src/"
+INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include" -I"$(DEDISPERSION)/include" -I"$(SNR)/include" -I"$(HDF5)/include" -I"$(PSRDADA)/src/" -I"$(MPI)/include" 
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
 CL_LIBS := -L"$(OPENCL_LIB)"
 BOOST_LIBS := -L"$(BOOST)/lib"
