@@ -9,9 +9,9 @@
 // Types for the data
 typedef float inputDataType;
 const std::string inputDataName("float");
-typedef float intermediateTypeName;
+typedef float intermediateDataType;
 const std::string intermediateDataName("float");
-typedef float outputTypeName;
+typedef float outputDataType;
 const std::string outputDataName("float");
 
 // DEBUG mode, prints to screen some useful information
