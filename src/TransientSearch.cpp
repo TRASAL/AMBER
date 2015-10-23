@@ -267,9 +267,9 @@ int main(int argc, char * argv[]) {
 
     if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
       if ( inputBits >= 8 ) {
-        deviceMemory += obs.getNrBeams() obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType);
+        deviceMemory += obs.getNrBeams() * obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType);
       } else {
-        deviceMemory += obs.getNrBeams() obs.getNrDelaySeconds() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType);
+        deviceMemory += obs.getNrBeams() * obs.getNrDelaySeconds() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType);
       }
     } else {
       hostMemory += obs.getNrBeams() * dispersedData[0].size() * sizeof(inputDataType);
