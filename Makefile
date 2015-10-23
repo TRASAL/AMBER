@@ -21,6 +21,7 @@ MPI := $(HOME)/src/mpi
 INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include" -I"$(DEDISPERSION)/include" -I"$(SNR)/include" -I"$(HDF5)/include" -I"$(PSRDADA)/src/" -I"$(MPI)/include" 
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
 CL_LIBS := -L"$(OPENCL_LIB)"
+HDF5_LIBS := -L"$(HDF5)/lib"
 BOOST_LIBS := -L"$(BOOST)/lib"
 
 CFLAGS := -std=c++11 -Wall
