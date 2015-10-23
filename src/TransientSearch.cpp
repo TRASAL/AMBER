@@ -369,7 +369,7 @@ int main(int argc, char * argv[]) {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       searchTime[beam].start();
       // Load the input
-      if ( !dedispersionParamters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+      if ( !dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
         inputHandlingTime[beam].start();
         for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
           for ( unsigned int chunk = 0; chunk < obs.getNrDelaySeconds(); chunk++ ) {
@@ -390,7 +390,7 @@ int main(int argc, char * argv[]) {
       try {
         if ( SYNC ) {
           inputCopyTime[beam].start();
-          if ( dedispersionParamenters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+          if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
             if ( inputBits >= 8 ) {
               clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_TRUE, 0, obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()), 0, &syncPoint[beam]);
             } else {
@@ -402,7 +402,7 @@ int main(int argc, char * argv[]) {
           syncPoint[beam].wait();
           inputCopyTime[beam].stop();
         } else {
-          if ( dedispersionParamenters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+          if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
             if ( inputBits >= 8 ) {
               clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_FALSE, 0, obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()));
             } else {
@@ -429,7 +429,7 @@ int main(int argc, char * argv[]) {
       } catch ( cl::Error & err ) {
         std::cerr << "Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
       }
-      if ( dedispersionParamenters[deviceName][obs.getNrDMs()].getSplitSeconds() && (second < obs.getNrDelaySeconds()) ) {
+      if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() && (second < obs.getNrDelaySeconds()) ) {
         // Not enough seconds in the buffer
         continue;
       }
