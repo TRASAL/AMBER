@@ -219,7 +219,7 @@ int main(int argc, char * argv[]) {
 
   // Device memory allocation and data transfers
   cl::Buffer shifts_d;
-  std::vector< std::vector< cl::Buffer > > dedispersedData_d(obs.getNrBeams());
+  std::vector< std::vector< cl::Buffer > > dispersedData_d(obs.getNrBeams());
   std::vector< cl::Buffer > dedispersedData_d(obs.getNrBeams()), snrData_d(obs.getNrBeams());
 
   try {
