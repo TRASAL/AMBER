@@ -359,7 +359,7 @@ int main(int argc, char * argv[]) {
 
   output = std::vector< std::ofstream >(obs.getNrBeams());
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-    output[beam].open(outputFile + isa::utils::toString(workers.rank()) + "_B" + isa::utils::toString(beam) + ".trigger");
+    output[beam].open(outputFile + "_" + isa::utils::toString(workers.rank()) + "_B" + isa::utils::toString(beam) + ".trigger");
     output[beam] << "# second DM SNR" << std::endl;
   }
   workers.barrier();
@@ -522,7 +522,7 @@ int main(int argc, char * argv[]) {
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
     output[beam].close();
     // Store statistics before shutting down
-    output[beam].open(outputFile + isa::utils::toString(workers.rank()) + "_B" + isa::utils::toString(beam) + ".stats");
+    output[beam].open(outputFile + "_" + isa::utils::toString(workers.rank()) + "_B" + isa::utils::toString(beam) + ".stats");
     output[beam] << "# nrDMs nodeTime searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionAvg err snrDedispersedTotal snrDedispersedAvg err outputCopyTotal outputCopyAvg err triggerTimeTotal triggerTimeAvg err" << std::endl;
     output[beam] << std::fixed << std::setprecision(6);
     output[beam] << obs.getNrDMs() << " ";
