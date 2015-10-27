@@ -63,7 +63,6 @@ int main(int argc, char * argv[]) {
   AstroData::Observation obs;
   // Configurations
   AstroData::paddingConf padding;
-  AstroData::vectorWidthConf vectorWidth;
   PulsarSearch::tunedDedispersionConf dedispersionParameters;
   PulsarSearch::tunedSNRDedispersedConf snrDParameters;
   // PSRDada
@@ -79,7 +78,6 @@ int main(int argc, char * argv[]) {
 		deviceName = args.getSwitchArgument< std::string >("-device_name");
 
     AstroData::readPaddingConf(padding, args.getSwitchArgument< std::string >("-padding_file"));
-    AstroData::readVectorWidthConf(vectorWidth, args.getSwitchArgument< std::string >("-vector_file"));
     PulsarSearch::readTunedDedispersionConf(dedispersionParameters, args.getSwitchArgument< std::string >("-dedispersion_file"));
     PulsarSearch::readTunedSNRDedispersedConf(snrDParameters, args.getSwitchArgument< std::string >("-snr_file"));
 
@@ -127,7 +125,7 @@ int main(int argc, char * argv[]) {
     obs.setDMRange(tempUInts[0], tempFloats[0] + (workers.rank() * tempUInts[0] * tempFloats[1]), tempFloats[1]);
     threshold = args.getSwitchArgument< float >("-threshold");
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -snr_file ... [-print] [-lofar] [-sigproc] [-dada] -input_bits ... -output ... -dm_node ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
+    std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -dedispersion_file ... -snr_file ... [-print] [-lofar] [-sigproc] [-dada] -input_bits ... -output ... -dm_node ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -seconds ..." << std::endl;
     std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
@@ -170,7 +168,6 @@ int main(int argc, char * argv[]) {
 	if ( DEBUG && workers.rank() == 0 ) {
     std::cout << "Device: " << deviceName << std::endl;
     std::cout << "Padding: " << padding[deviceName] << std::endl;
-    std::cout << "Vector: " << vectorWidth[deviceName] << std::endl;
     std::cout << std::endl;
     std::cout << "Beams: " << obs.getNrBeams() << std::endl;
     std::cout << "Seconds: " << obs.getNrSeconds() << std::endl;
