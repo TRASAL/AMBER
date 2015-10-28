@@ -431,11 +431,13 @@ int main(int argc, char * argv[]) {
                   } else if ( inputBits == 8 ) {
                     std::cout << static_cast< unsigned int >(dispersedData[beam][(channel * obs.getNrSamplesPerPaddedDispersedChannel()) + sample]) << " ";
                   } else {
+                    unsigned int byte = sample / (8 / inputBits);
                     uint8_t value = 0;
-                    inputDataType buffer = dispersedData[beam][(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + (sample / (8 / inputBits))];
+                    uint8_t firstBit = (sample % (8 / inputBits)) * inputBits;
+                    inputDataType buffer = dispersedData[beam][(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + byte];
 
                     for ( uint8_t bit = 0; bit < inputBits; bit++ ) {
-                      isa::utils::setBit(value, isa::utils::getBit(buffer, (sample % (8 / inputBits)) + bit), bit);
+                      isa::utils::setBit(value, isa::utils::getBit(buffer, firstBit + bit), bit);
                     }
                     std::cout << static_cast< unsigned int >(value) << " ";
                   }
