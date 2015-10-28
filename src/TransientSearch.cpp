@@ -420,8 +420,10 @@ int main(int argc, char * argv[]) {
               for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
                 std::cout << channel << " : ";
                 for ( unsigned int sample = 0; sample < obs.getNrSamplesPerDispersedChannel(); sample++ ) {
-                  if ( inputBits >= 8 ) {
+                  if ( inputBits > 8 ) {
                     std::cout << dispersedData[beam][(channel * obs.getNrSamplesPerDispersedChannel()) + sample] << " ";
+                  } else if ( inputBits == 8 ) {
+                    std::cout << static_cast< unsigned int >(dispersedData[beam][(channel * obs.getNrSamplesPerDispersedChannel()) + sample]) << " ";
                   } else {
                     uint8_t value = 0;
                     inputDataType buffer = dispersedData[beam][(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + (sample / (8 / inputBits))];
