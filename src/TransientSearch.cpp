@@ -369,18 +369,24 @@ int main(int argc, char * argv[]) {
       if ( !dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
         inputHandlingTime[beam].start();
         for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-          for ( unsigned int chunk = 0; chunk < obs.getNrDelaySeconds(); chunk++ ) {
+          for ( unsigned int chunk = 0; chunk < obs.getNrDelaySeconds() - 1; chunk++ ) {
             if ( inputBits >= 8 ) {
               memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerPaddedDispersedChannel()) + (chunk * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * obs.getNrSamplesPerPaddedSecond()))), obs.getNrSamplesPerSecond() * sizeof(inputDataType));
             } else {
               memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + (chunk * (obs.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding())))), (obs.getNrSamplesPerSecond() / (8 / inputBits)) * sizeof(inputDataType));
             }
           }
-          if ( obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond() != 0 ) {
+          if ( obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond() == 0 ) {
             if ( inputBits >= 8 ) {
-              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerPaddedDispersedChannel()) + (obs.getNrDelaySeconds() * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + obs.getNrDelaySeconds()))->at(channel * obs.getNrSamplesPerPaddedSecond()))), (obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond()) * sizeof(inputDataType));
+              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerPaddedDispersedChannel()) + ((obs.getNrDelaySeconds() - 1) * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + (obs.getNrDelaySeconds() - 1)))->at(channel * obs.getNrSamplesPerPaddedSecond()))), obs.getNrSamplesPerDispersedChannel() * sizeof(inputDataType));
             } else {
-              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + (obs.getNrDelaySeconds() * (obs.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + obs.getNrDelaySeconds()))->at(channel * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding())))), ((obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond()) / (8 / inputBits)) * sizeof(inputDataType));
+              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + ((obs.getNrDelaySeconds() - 1) * (obs.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + (obs.getNrDelaySeconds() - 1)))->at(channel * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding())))), (obs.getNrSamplesPerDispersedChannel() / (8 / inputBits)) * sizeof(inputDataType));
+            }
+          } else {
+            if ( inputBits >= 8 ) {
+              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerPaddedDispersedChannel()) + ((obs.getNrDelaySeconds() - 1) * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + (obs.getNrDelaySeconds() - 1)))->at(channel * obs.getNrSamplesPerPaddedSecond()))), (obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond()) * sizeof(inputDataType));
+            } else {
+              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + ((obs.getNrDelaySeconds() - 1) * (obs.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + (obs.getNrDelaySeconds() - 1)))->at(channel * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding())))), ((obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond()) / (8 / inputBits)) * sizeof(inputDataType));
             }
           }
         }
