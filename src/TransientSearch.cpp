@@ -162,7 +162,7 @@ int main(int argc, char * argv[]) {
 	} else {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       input[beam] = new std::vector< std::vector< inputDataType > * >(obs.getNrSeconds());
-      AstroData::generateSinglePulse(width, DM, obs, *(input[beam]), random);
+      AstroData::generateSinglePulse(width, DM, obs, *(input[beam]), inputBits, random);
     }
   }
 	if ( DEBUG && workers.rank() == 0 ) {
