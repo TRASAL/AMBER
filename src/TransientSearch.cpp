@@ -424,7 +424,7 @@ int main(int argc, char * argv[]) {
                     uint8_t value = 0;
                     inputDataType buffer = dispersedData[beam][(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + (sample / (8 / inputBits))];
 
-                    for ( uint8_t bit = 0; bit > inputBits; bit++ ) {
+                    for ( uint8_t bit = 0; bit < inputBits; bit++ ) {
                       isa::utils::setBit(value, isa::utils::getBit(buffer, (sample % (8 / inputBits)) + bit), bit);
                     }
                     std::cout << static_cast< unsigned int >(value) << " ";
