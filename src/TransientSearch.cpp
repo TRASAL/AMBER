@@ -411,14 +411,27 @@ int main(int argc, char * argv[]) {
         }
         if ( DEBUG && workers.rank() == 0 ) {
           if ( print ) {
-            // TODO: add support for splitSeconds and inputBits < 8
+            // TODO: add support for splitSeconds
             std::cout << std::fixed << std::setprecision(3);
-            for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-              std::cout << channel << " : ";
-              for ( unsigned int sample = 0; sample < obs.getNrSamplesPerDispersedChannel(); sample++ ) {
-                std::cout << dispersedData[beam][(channel * obs.getNrSamplesPerDispersedChannel()) + sample] << " ";
+            if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+            } else {
+              for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
+                std::cout << channel << " : ";
+                for ( unsigned int sample = 0; sample < obs.getNrSamplesPerDispersedChannel(); sample++ ) {
+                  if ( inputBits >= 8 ) {
+                    std::cout << dispersedData[beam][(channel * obs.getNrSamplesPerDispersedChannel()) + sample] << " ";
+                  } else {
+                    uint8_t value = 0;
+                    inputDataType buffer = dispersedData[beam][(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + (sample / (8 / inputBits))];
+
+                    for ( uint8_t bit = 0; bit > inputBits; bit++ ) {
+                      isa::utils::setBit(value, isa::utils::getBit(buffer, (sample % (8 / inputBits)) + bit), bit);
+                    }
+                    std::cout << static_cast< unsigned int >(value) << " ";
+                  }
+                }
+                std::cout << std::endl;
               }
-              std::cout << std::endl;
             }
             std::cout << std::endl;
           }
