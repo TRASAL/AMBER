@@ -12,6 +12,7 @@ A many-core transient searching pipeline.
 * [SNR](https://github.com/isazi/SNR) - Chan branch
 * [Boost](http://www.boost.org/) - (MPI)
 * [HDF5](http://www.hdfgroup.org/HDF5/) - (to read LOFAR data)
+* [PSRDada](http://psrdada.sourceforge.net/)
 
 ## License
 
