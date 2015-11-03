@@ -522,7 +522,7 @@ int main(int argc, char * argv[]) {
             } else if ( previous ) {
               output[beam] << second << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
               previous = false;
-              maxDm = 0;
+              maxDM = 0;
               maxSNR = 0;
             }
           } else {
