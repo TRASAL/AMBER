@@ -511,8 +511,10 @@ int main(int argc, char * argv[]) {
             if ( snrData[beam][dm] >= threshold ) {
               if ( !previous || snrData[beam][dm] > maxSNR ) {
                 previous = true;
-                maxDM = dm;
-                maxSNR = snrData[beam][dm];
+                if ( snrData[beam][dm] > maxSNR ) {
+                  maxDM = dm;
+                  maxSNR = snrData[beam][dm];
+                }
               }
             } else if ( previous ) {
               output[beam] << second << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
