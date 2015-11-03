@@ -531,6 +531,9 @@ int main(int argc, char * argv[]) {
             }
           }
         }
+        if ( previous ) {
+          output[beam] << second << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
+        }
         triggerTime[beam].stop();
         if ( DEBUG && workers.rank() == 0 ) {
           if ( print ) {
