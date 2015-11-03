@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO: Merge of candidates left as an option, not the default
 // TODO: PSRDada multibeam
 
 #include <iostream>
@@ -45,6 +44,7 @@ int main(int argc, char * argv[]) {
 	bool dataSIGPROC = false;
   bool dataPSRDada = false;
   bool limit = false;
+  bool compactResults = false;
   uint8_t inputBits = 0;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
@@ -83,6 +83,7 @@ int main(int argc, char * argv[]) {
     PulsarSearch::readTunedDedispersionConf(dedispersionParameters, args.getSwitchArgument< std::string >("-dedispersion_file"));
     PulsarSearch::readTunedSNRDedispersedConf(snrDParameters, args.getSwitchArgument< std::string >("-snr_file"));
 
+    compactResults = args.getSwitch("-compact_results");
     print = args.getSwitch("-print");
 		obs.setPadding(padding[deviceName]);
 
@@ -127,7 +128,7 @@ int main(int argc, char * argv[]) {
     obs.setDMRange(tempUInts[0], tempFloats[0] + (workers.rank() * tempUInts[0] * tempFloats[1]), tempFloats[1]);
     threshold = args.getSwitchArgument< float >("-threshold");
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -dedispersion_file ... -snr_file ... [-print] [-lofar] [-sigproc] [-dada] -input_bits ... -output ... -dm_node ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
+    std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -dedispersion_file ... -snr_file ... [-print] [-compact_results] [-lofar] [-sigproc] [-dada] -input_bits ... -output ... -dm_node ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -seconds ..." << std::endl;
     std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
@@ -500,23 +501,29 @@ int main(int argc, char * argv[]) {
           clQueues->at(clDeviceID)[beam].finish();
         }
         // Triggering
-        triggerTime[beam].start();
         bool previous = false;
         unsigned int maxDM = 0;
         double maxSNR = 0.0;
 
+        triggerTime[beam].start();
         for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-          if ( snrData[beam][dm] >= threshold ) {
-            if ( !previous || snrData[beam][dm] > maxSNR ) {
-              previous = true;
-              maxDM = dm;
-              maxSNR = snrData[beam][dm];
+          if ( compactResults ) {
+            if ( snrData[beam][dm] >= threshold ) {
+              if ( !previous || snrData[beam][dm] > maxSNR ) {
+                previous = true;
+                maxDM = dm;
+                maxSNR = snrData[beam][dm];
+              }
+            } else if ( previous ) {
+              output[beam] << second << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
+              previous = false;
+              maxDM = 0;
+              maxSNR = 0.0;
             }
-          } else if ( previous ) {
-            output[beam] << second << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
-            previous = false;
-            maxDM = 0;
-            maxSNR = 0.0;
+          } else {
+            if ( snrData[beam][dm] >= threshold ) {
+              output[beam] << second << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + dm) * obs.getDMStep()) << " " << snrData[beam][dm] << std::endl;
+            }
           }
         }
         triggerTime[beam].stop();
