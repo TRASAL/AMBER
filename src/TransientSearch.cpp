@@ -509,18 +509,19 @@ int main(int argc, char * argv[]) {
         for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
           if ( compactResults ) {
             if ( snrData[beam][dm] >= threshold ) {
-              if ( !previous || snrData[beam][dm] > maxSNR ) {
-                previous = true;
+              if ( previous ) {
                 if ( snrData[beam][dm] > maxSNR ) {
                   maxDM = dm;
                   maxSNR = snrData[beam][dm];
                 }
+              } else {
+                previous = true;
+                maxDM = dm;
+                maxSNR = snrData[beam][dm];
               }
             } else if ( previous ) {
-              output[beam] << second << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
               previous = false;
-              maxDM = 0;
-              maxSNR = 0.0;
+              output[beam] << second << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
             }
           } else {
             if ( snrData[beam][dm] >= threshold ) {
