@@ -442,6 +442,11 @@ int main(int argc, char * argv[]) {
                     for ( uint8_t bit = 0; bit < inputBits; bit++ ) {
                       isa::utils::setBit(value, isa::utils::getBit(buffer, firstBit + bit), bit);
                     }
+                    if ( inputDataName == "char" ) {
+                      for ( uint8_t bit = inputBits; bit < 8; bit++ ) {
+                        isa::utils::setBit(value, isa::utils::getBit(buffer, firstBit + (inputBits - 1)), bit);
+                      }
+                    }
                     std::cout << static_cast< float >(value) << " ";
                   }
                 }
