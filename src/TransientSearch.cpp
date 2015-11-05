@@ -432,17 +432,17 @@ int main(int argc, char * argv[]) {
                   if ( inputBits > 8 ) {
                     std::cout << dispersedData[beam][(channel * obs.getNrSamplesPerPaddedDispersedChannel()) + sample] << " ";
                   } else if ( inputBits == 8 ) {
-                    std::cout << static_cast< unsigned int >(dispersedData[beam][(channel * obs.getNrSamplesPerPaddedDispersedChannel()) + sample]) << " ";
+                    std::cout << static_cast< float >(dispersedData[beam][(channel * obs.getNrSamplesPerPaddedDispersedChannel()) + sample]) << " ";
                   } else {
                     unsigned int byte = sample / (8 / inputBits);
-                    uint8_t value = 0;
+                    inputDataType value = 0;
                     uint8_t firstBit = (sample % (8 / inputBits)) * inputBits;
                     inputDataType buffer = dispersedData[beam][(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + byte];
 
                     for ( uint8_t bit = 0; bit < inputBits; bit++ ) {
                       isa::utils::setBit(value, isa::utils::getBit(buffer, firstBit + bit), bit);
                     }
-                    std::cout << static_cast< unsigned int >(value) << " ";
+                    std::cout << static_cast< float >(value) << " ";
                   }
                 }
                 std::cout << std::endl;
