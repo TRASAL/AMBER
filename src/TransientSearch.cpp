@@ -197,7 +197,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	// Host memory allocation
-  std::vector< float > * shifts = PulsarSearch::getShifts(obs. padding[deviceName]);
+  std::vector< float > * shifts = PulsarSearch::getShifts(obs, padding[deviceName]);
   obs.setNrSamplesPerDispersedChannel(obs.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()))));
   obs.setNrDelaySeconds(static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerDispersedChannel()) / obs.getNrSamplesPerSecond())));
   std::vector< std::vector< inputDataType > > dispersedData(obs.getNrBeams());
