@@ -146,15 +146,15 @@ int main(int argc, char * argv[]) {
     input[0] = new std::vector< std::vector< inputDataType > * >(obs.getNrSeconds());
     loadTime.start();
     if ( limit ) {
-      AstroData::readLOFAR(headerFile, dataFile, obs, *(input[0]), obs.getNrSeconds());
+      AstroData::readLOFAR(headerFile, dataFile, obs, padding[deviceName], *(input[0]), obs.getNrSeconds());
     } else {
-      AstroData::readLOFAR(headerFile, dataFile, obs, *(input[0]));
+      AstroData::readLOFAR(headerFile, dataFile, obs, padding[deviceName], *(input[0]));
     }
     loadTime.stop();
 	} else if ( dataSIGPROC ) {
     input[0] = new std::vector< std::vector< inputDataType > * >(obs.getNrSeconds());
     loadTime.start();
-    AstroData::readSIGPROC(obs, inputBits, bytesToSkip, dataFile, *(input[0]));
+    AstroData::readSIGPROC(obs, padding[deviceName], inputBits, bytesToSkip, dataFile, *(input[0]));
     loadTime.stop();
   } else if ( dataPSRDada ) {
     ringBuffer = dada_hdu_create(0);
@@ -164,7 +164,7 @@ int main(int argc, char * argv[]) {
 	} else {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       input[beam] = new std::vector< std::vector< inputDataType > * >(obs.getNrSeconds());
-      AstroData::generateSinglePulse(width, DM, obs, *(input[beam]), inputBits, random);
+      AstroData::generateSinglePulse(width, DM, obs, padding[deviceName], *(input[beam]), inputBits, random);
     }
   }
 	if ( DEBUG && workers.rank() == 0 ) {
@@ -197,7 +197,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	// Host memory allocation
-  std::vector< float > * shifts = PulsarSearch::getShifts(obs);
+  std::vector< float > * shifts = PulsarSearch::getShifts(obs. padding[deviceName]);
   obs.setNrSamplesPerDispersedChannel(obs.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()))));
   obs.setNrDelaySeconds(static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerDispersedChannel()) / obs.getNrSamplesPerSecond())));
   std::vector< std::vector< inputDataType > > dispersedData(obs.getNrBeams());
@@ -287,7 +287,7 @@ int main(int argc, char * argv[]) {
   std::string * code;
   std::vector< cl::Kernel * > dedispersionK(obs.getNrBeams()), snrDedispersedK(obs.getNrBeams());
 
-  code = PulsarSearch::getDedispersionOpenCL(dedispersionParameters[deviceName][obs.getNrDMs()], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shifts);
+  code = PulsarSearch::getDedispersionOpenCL(dedispersionParameters[deviceName][obs.getNrDMs()], padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shifts);
 	try {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       dedispersionK[beam] = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
@@ -434,9 +434,9 @@ int main(int argc, char * argv[]) {
                     std::cout << static_cast< float >(dispersedData[beam][(channel * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + sample]) << " ";
                   } else {
                     unsigned int byte = sample / (8 / inputBits);
-                    inputDataType value = 0;
+                    char value = 0;
                     uint8_t firstBit = (sample % (8 / inputBits)) * inputBits;
-                    inputDataType buffer = dispersedData[beam][(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + byte];
+                    char buffer = dispersedData[beam][(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + byte];
 
                     for ( uint8_t bit = 0; bit < inputBits; bit++ ) {
                       isa::utils::setBit(value, isa::utils::getBit(buffer, firstBit + bit), bit);
