@@ -213,7 +213,7 @@ int main(int argc, char * argv[]) {
       }
     }
     dedispersedData[beam] = std::vector< outputDataType >(obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(outputDataType)));
-    snrData[beam] = std::vector< float >(obs.getNrPaddedDMs(padding[devicenName] / sizeof(float)));
+    snrData[beam] = std::vector< float >(obs.getNrPaddedDMs(padding[deviceName] / sizeof(float)));
   }
 
   // Device memory allocation and data transfers
