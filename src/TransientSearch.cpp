@@ -287,7 +287,7 @@ int main(int argc, char * argv[]) {
   std::string * code;
   std::vector< cl::Kernel * > dedispersionK(obs.getNrBeams()), snrDedispersedK(obs.getNrBeams());
 
-  code = PulsarSearch::getDedispersionOpenCL(dedispersionParameters[deviceName][obs.getNrDMs()], padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shifts);
+  code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(dedispersionParameters[deviceName][obs.getNrDMs()], padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shifts);
 	try {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       dedispersionK[beam] = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
