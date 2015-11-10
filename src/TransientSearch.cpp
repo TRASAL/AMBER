@@ -85,7 +85,6 @@ int main(int argc, char * argv[]) {
 
     compactResults = args.getSwitch("-compact_results");
     print = args.getSwitch("-print");
-		obs.setPadding(padding[deviceName]);
 
 		dataLOFAR = args.getSwitch("-lofar");
 		dataSIGPROC = args.getSwitch("-sigproc");
@@ -208,13 +207,13 @@ int main(int argc, char * argv[]) {
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
     if ( !dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
       if ( inputBits >= 8 ) {
-        dispersedData[beam] = std::vector< inputDataType >(obs.getNrChannels() * obs.getNrSamplesPerPaddedDispersedChannel());
+        dispersedData[beam] = std::vector< inputDataType >(obs.getNrChannels() * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType)));
       } else {
-        dispersedData[beam] = std::vector< inputDataType >(obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding()));
+        dispersedData[beam] = std::vector< inputDataType >(obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)));
       }
     }
-    dedispersedData[beam] = std::vector< outputDataType >(obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond());
-    snrData[beam] = std::vector< float >(obs.getNrPaddedDMs());
+    dedispersedData[beam] = std::vector< outputDataType >(obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(outputDataType)));
+    snrData[beam] = std::vector< float >(obs.getNrPaddedDMs(padding[devicenName] / sizeof(float)));
   }
 
   // Device memory allocation and data transfers
@@ -228,20 +227,20 @@ int main(int argc, char * argv[]) {
       dispersedData_d[beam] = std::vector< cl::Buffer >(obs.getNrDelaySeconds() + 1);
       if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
         if ( inputBits >= 8 ) {
-          dispersedData_d[beam][obs.getNrDelaySeconds()] = cl::Buffer(*clContext, CL_MEM_READ_ONLY, obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType), 0, 0);
+          dispersedData_d[beam][obs.getNrDelaySeconds()] = cl::Buffer(*clContext, CL_MEM_READ_ONLY, obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType), 0, 0);
         } else {
-          dispersedData_d[beam][obs.getNrDelaySeconds()] = cl::Buffer(*clContext, CL_MEM_READ_ONLY, obs.getNrDelaySeconds() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType), 0, 0);
+          dispersedData_d[beam][obs.getNrDelaySeconds()] = cl::Buffer(*clContext, CL_MEM_READ_ONLY, obs.getNrDelaySeconds() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType), 0, 0);
         }
         for ( unsigned int second = 0; second < obs.getNrDelaySeconds(); second++ ) {
           cl_buffer_region offsets;
           cl_int err = 0;
 
           if ( inputBits >= 8 ) {
-            offsets.origin = second * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType);
-            offsets.size = obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType);
+            offsets.origin = second * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType);
+            offsets.size = obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType);
           } else {
-            offsets.origin = second * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType);
-            offsets.size = obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType);
+            offsets.origin = second * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType);
+            offsets.size = obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType);
           }
           dispersedData_d[beam][second] = dispersedData_d[beam][obs.getNrDelaySeconds()].createSubBuffer(CL_MEM_READ_ONLY, CL_BUFFER_CREATE_TYPE_REGION, reinterpret_cast< void * >(&offsets), &err);
           if ( err != CL_SUCCESS ) {
@@ -267,9 +266,9 @@ int main(int argc, char * argv[]) {
 
     if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
       if ( inputBits >= 8 ) {
-        deviceMemory += obs.getNrBeams() * obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType);
+        deviceMemory += obs.getNrBeams() * obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType);
       } else {
-        deviceMemory += obs.getNrBeams() * obs.getNrDelaySeconds() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType);
+        deviceMemory += obs.getNrBeams() * obs.getNrDelaySeconds() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType);
       }
     } else {
       hostMemory += obs.getNrBeams() * dispersedData[0].size() * sizeof(inputDataType);
@@ -277,7 +276,7 @@ int main(int argc, char * argv[]) {
     hostMemory += obs.getNrBeams() * snrData[0].size() * sizeof(float);
     deviceMemory += hostMemory;
     deviceMemory += shifts->size() * sizeof(float);
-    deviceMemory += obs.getNrBeams() * obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(outputDataType);
+    deviceMemory += obs.getNrBeams() * obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(outputDataType)) * sizeof(outputDataType);
 
 		std::cout << "Allocated host memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(hostMemory) << " GB." << std::endl;
 		std::cout << "Allocated device memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(deviceMemory) << "GB." << std::endl;
@@ -325,8 +324,8 @@ int main(int argc, char * argv[]) {
   // TODO: Avoid overpadding of threads
   if ( obs.getNrSamplesPerSecond() % (dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() * dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread()) == 0 ) {
     nrThreads = obs.getNrSamplesPerSecond() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread();
-  } else if ( obs.getNrSamplesPerPaddedSecond() % (dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() * dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread()) == 0 ) {
-    nrThreads = obs.getNrSamplesPerPaddedSecond() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread();
+  } else if ( obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) % (dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() * dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread()) == 0 ) {
+    nrThreads = obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread();
   } else {
     nrThreads = isa::utils::pad(obs.getNrSamplesPerSecond() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread(), dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock());
   }
@@ -374,22 +373,22 @@ int main(int argc, char * argv[]) {
         for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
           for ( unsigned int chunk = 0; chunk < obs.getNrDelaySeconds() - 1; chunk++ ) {
             if ( inputBits >= 8 ) {
-              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerPaddedDispersedChannel()) + (chunk * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * obs.getNrSamplesPerPaddedSecond()))), obs.getNrSamplesPerSecond() * sizeof(inputDataType));
+              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + (chunk * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * obs.getNrSamplesPerPaddedSecond(padding[devicename] / sizeof(inputDataType))))), obs.getNrSamplesPerSecond() * sizeof(inputDataType));
             } else {
-              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + (chunk * (obs.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding())))), (obs.getNrSamplesPerSecond() / (8 / inputBits)) * sizeof(inputDataType));
+              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (chunk * (obs.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))))), (obs.getNrSamplesPerSecond() / (8 / inputBits)) * sizeof(inputDataType));
             }
           }
           if ( obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond() == 0 ) {
             if ( inputBits >= 8 ) {
-              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerPaddedDispersedChannel()) + ((obs.getNrDelaySeconds() - 1) * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + (obs.getNrDelaySeconds() - 1)))->at(channel * obs.getNrSamplesPerPaddedSecond()))), obs.getNrSamplesPerDispersedChannel() * sizeof(inputDataType));
+              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + ((obs.getNrDelaySeconds() - 1) * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + (obs.getNrDelaySeconds() - 1)))->at(channel * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType))))), obs.getNrSamplesPerDispersedChannel() * sizeof(inputDataType));
             } else {
-              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + ((obs.getNrDelaySeconds() - 1) * (obs.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + (obs.getNrDelaySeconds() - 1)))->at(channel * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding())))), (obs.getNrSamplesPerDispersedChannel() / (8 / inputBits)) * sizeof(inputDataType));
+              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + ((obs.getNrDelaySeconds() - 1) * (obs.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + (obs.getNrDelaySeconds() - 1)))->at(channel * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))))), (obs.getNrSamplesPerDispersedChannel() / (8 / inputBits)) * sizeof(inputDataType));
             }
           } else {
             if ( inputBits >= 8 ) {
-              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerPaddedDispersedChannel()) + ((obs.getNrDelaySeconds() - 1) * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + (obs.getNrDelaySeconds() - 1)))->at(channel * obs.getNrSamplesPerPaddedSecond()))), (obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond()) * sizeof(inputDataType));
+              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + ((obs.getNrDelaySeconds() - 1) * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + (obs.getNrDelaySeconds() - 1)))->at(channel * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType))))), (obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond()) * sizeof(inputDataType));
             } else {
-              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + ((obs.getNrDelaySeconds() - 1) * (obs.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + (obs.getNrDelaySeconds() - 1)))->at(channel * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding())))), ((obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond()) / (8 / inputBits)) * sizeof(inputDataType));
+              memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + ((obs.getNrDelaySeconds() - 1) * (obs.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + (obs.getNrDelaySeconds() - 1)))->at(channel * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))))), ((obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond()) / (8 / inputBits)) * sizeof(inputDataType));
             }
           }
         }
@@ -400,9 +399,9 @@ int main(int argc, char * argv[]) {
           inputCopyTime[beam].start();
           if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
             if ( inputBits >= 8 ) {
-              clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_TRUE, 0, obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()), 0, &syncPoint[beam]);
+              clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_TRUE, 0, obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()), 0, &syncPoint[beam]);
             } else {
-              clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_TRUE, 0, obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()), 0, &syncPoint[beam]);
+              clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_TRUE, 0, obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()), 0, &syncPoint[beam]);
             }
           } else {
             clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][obs.getNrDelaySeconds()], CL_TRUE, 0, dispersedData[beam].size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData[beam].data()), 0, &syncPoint[beam]);
@@ -412,9 +411,9 @@ int main(int argc, char * argv[]) {
         } else {
           if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
             if ( inputBits >= 8 ) {
-              clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_FALSE, 0, obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()));
+              clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_FALSE, 0, obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()));
             } else {
-              clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_FALSE, 0, obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), obs.getPadding()) * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()));
+              clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_FALSE, 0, obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()));
             }
           } else {
             clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][obs.getNrDelaySeconds()], CL_FALSE, 0, dispersedData[beam].size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData[beam].data()));
@@ -430,14 +429,14 @@ int main(int argc, char * argv[]) {
                 std::cout << channel << " : ";
                 for ( unsigned int sample = 0; sample < obs.getNrSamplesPerDispersedChannel(); sample++ ) {
                   if ( inputBits > 8 ) {
-                    std::cout << dispersedData[beam][(channel * obs.getNrSamplesPerPaddedDispersedChannel()) + sample] << " ";
+                    std::cout << dispersedData[beam][(channel * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + sample] << " ";
                   } else if ( inputBits == 8 ) {
-                    std::cout << static_cast< float >(dispersedData[beam][(channel * obs.getNrSamplesPerPaddedDispersedChannel()) + sample]) << " ";
+                    std::cout << static_cast< float >(dispersedData[beam][(channel * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + sample]) << " ";
                   } else {
                     unsigned int byte = sample / (8 / inputBits);
                     inputDataType value = 0;
                     uint8_t firstBit = (sample % (8 / inputBits)) * inputBits;
-                    inputDataType buffer = dispersedData[beam][(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), obs.getPadding())) + byte];
+                    inputDataType buffer = dispersedData[beam][(channel * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + byte];
 
                     for ( uint8_t bit = 0; bit < inputBits; bit++ ) {
                       isa::utils::setBit(value, isa::utils::getBit(buffer, firstBit + bit), bit);
@@ -484,7 +483,7 @@ int main(int argc, char * argv[]) {
             for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
               std::cout << dm << " : ";
               for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
-                std::cout << dedispersedData[beam][(dm * obs.getNrSamplesPerPaddedSecond()) + sample] << " ";
+                std::cout << dedispersedData[beam][(dm * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
               }
               std::cout << std::endl;
             }
