@@ -307,7 +307,7 @@ int main(int argc, char * argv[]) {
 	}
   delete shifts;
   delete code;
-  code = PulsarSearch::getSNRDedispersedOpenCL(snrDParameters[deviceName][obs.getNrDMs()], outputDataName, obs);
+  code = PulsarSearch::getSNRDedispersedOpenCL< outputDataType >(snrDParameters[deviceName][obs.getNrDMs()], outputDataName, obs, padding[deviceName]);
   try {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       snrDedispersedK[beam] = isa::OpenCL::compile("snrDedispersed", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
