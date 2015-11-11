@@ -202,7 +202,7 @@ int main(int argc, char * argv[]) {
 	// Host memory allocation
   std::vector< float > * shifts = PulsarSearch::getShifts(obs, padding[deviceName]);
   std::vector< uint8_t > zappedChannels(obs.getNrPaddedChannels(padding[deviceName] / sizeof(uint8_t)));
-  AstroData::readZappedChannels(obs, channelsFile, zappedChanels);
+  AstroData::readZappedChannels(obs, channelsFile, zappedChannels);
   obs.setNrSamplesPerDispersedChannel(obs.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()))));
   obs.setNrDelaySeconds(static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerDispersedChannel()) / obs.getNrSamplesPerSecond())));
   std::vector< std::vector< inputDataType > > dispersedData(obs.getNrBeams());
