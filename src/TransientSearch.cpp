@@ -55,6 +55,7 @@ int main(int argc, char * argv[]) {
 	std::string dataFile;
 	std::string headerFile;
 	std::string outputFile;
+  std::string channelsFile;
   std::vector< std::ofstream > output;
   isa::utils::ArgumentList args(argc, argv);
   // Fake single pulse
@@ -80,6 +81,7 @@ int main(int argc, char * argv[]) {
 		deviceName = args.getSwitchArgument< std::string >("-device_name");
 
     AstroData::readPaddingConf(padding, args.getSwitchArgument< std::string >("-padding_file"));
+    channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     PulsarSearch::readTunedDedispersionConf(dedispersionParameters, args.getSwitchArgument< std::string >("-dedispersion_file"));
     PulsarSearch::readTunedSNRDedispersedConf(snrDParameters, args.getSwitchArgument< std::string >("-snr_file"));
 
@@ -127,7 +129,7 @@ int main(int argc, char * argv[]) {
     obs.setDMRange(tempUInts[0], tempFloats[0] + (workers.rank() * tempUInts[0] * tempFloats[1]), tempFloats[1]);
     threshold = args.getSwitchArgument< float >("-threshold");
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -dedispersion_file ... -snr_file ... [-print] [-compact_results] [-lofar] [-sigproc] [-dada] -input_bits ... -output ... -dm_node ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
+    std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -zapped_channels ... -dedispersion_file ... -snr_file ... [-print] [-compact_results] [-lofar] [-sigproc] [-dada] -input_bits ... -output ... -dm_node ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -seconds ..." << std::endl;
     std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
@@ -169,13 +171,14 @@ int main(int argc, char * argv[]) {
   }
 	if ( DEBUG && workers.rank() == 0 ) {
     std::cout << "Device: " << deviceName << std::endl;
-    std::cout << "Padding: " << padding[deviceName] << std::endl;
+    std::cout << "Padding: " << padding[deviceName] << " bytes" << std::endl;
     std::cout << std::endl;
     std::cout << "Beams: " << obs.getNrBeams() << std::endl;
     std::cout << "Seconds: " << obs.getNrSeconds() << std::endl;
     std::cout << "Samples: " << obs.getNrSamplesPerSecond() << std::endl;
     std::cout << "Frequency range: " << obs.getMinFreq() << " MHz, " << obs.getMaxFreq() << " MHz" << std::endl;
     std::cout << "Channels: " << obs.getNrChannels() << " (" << obs.getChannelBandwidth() << " MHz)" << std::endl;
+    std::cout << "Zapped Channels: " << obs.getNrZappedChannels() << std::endl;
     std::cout << std::endl;
     if ( (dataLOFAR || dataSIGPROC) ) {
       std::cout << "Time to load the input: " << std::fixed << std::setprecision(6) << loadTime.getTotalTime() << " seconds." << std::endl;
@@ -198,6 +201,8 @@ int main(int argc, char * argv[]) {
 
 	// Host memory allocation
   std::vector< float > * shifts = PulsarSearch::getShifts(obs, padding[deviceName]);
+  std::vector< uint8_t > zappedChannels(obs.getNrPaddedChannels(padding[deviceName] / sizeof(uint8_t)));
+  AstroData::readZappedChannels(obs, channelsFile, zappedChanels);
   obs.setNrSamplesPerDispersedChannel(obs.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()))));
   obs.setNrDelaySeconds(static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerDispersedChannel()) / obs.getNrSamplesPerSecond())));
   std::vector< std::vector< inputDataType > > dispersedData(obs.getNrBeams());
@@ -218,11 +223,13 @@ int main(int argc, char * argv[]) {
 
   // Device memory allocation and data transfers
   cl::Buffer shifts_d;
+  cl::Buffer zappedChannels_d;
   std::vector< std::vector< cl::Buffer > > dispersedData_d(obs.getNrBeams());
   std::vector< cl::Buffer > dedispersedData_d(obs.getNrBeams()), snrData_d(obs.getNrBeams());
 
   try {
     shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(float), 0, 0);
+    zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       dispersedData_d[beam] = std::vector< cl::Buffer >(obs.getNrDelaySeconds() + 1);
       if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
@@ -255,6 +262,7 @@ int main(int argc, char * argv[]) {
       snrData_d[beam] = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, snrData[beam].size() * sizeof(float), 0, 0);
     }
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_TRUE, 0, shifts->size() * sizeof(float), reinterpret_cast< void * >(shifts->data()));
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_TRUE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()));
   } catch ( cl::Error & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
@@ -287,7 +295,7 @@ int main(int argc, char * argv[]) {
   std::string * code;
   std::vector< cl::Kernel * > dedispersionK(obs.getNrBeams()), snrDedispersedK(obs.getNrBeams());
 
-  code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(dedispersionParameters[deviceName][obs.getNrDMs()], padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shifts);
+  code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(dedispersionParameters[deviceName][obs.getNrDMs()], padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shifts, zappedChannels);
 	try {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       dedispersionK[beam] = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
@@ -295,10 +303,12 @@ int main(int argc, char * argv[]) {
         dedispersionK[beam]->setArg(1, dispersedData_d[beam][obs.getNrDelaySeconds()]);
         dedispersionK[beam]->setArg(2, dedispersedData_d[beam]);
         dedispersionK[beam]->setArg(3, shifts_d);
+        dedispersionK[beam]->setArg(4, zappedChannels_d);
       } else {
         dedispersionK[beam]->setArg(0, dispersedData_d[beam][obs.getNrDelaySeconds()]);
         dedispersionK[beam]->setArg(1, dedispersedData_d[beam]);
         dedispersionK[beam]->setArg(2, shifts_d);
+        dedispersionK[beam]->setArg(3, zappedChannels_d);
       }
     }
 	} catch ( isa::OpenCL::OpenCLError & err ) {
