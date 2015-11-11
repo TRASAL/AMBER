@@ -321,7 +321,6 @@ int main(int argc, char * argv[]) {
   delete code;
 
   // Set execution parameters
-  // TODO: Avoid overpadding of threads
   if ( obs.getNrSamplesPerSecond() % (dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() * dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread()) == 0 ) {
     nrThreads = obs.getNrSamplesPerSecond() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread();
   } else if ( obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) % (dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() * dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread()) == 0 ) {
