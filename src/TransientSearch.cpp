@@ -261,8 +261,8 @@ int main(int argc, char * argv[]) {
       dedispersedData_d[beam] = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData[beam].size() * sizeof(outputDataType), 0, 0);
       snrData_d[beam] = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, snrData[beam].size() * sizeof(float), 0, 0);
     }
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_TRUE, 0, shifts->size() * sizeof(float), reinterpret_cast< void * >(shifts->data()));
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_TRUE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()));
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_FALSE, 0, shifts->size() * sizeof(float), reinterpret_cast< void * >(shifts->data()));
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()));
   } catch ( cl::Error & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
@@ -331,13 +331,7 @@ int main(int argc, char * argv[]) {
   delete code;
 
   // Set execution parameters
-  if ( obs.getNrSamplesPerSecond() % (dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() * dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread()) == 0 ) {
-    nrThreads = obs.getNrSamplesPerSecond() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread();
-  } else if ( obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) % (dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() * dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread()) == 0 ) {
-    nrThreads = obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread();
-  } else {
-    nrThreads = isa::utils::pad(obs.getNrSamplesPerSecond() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread(), dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock());
-  }
+  nrThreads = obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread();
   cl::NDRange dedispersionGlobal(nrThreads, obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread());
   cl::NDRange dedispersionLocal(dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock());
   if ( DEBUG && workers.rank() == 0 ) {
