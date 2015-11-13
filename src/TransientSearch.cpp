@@ -331,7 +331,7 @@ int main(int argc, char * argv[]) {
   delete code;
 
   // Set execution parameters
-  nrThreads = obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread();
+  nrThreads = obs.getNrSamplesPerSecond() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread();
   cl::NDRange dedispersionGlobal(nrThreads, obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread());
   cl::NDRange dedispersionLocal(dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock());
   if ( DEBUG && workers.rank() == 0 ) {
