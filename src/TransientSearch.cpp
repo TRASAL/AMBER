@@ -331,14 +331,15 @@ int main(int argc, char * argv[]) {
       }
       code = PulsarSearch::getIntegrationDMsSamplesOpenCL< outputDataType >(integrationParameters[deviceName][obs.getNrSamplesPerSecond()][*step], obs.getNrSamplesPerSecond() / *step, outputDataName, *step, padding[deviceName]);
       try {
-        integrationDMsSamplesK[beam][stepNumber] = isa::OpenCL::compile("integrationDMsSamples" + isa::utils::toString(*step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
-        integrationDMsSamplesK[beam][stepNumber]->setArg(0, dedispersedData_d[beam]);
-        integrationDMsSamplesK[beam][stepNumber]->setArg(1, integratedData_d[beam]);
+        if ( *step > 1 ) {
+          integrationDMsSamplesK[beam][stepNumber] = isa::OpenCL::compile("integrationDMsSamples" + isa::utils::toString(*step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+          integrationDMsSamplesK[beam][stepNumber]->setArg(0, dedispersedData_d[beam]);
+          integrationDMsSamplesK[beam][stepNumber]->setArg(1, integratedData_d[beam]);
+        }
       } catch ( isa::OpenCL::OpenCLError & err ) {
         std::cerr << err.what() << std::endl;
         return 1;
       }
-      stepNumber++;
       delete code;
       code = PulsarSearch::getSNRDMsSamplesOpenCL< outputDataType >(snrDParameters[deviceName][obs.getNrDMs()], outputDataName, obs.getNrSamplesPerSecond() / *step, padding[deviceName]);
       try {
