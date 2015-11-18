@@ -607,7 +607,7 @@ int main(int argc, char * argv[]) {
               }
             } else {
               if ( snrData[beam][dm] >= threshold ) {
-                output[beam] << second << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + dm) * obs.getDMStep()) << " " << snrData[beam][dm] << std::endl;
+                output[beam] << second << " " << *step << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + dm) * obs.getDMStep()) << " " << snrData[beam][dm] << std::endl;
               }
             }
           }
@@ -643,7 +643,7 @@ int main(int argc, char * argv[]) {
     output[beam].close();
     // Store statistics before shutting down
     output[beam].open(outputFile + "_" + isa::utils::toString(workers.rank()) + "_B" + isa::utils::toString(beam) + ".stats");
-    output[beam] << "# nrDMs nodeTime searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionAvg err snrDMsSamplesTotal snrDMsSamplesAvg err outputCopyTotal outputCopyAvg err triggerTimeTotal triggerTimeAvg err" << std::endl;
+    output[beam] << "# nrDMs nodeTime searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionAvg err integrationTotal integrationAvg err snrDMsSamplesTotal snrDMsSamplesAvg err outputCopyTotal outputCopyAvg err triggerTimeTotal triggerTimeAvg err" << std::endl;
     output[beam] << std::fixed << std::setprecision(6);
     output[beam] << obs.getNrDMs() << " ";
     output[beam] << nodeTime.getTotalTime() << " ";
@@ -651,6 +651,7 @@ int main(int argc, char * argv[]) {
     output[beam] << inputHandlingTime[beam].getTotalTime() << " " << inputHandlingTime[beam].getAverageTime() << " " << inputHandlingTime[beam].getStandardDeviation() << " ";
     output[beam] << inputCopyTime[beam].getTotalTime() << " " << inputCopyTime[beam].getAverageTime() << " " << inputCopyTime[beam].getStandardDeviation() << " ";
     output[beam] << dedispTime[beam].getTotalTime() << " " << dedispTime[beam].getAverageTime() << " " << dedispTime[beam].getStandardDeviation() << " ";
+    output[beam] << integrationTime[beam].getTotalTime() << " " << integrationTime[beam].getAverageTime() << " " << integrationTime[beam].getStandardDeviation() << " ";
     output[beam] << snrDMsSamplesTime[beam].getTotalTime() << " " << snrDMsSamplesTime[beam].getAverageTime() << " " << snrDMsSamplesTime[beam].getStandardDeviation() << " ";
     output[beam] << outputCopyTime[beam].getTotalTime() << " " << outputCopyTime[beam].getAverageTime() << " " << outputCopyTime[beam].getStandardDeviation() << " ";
     output[beam] << triggerTime[beam].getTotalTime() << " " << triggerTime[beam].getAverageTime() << " " << triggerTime[beam].getStandardDeviation() << " ";
