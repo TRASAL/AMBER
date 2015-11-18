@@ -324,8 +324,11 @@ int main(int argc, char * argv[]) {
     integrationDMsSamplesK[beam] = std::vector< cl::Kernel * >(integrationSteps.size());
     snrDMsSamplesK[beam] = std::vector< cl::Kernel * >(integrationSteps.size());
     for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
-      auto step = integrationSteps.begin() + stepNumber;
+      auto step = integrationSteps.begin();
 
+      for ( unsigned int i = 0; i < stepNumber; i++ ) {
+        ++step;
+      }
       code = PulsarSearch::getIntegrationDMsSamplesOpenCL< outputDataType >(integrationParameters[deviceName][obs.getNrSamplesPerSecond()][*step], obs.getNrSamplesPerSecond() / *step, outputDataName, *step, padding[deviceName]);
       try {
         integrationDMsSamplesK[beam][stepNumber] = isa::OpenCL::compile("integrationDMsSamples" + isa::utils::toString(*step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
@@ -366,8 +369,11 @@ int main(int argc, char * argv[]) {
   std::vector< cl::NDRange > snrDMsSamplesGlobal(integrationSteps.size());
   std::vector< cl::NDRange > snrDMsSamplesLocal(integrationSteps.size());
   for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
-    auto step = integrationSteps.begin() + stepNumber;
+    auto step = integrationSteps.begin();
 
+    for ( unsigned int i = 0; i < stepNumber; i++ ) {
+      ++step;
+    }
     nrThreads = obs.getNrSamplesPerSecond() / integrationParameters[deviceName][obs.getNrSamplesPerSecond()][*step].getNrSamplesPerThread();
     integrationGlobal[stepNumber] = cl::NDRange(nrThreads, obs.getNrDMs());
     integrationLocal[stepNumber] = cl::NDRange(integrationParameters[deviceName][obs.getNrSamplesPerSecond()][*step].getNrSamplesPerBlock(), 1);
@@ -532,8 +538,11 @@ int main(int argc, char * argv[]) {
           }
         }
         for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
-          auto step = integrationSteps.begin() + stepNumber;
+          auto step = integrationSteps.begin();
 
+          for ( unsigned int i = 0; i < stepNumber; i++ ) {
+            ++step;
+          }
           if ( *step == 1 ) {
             snrDMsSamplesK[beam][stepNumber]->setArg(0, dedispersedData_d[beam]);
             if ( SYNC ) {
