@@ -1,1 +1,0 @@
-# device nrDMs nrDMsPerBlock nrDMsPerThread
