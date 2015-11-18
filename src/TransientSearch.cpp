@@ -140,7 +140,7 @@ int main(int argc, char * argv[]) {
   isa::utils::Timer loadTime;
   std::vector< std::vector< std::vector< inputDataType > * > * > input(obs.getNrBeams());
   std::vector< uint8_t > zappedChannels(obs.getNrPaddedChannels(padding[deviceName] / sizeof(uint8_t)));
-  std::set< unsigned int > integrationSteps();
+  std::set< unsigned int > integrationSteps;
 	if ( dataLOFAR ) {
     input[0] = new std::vector< std::vector< inputDataType > * >(obs.getNrSeconds());
     loadTime.start();
@@ -337,7 +337,7 @@ int main(int argc, char * argv[]) {
       }
       stepNumber++;
       delete code;
-      code = PulsarSearch::getSNRDMsSamplesOpenCL< outputDataType >(snrDParameters[deviceName][obs.getNrDMs()], outputDataName, obs, padding[deviceName]);
+      code = PulsarSearch::getSNRDMsSamplesOpenCL< outputDataType >(snrDParameters[deviceName][obs.getNrDMs()], outputDataName, obs.getNrSamplesPerSecond() / *step, padding[deviceName]);
       try {
         snrDMsSamplesK[beam][stepNumber] = isa::OpenCL::compile("snrDMsSamples" + isa::utils::toString(obs.getNrSamplesPerSecond() / *step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
         snrDMsSamplesK[beam][stepNumber]->setArg(1, snrData_d[beam]);
@@ -532,7 +532,7 @@ int main(int argc, char * argv[]) {
           }
         }
         for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
-          auto step = integrationStep.begin() + stepNumber;
+          auto step = integrationSteps.begin() + stepNumber;
 
           if ( *step == 1 ) {
             snrDMsSamplesK[beam][stepNumber]->setArg(0, dedispersedData_d[beam]);
