@@ -7,6 +7,8 @@ OPENCL := $(HOME)/src/OpenCL
 ASTRODATA := $(HOME)/src/AstroData
 # https://github.com/isazi/Dedispersion
 DEDISPERSION := $(HOME)/src/Dedispersion
+# https://github.com/isazi/Integration
+INTEGRATION := $(HOME)/src/Integration
 # https://github.com/isazi/SNR
 SNR := $(HOME)/src/SNR
 # HDF5
@@ -18,7 +20,7 @@ BOOST := $(HOME)/src/boost
 # MPI
 MPI := $(HOME)/src/mpi
 
-INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include" -I"$(DEDISPERSION)/include" -I"$(SNR)/include" -I"$(HDF5)/include" -I"$(PSRDADA)/src/" -I"$(MPI)/include" 
+INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include" -I"$(DEDISPERSION)/include" -I"$(INTEGRATION)/include" -I"$(SNR)/include" -I"$(HDF5)/include" -I"$(PSRDADA)/src/" -I"$(MPI)/include" 
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
 CL_LIBS := -L"$(OPENCL_LIB)"
 HDF5_LIBS := -L"$(HDF5)/lib"
@@ -43,7 +45,7 @@ CC := g++
 MPI := mpicxx
 
 # Dependencies
-KERNELS := $(DEDISPERSION)/bin/Shifts.o $(DEDISPERSION)/bin/Dedispersion.o $(SNR)/bin/SNR.o
+KERNELS := $(DEDISPERSION)/bin/Shifts.o $(DEDISPERSION)/bin/Dedispersion.o $(INTEGRATION)/bin/Integration.o $(SNR)/bin/SNR.o
 DEPS := $(ASTRODATA)/bin/Observation.o $(ASTRODATA)/bin/Platform.o $(ASTRODATA)/bin/ReadData.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/Timer.o $(UTILS)/bin/utils.o
 CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o 
 DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o
