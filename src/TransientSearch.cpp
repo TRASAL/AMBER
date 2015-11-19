@@ -383,6 +383,17 @@ int main(int argc, char * argv[]) {
   std::vector< cl::NDRange > integrationLocal(integrationSteps.size());
   std::vector< cl::NDRange > snrDMsSamplesGlobal(integrationSteps.size());
   std::vector< cl::NDRange > snrDMsSamplesLocal(integrationSteps.size());
+  nrThreads = snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock();
+  snrDMsSamplesGlobal[integrationSteps.size()] = cl::NDRange(nrThreads, obs.getNrDMs());
+  snrDMsSamplesLocal[integrationSteps.size()] = cl::NDRange(snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), 1);
+  if ( DEBUG && workers.rank() == 0 ) {
+    std::cout << "SNRDMsSamples (" + isa::utils::toString(obs.getNrSamplesPerSecond() / *step) + ")" << std::endl;
+    std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() << std::endl;
+    std::cout << "Local: " << snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() << ", 1" << std::endl;
+    std::cout << "Parameters: ";
+    std::cout << snrDParameters[deviceName][obs.getNrDMs()].print() << std::endl;
+    std::cout << std::endl;
+  }
   for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
     auto step = integrationSteps.begin();
 
@@ -555,7 +566,7 @@ int main(int argc, char * argv[]) {
         // SNR of dedispersed data
         if ( SYNC ) {
           snrDMsSamplesTime[beam].start();
-          clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber], 0, &syncPoint[beam]);
+          clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][integrationSteps.size()], cl::NullRange, snrDMsSamplesGlobal[integrationSteps.size()], snrDMsSamplesLocal[integrationSteps.size()], 0, &syncPoint[beam]);
           syncPoint[beam].wait();
           snrDMsSamplesTime[beam].stop();
           outputCopyTime[beam].start();
@@ -563,7 +574,7 @@ int main(int argc, char * argv[]) {
           syncPoint[beam].wait();
           outputCopyTime[beam].stop();
         } else {
-          clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber]);
+          clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][integrationSteps.size()], cl::NullRange, snrDMsSamplesGlobal[integrationSteps.size()], snrDMsSamplesLocal[integrationSteps.size()]);
           clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_FALSE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()));
           clQueues->at(clDeviceID)[beam].finish();
         }
