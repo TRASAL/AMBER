@@ -387,7 +387,7 @@ int main(int argc, char * argv[]) {
   snrDMsSamplesGlobal[integrationSteps.size()] = cl::NDRange(nrThreads, obs.getNrDMs());
   snrDMsSamplesLocal[integrationSteps.size()] = cl::NDRange(snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), 1);
   if ( DEBUG && workers.rank() == 0 ) {
-    std::cout << "SNRDMsSamples (" + isa::utils::toString(obs.getNrSamplesPerSecond() / *step) + ")" << std::endl;
+    std::cout << "SNRDMsSamples (" + isa::utils::toString(obs.getNrSamplesPerSecond()) + ")" << std::endl;
     std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() << std::endl;
     std::cout << "Local: " << snrDParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() << ", 1" << std::endl;
     std::cout << "Parameters: ";
