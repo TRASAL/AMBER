@@ -223,6 +223,11 @@ int main(int argc, char * argv[]) {
     snrData[beam] = std::vector< float >(obs.getNrPaddedDMs(padding[deviceName] / sizeof(float)));
   }
 
+  if ( obs.getNrDelaySeconds() >obs.getNrSeconds() ) {
+    std::cerr << "Not enough seconds in input." << std::endl;
+    return 1;
+  }
+
   // Device memory allocation and data transfers
   cl::Buffer shifts_d;
   cl::Buffer zappedChannels_d;
