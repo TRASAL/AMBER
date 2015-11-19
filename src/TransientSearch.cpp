@@ -28,6 +28,8 @@
 
 #include <configuration.hpp>
 
+void trigger(const bool compactResults, const unsigned int second, const unsigned int integration, const float threshold, const AstroData::Observation & obs, isa::utils::Timer & timer, boost::mpi::communicator & workers, const std::vector< float > & snrData, std::ofstream & output);
+
 
 int main(int argc, char * argv[]) {
   bool print = false;
@@ -320,9 +322,20 @@ int main(int argc, char * argv[]) {
 	}
   delete shifts;
   delete code;
+  code = PulsarSearch::getSNRDMsSamplesOpenCL< outputDataType >(snrDParameters[deviceName][obs.getNrDMs()], outputDataName, obs.getNrSamplesPerSecond(), padding[deviceName]);
+  try {
+    for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+      snrDMsSamplesK[beam] = std::vector< cl::Kernel * >(integrationSteps.size() + 1);
+      snrDMsSamplesK[beam][integrationSteps.size()] = isa::OpenCL::compile("snrDMsSamples" + isa::utils::toString(obs.getNrSamplesPerSecond()), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+      snrDMsSamplesK[beam][integrationSteps.size()]->setArg(1, snrData_d[beam]);
+    }
+  } catch ( isa::OpenCL::OpenCLError & err ) {
+    std::cerr << err.what() << std::endl;
+    return 1;
+  }
+  delete code;
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
     integrationDMsSamplesK[beam] = std::vector< cl::Kernel * >(integrationSteps.size());
-    snrDMsSamplesK[beam] = std::vector< cl::Kernel * >(integrationSteps.size());
     for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
       auto step = integrationSteps.begin();
 
@@ -538,84 +551,50 @@ int main(int argc, char * argv[]) {
             std::cout << std::endl;
           }
         }
+        // SNR of dedispersed data
+        snrDMsSamplesK[beam][stepNumber]->setArg(0, dedispersedData_d[beam]);
+        if ( SYNC ) {
+          snrDMsSamplesTime[beam].start();
+          clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber], 0, &syncPoint[beam]);
+          syncPoint[beam].wait();
+          snrDMsSamplesTime[beam].stop();
+          outputCopyTime[beam].start();
+          clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_TRUE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()), 0, &syncPoint[beam]);
+          syncPoint[beam].wait();
+          outputCopyTime[beam].stop();
+        } else {
+          clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber]);
+          clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_FALSE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()));
+          clQueues->at(clDeviceID)[beam].finish();
+        }
+        trigger(compactResults, second, 0, threshold, obs, triggerTime[beam], workers, snrData[beam], output[beam]);
+        // SNR of integrated dedispersed data
         for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
           auto step = integrationSteps.begin();
 
           for ( unsigned int i = 0; i < stepNumber; i++ ) {
             ++step;
           }
-          if ( *step == 1 ) {
-            snrDMsSamplesK[beam][stepNumber]->setArg(0, dedispersedData_d[beam]);
-            if ( SYNC ) {
-              snrDMsSamplesTime[beam].start();
-              clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber], 0, &syncPoint[beam]);
-              syncPoint[beam].wait();
-              snrDMsSamplesTime[beam].stop();
-              outputCopyTime[beam].start();
-              clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_TRUE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()), 0, &syncPoint[beam]);
-              syncPoint[beam].wait();
-              outputCopyTime[beam].stop();
-            } else {
-              clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber]);
-              clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_FALSE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()));
-              clQueues->at(clDeviceID)[beam].finish();
-            }
+          snrDMsSamplesK[beam][stepNumber]->setArg(0, integratedData_d[beam]);
+          if ( SYNC ) {
+            integrationTime[beam].start();
+            clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*integrationDMsSamplesK[beam][stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber], 0, &syncPoint[beam]);
+            syncPoint[beam].wait();
+            integrationTime[beam].stop();
+            snrDMsSamplesTime[beam].start();
+            clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber], 0, &syncPoint[beam]);
+            syncPoint[beam].wait();
+            snrDMsSamplesTime[beam].stop();
+            outputCopyTime[beam].start();
+            clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_TRUE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()), 0, &syncPoint[beam]);
+            syncPoint[beam].wait();
+            outputCopyTime[beam].stop();
           } else {
-            snrDMsSamplesK[beam][stepNumber]->setArg(0, integratedData_d[beam]);
-            if ( SYNC ) {
-              integrationTime[beam].start();
-              clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*integrationDMsSamplesK[beam][stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber], 0, &syncPoint[beam]);
-              syncPoint[beam].wait();
-              integrationTime[beam].stop();
-              snrDMsSamplesTime[beam].start();
-              clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber], 0, &syncPoint[beam]);
-              syncPoint[beam].wait();
-              snrDMsSamplesTime[beam].stop();
-              outputCopyTime[beam].start();
-              clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_TRUE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()), 0, &syncPoint[beam]);
-              syncPoint[beam].wait();
-              outputCopyTime[beam].stop();
-            } else {
-              clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber]);
-              clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_FALSE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()));
-              clQueues->at(clDeviceID)[beam].finish();
-            }
+            clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber]);
+            clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_FALSE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()));
+            clQueues->at(clDeviceID)[beam].finish();
           }
-          // Triggering
-          bool previous = false;
-          unsigned int maxDM = 0;
-          double maxSNR = 0.0;
-
-          triggerTime[beam].start();
-          for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-            if ( compactResults ) {
-              if ( snrData[beam][dm] >= threshold ) {
-                if ( previous ) {
-                  if ( snrData[beam][dm] > maxSNR ) {
-                    maxDM = dm;
-                    maxSNR = snrData[beam][dm];
-                  }
-                } else {
-                  previous = true;
-                  maxDM = dm;
-                  maxSNR = snrData[beam][dm];
-                }
-              } else if ( previous ) {
-                output[beam] << second << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
-                previous = false;
-                maxDM = 0;
-                maxSNR = 0;
-              }
-            } else {
-              if ( snrData[beam][dm] >= threshold ) {
-                output[beam] << second << " " << *step << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + dm) * obs.getDMStep()) << " " << snrData[beam][dm] << std::endl;
-              }
-            }
-          }
-          if ( previous ) {
-            output[beam] << second << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
-          }
-          triggerTime[beam].stop();
+          trigger(compactResults, second, *step, threshold, obs, triggerTime[beam], workers, snrData[beam], output[beam]);
         }
         if ( DEBUG && workers.rank() == 0 ) {
           if ( print ) {
@@ -661,5 +640,42 @@ int main(int argc, char * argv[]) {
   }
 
 	return 0;
+}
+
+void trigger(const bool compactResults, const unsigned int second, const unsigned int integration, const float threshold, const AstroData::Observation & obs, isa::utils::Timer & timer, boost::mpi::communicator & workers, const std::vector< float > & snrData, std::ofstream & output) {
+  bool previous = false;
+  unsigned int maxDM = 0;
+  double maxSNR = 0.0;
+
+  timer.start();
+  for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+    if ( compactResults ) {
+      if ( snrData[dm] >= threshold ) {
+        if ( previous ) {
+          if ( snrData[dm] > maxSNR ) {
+            maxDM = dm;
+            maxSNR = snrData[dm];
+          }
+        } else {
+          previous = true;
+          maxDM = dm;
+          maxSNR = snrData[dm];
+        }
+      } else if ( previous ) {
+        output << second << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
+        previous = false;
+        maxDM = 0;
+        maxSNR = 0;
+      }
+    } else {
+      if ( snrData[dm] >= threshold ) {
+        output << second << " " << integration << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + dm) * obs.getDMStep()) << " " << snrData[dm] << std::endl;
+      }
+    }
+  }
+  if ( previous ) {
+    output << second << " " << integration << " " << obs.getFirstDM() + (((workers.rank() * obs.getNrDMs()) + maxDM) * obs.getDMStep()) << " " << maxSNR << std::endl;
+  }
+  timer.stop();
 }
 
