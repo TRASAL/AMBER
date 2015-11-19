@@ -327,6 +327,7 @@ int main(int argc, char * argv[]) {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       snrDMsSamplesK[beam] = std::vector< cl::Kernel * >(integrationSteps.size() + 1);
       snrDMsSamplesK[beam][integrationSteps.size()] = isa::OpenCL::compile("snrDMsSamples" + isa::utils::toString(obs.getNrSamplesPerSecond()), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+      snrDMsSamplesK[beam][integrationSteps.size()]->setArg(0, dedispersedData_d[beam]);
       snrDMsSamplesK[beam][integrationSteps.size()]->setArg(1, snrData_d[beam]);
     }
   } catch ( isa::OpenCL::OpenCLError & err ) {
@@ -552,7 +553,6 @@ int main(int argc, char * argv[]) {
           }
         }
         // SNR of dedispersed data
-        snrDMsSamplesK[beam][stepNumber]->setArg(0, dedispersedData_d[beam]);
         if ( SYNC ) {
           snrDMsSamplesTime[beam].start();
           clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber], 0, &syncPoint[beam]);
