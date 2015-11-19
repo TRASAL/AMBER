@@ -1,1 +1,1 @@
-# device nrDMs nrSamplesPerBlock nrSamplesPerThread
+# device nrDMs nrSamples nrSamplesPerBlock nrSamplesPerThread
