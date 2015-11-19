@@ -536,7 +536,7 @@ int main(int argc, char * argv[]) {
         continue;
       }
 
-      // Run the kernels
+      // Dedispersion
       try {
         if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
           dedispersionK[beam]->setArg(0, second % obs.getNrDelaySeconds());
@@ -579,6 +579,15 @@ int main(int argc, char * argv[]) {
           clQueues->at(clDeviceID)[beam].finish();
         }
         trigger(compactResults, second, 0, threshold, obs, triggerTime[beam], workers, snrData[beam], output[beam]);
+        if ( DEBUG && workers.rank() == 0 ) {
+          if ( print ) {
+            std::cout << std::fixed << std::setprecision(6);
+            for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+              std::cout << dm << ": " << snrData[beam][dm] << std::endl;
+            }
+            std::cout << std::endl;
+          }
+        }
         // SNR of integrated dedispersed data
         for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
           auto step = integrationSteps.begin();
@@ -606,14 +615,14 @@ int main(int argc, char * argv[]) {
             clQueues->at(clDeviceID)[beam].finish();
           }
           trigger(compactResults, second, *step, threshold, obs, triggerTime[beam], workers, snrData[beam], output[beam]);
-        }
-        if ( DEBUG && workers.rank() == 0 ) {
-          if ( print ) {
-            std::cout << std::fixed << std::setprecision(6);
-            for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-              std::cout << dm << ": " << snrData[beam][dm] << std::endl;
+          if ( DEBUG && workers.rank() == 0 ) {
+            if ( print ) {
+              std::cout << std::fixed << std::setprecision(6);
+              for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+                std::cout << dm << ": " << snrData[beam][dm] << std::endl;
+              }
+              std::cout << std::endl;
             }
-            std::cout << std::endl;
           }
         }
       } catch ( cl::Error & err ) {
