@@ -272,6 +272,7 @@ int main(int argc, char * argv[]) {
   }
 
 	if ( DEBUG && workers.rank() == 0 ) {
+    std::cout << std::fixed << std::setprecision(3);
     if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
       if ( inputBits >= 8 ) {
         std::cout << "dispersedData: " << isa::utils::giga(static_cast< double >(obs.getNrBeams()) * obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType)) << " GB" << std::endl;
