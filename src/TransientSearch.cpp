@@ -272,26 +272,20 @@ int main(int argc, char * argv[]) {
   }
 
 	if ( DEBUG && workers.rank() == 0 ) {
-		double hostMemory = 0.0;
-		double deviceMemory = 0.0;
-
     if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
       if ( inputBits >= 8 ) {
-        deviceMemory += obs.getNrBeams() * obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType);
+        std::cout << "dispersedData: " << isa::utils::giga(static_cast< double >(obs.getNrBeams()) * obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType)) << " GB" << std::endl;
       } else {
-        deviceMemory += obs.getNrBeams() * obs.getNrDelaySeconds() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType);
+        std::cout << "dispersedData: " << isa::utils::giga(static_cast< double >(obs.getNrBeams()) * obs.getNrDelaySeconds() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSecond() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType)) << " GB" << std::endl;
       }
     } else {
-      hostMemory += obs.getNrBeams() * dispersedData[0].size() * sizeof(inputDataType);
+      std::cout << "dispersedData: " << isa::utils::giga(static_cast< double >(obs.getNrBeams()) * dispersedData[0].size() * sizeof(inputDataType)) << " GB" << std::endl;
     }
-    hostMemory += obs.getNrBeams() * snrData[0].size() * sizeof(float);
-    deviceMemory += hostMemory;
-    deviceMemory += shifts->size() * sizeof(float);
-    deviceMemory += obs.getNrBeams() * obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(outputDataType)) * sizeof(outputDataType);
-    deviceMemory += obs.getNrBeams() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerSecond() / *(--(integrationSteps.end())), padding[deviceName] / sizeof(outputDataType));
-
-		std::cout << "Allocated host memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(hostMemory) << " GB." << std::endl;
-		std::cout << "Allocated device memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(deviceMemory) << "GB." << std::endl;
+    std::cout << "snrData: " << isa::utils::giga(static_cast< double >(obs.getNrBeams()) * snrData[0].size() * sizeof(float)) << " GB" << std::endl;
+    std::cout << "shifts: " << isa::utils::giga(static_cast< double >(shifts->size()) * sizeof(float)) << " GB" << std::endl;
+    std::cout << "zappedChannels: " << isa::utils::giga(static_cast< double >(zappedChannels.size()) * sizeof(uint8_t)) << " GB" << std::endl;
+    std::cout << "dedispersedData: " << isa::utils::giga(static_cast< double >(obs.getNrBeams()) * obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(outputDataType)) * sizeof(outputDataType)) << " GB" << std::endl;
+    std::cout << "integratedData: " << isa::utils::giga(static_cast< double >(obs.getNrBeams()) * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerSecond() / *(--(integrationSteps.end())), padding[deviceName] / sizeof(outputDataType))) << " GB" << std::endl;
     std::cout << std::endl;
 	}
 
