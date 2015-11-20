@@ -401,7 +401,7 @@ int main(int argc, char * argv[]) {
     for ( unsigned int i = 0; i < stepNumber; i++ ) {
       ++step;
     }
-    nrThreads = integrationParameter[deviceName][obs.getNrSamplesPerSecond()][*step].getNrSamplesPerBlock() * ((obs.getNrSamplesPerSecond() / *step) / integrationParameters[deviceName][obs.getNrSamplesPerSecond()][*step].getNrSamplesPerThread());
+    nrThreads = integrationParameters[deviceName][obs.getNrSamplesPerSecond()][*step].getNrSamplesPerBlock() * ((obs.getNrSamplesPerSecond() / *step) / integrationParameters[deviceName][obs.getNrSamplesPerSecond()][*step].getNrSamplesPerThread());
     integrationGlobal[stepNumber] = cl::NDRange(nrThreads, obs.getNrDMs());
     integrationLocal[stepNumber] = cl::NDRange(integrationParameters[deviceName][obs.getNrSamplesPerSecond()][*step].getNrSamplesPerBlock(), 1);
     if ( DEBUG && workers.rank() == 0 ) {
