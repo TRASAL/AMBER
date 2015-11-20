@@ -614,6 +614,20 @@ int main(int argc, char * argv[]) {
             clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_FALSE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()));
             clQueues->at(clDeviceID)[beam].finish();
           }
+          if ( DEBUG && workers.rank() == 0 ) {
+            if ( print ) {
+              clQueues->at(clDeviceID)[beam].enqueueReadBuffer(integratedData_d[beam], CL_TRUE, 0, integratedData[beam].size() * sizeof(outputDataType), reinterpret_cast< void * >(integratedData[beam].data()));
+              std::cout << std::fixed << std::setprecision(3);
+              for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+                std::cout << dm << " : ";
+                for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond() / *step; sample++ ) {
+                  std::cout << dedispersedData[beam][(dm * isa::utils::pad(obs.getNrSamplesPerSecond() / *step, padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
+                }
+                std::cout << std::endl;
+              }
+              std::cout << std::endl;
+            }
+          }
           trigger(compactResults, second, *step, threshold, obs, triggerTime[beam], workers, snrData[beam], output[beam]);
           if ( DEBUG && workers.rank() == 0 ) {
             if ( print ) {
