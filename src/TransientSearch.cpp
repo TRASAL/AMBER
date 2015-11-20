@@ -358,6 +358,7 @@ int main(int argc, char * argv[]) {
       code = PulsarSearch::getSNRDMsSamplesOpenCL< outputDataType >(snrParameters[deviceName][obs.getNrDMs()][obs.getNrSamplesPerSecond() / *step], outputDataName, obs.getNrSamplesPerSecond() / *step, padding[deviceName]);
       try {
         snrDMsSamplesK[beam][stepNumber] = isa::OpenCL::compile("snrDMsSamples" + isa::utils::toString(obs.getNrSamplesPerSecond() / *step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+        snrDMsSamplesK[beam][stepNumber]->setArg(0, integratedData_d[beam]);
         snrDMsSamplesK[beam][stepNumber]->setArg(1, snrData_d[beam]);
       } catch ( isa::OpenCL::OpenCLError & err ) {
         std::cerr << err.what() << std::endl;
@@ -400,7 +401,7 @@ int main(int argc, char * argv[]) {
     for ( unsigned int i = 0; i < stepNumber; i++ ) {
       ++step;
     }
-    nrThreads = obs.getNrSamplesPerSecond() / integrationParameters[deviceName][obs.getNrSamplesPerSecond()][*step].getNrSamplesPerThread();
+    nrThreads = integrationParameter[deviceName][obs.getNrSamplesPerSecond()][*step].getNrSamplesPerBlock() * ((obs.getNrSamplesPerSecond() / *step) / integrationParameters[deviceName][obs.getNrSamplesPerSecond()][*step].getNrSamplesPerThread());
     integrationGlobal[stepNumber] = cl::NDRange(nrThreads, obs.getNrDMs());
     integrationLocal[stepNumber] = cl::NDRange(integrationParameters[deviceName][obs.getNrSamplesPerSecond()][*step].getNrSamplesPerBlock(), 1);
     if ( DEBUG && workers.rank() == 0 ) {
@@ -595,7 +596,6 @@ int main(int argc, char * argv[]) {
           for ( unsigned int i = 0; i < stepNumber; i++ ) {
             ++step;
           }
-          snrDMsSamplesK[beam][stepNumber]->setArg(0, integratedData_d[beam]);
           if ( SYNC ) {
             integrationTime[beam].start();
             clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*integrationDMsSamplesK[beam][stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber], 0, &syncPoint[beam]);
