@@ -621,7 +621,7 @@ int main(int argc, char * argv[]) {
               for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
                 std::cout << dm << " : ";
                 for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond() / *step; sample++ ) {
-                  std::cout << dedispersedData[beam][(dm * isa::utils::pad(obs.getNrSamplesPerSecond() / *step, padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
+                  std::cout << integratedData[beam][(dm * isa::utils::pad(obs.getNrSamplesPerSecond() / *step, padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
                 }
                 std::cout << std::endl;
               }
