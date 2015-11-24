@@ -610,6 +610,7 @@ int main(int argc, char * argv[]) {
             syncPoint[beam].wait();
             outputCopyTime[beam].stop();
           } else {
+            clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*integrationDMsSamplesK[beam][stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber]);
             clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber]);
             clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_FALSE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()));
             clQueues->at(clDeviceID)[beam].finish();
