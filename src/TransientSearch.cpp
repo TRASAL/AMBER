@@ -211,7 +211,7 @@ int main(int argc, char * argv[]) {
   std::vector< std::vector< float > > snrData(obs.getNrBeams());
 
   for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-    if ( !dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+    if ( !dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
       if ( inputBits >= 8 ) {
         dispersedData[beam] = std::vector< inputDataType >(obs.getNrChannels() * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType)));
       } else {
@@ -239,7 +239,7 @@ int main(int argc, char * argv[]) {
     zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       dispersedData_d[beam] = std::vector< cl::Buffer >(obs.getNrDelaySeconds() + 1);
-      if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+      if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
         if ( inputBits >= 8 ) {
           dispersedData_d[beam][obs.getNrDelaySeconds()] = cl::Buffer(*clContext, CL_MEM_READ_ONLY, obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType), 0, 0);
         } else {
@@ -278,7 +278,7 @@ int main(int argc, char * argv[]) {
 
 	if ( DEBUG && workers.rank() == 0 ) {
     std::cout << std::fixed << std::setprecision(3);
-    if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+    if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
       if ( inputBits >= 8 ) {
         std::cout << "dispersedData: " << isa::utils::giga(static_cast< double >(obs.getNrBeams()) * obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType)) << " GB" << std::endl;
       } else {
@@ -300,11 +300,11 @@ int main(int argc, char * argv[]) {
   std::vector< cl::Kernel * > dedispersionK(obs.getNrBeams());
   std::vector< std::vector< cl::Kernel * > > integrationDMsSamplesK(obs.getNrBeams()), snrDMsSamplesK(obs.getNrBeams());
 
-  code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(dedispersionParameters[deviceName][obs.getNrDMs()], padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shifts, zappedChannels);
+  code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(*(dedispersionParameters.at(deviceName)->at(obs.getNrDMs())), padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shifts, zappedChannels);
 	try {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       dedispersionK[beam] = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
-      if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+      if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
         dedispersionK[beam]->setArg(1, dispersedData_d[beam][obs.getNrDelaySeconds()]);
         dedispersionK[beam]->setArg(2, dedispersedData_d[beam]);
         dedispersionK[beam]->setArg(3, shifts_d);
@@ -369,15 +369,15 @@ int main(int argc, char * argv[]) {
   }
 
   // Set execution parameters
-  nrThreads = obs.getNrSamplesPerSecond() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread();
-  cl::NDRange dedispersionGlobal(nrThreads, obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread());
-  cl::NDRange dedispersionLocal(dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock());
+  nrThreads = obs.getNrSamplesPerSecond() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD0();
+  cl::NDRange dedispersionGlobal(nrThreads, obs.getNrDMs() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1());
+  cl::NDRange dedispersionLocal(dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0(), dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD1());
   if ( DEBUG && workers.rank() == 0 ) {
     std::cout << "Dedispersion" << std::endl;
-    std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread() << std::endl;
-    std::cout << "Local: " << dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() << ", " << dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock() << std::endl;
+    std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1() << std::endl;
+    std::cout << "Local: " << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0 << ", " << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD1() << std::endl;
     std::cout << "Parameters: ";
-    std::cout << dedispersionParameters[deviceName][obs.getNrDMs()].print() << std::endl;
+    std::cout << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->print() << std::endl;
     std::cout << std::endl;
   }
   std::vector< cl::NDRange > integrationGlobal(integrationSteps.size());
@@ -442,7 +442,7 @@ int main(int argc, char * argv[]) {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       searchTime[beam].start();
       // Load the input
-      if ( !dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+      if ( !dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
         inputHandlingTime[beam].start();
         for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
           for ( unsigned int chunk = 0; chunk < obs.getNrDelaySeconds() - 1; chunk++ ) {
@@ -471,7 +471,7 @@ int main(int argc, char * argv[]) {
       try {
         if ( SYNC ) {
           inputCopyTime[beam].start();
-          if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+          if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
             if ( inputBits >= 8 ) {
               clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_TRUE, 0, obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()), 0, &syncPoint[beam]);
             } else {
@@ -483,7 +483,7 @@ int main(int argc, char * argv[]) {
           syncPoint[beam].wait();
           inputCopyTime[beam].stop();
         } else {
-          if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+          if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
             if ( inputBits >= 8 ) {
               clQueues->at(clDeviceID)[beam].enqueueWriteBuffer(dispersedData_d[beam][second % obs.getNrDelaySeconds()], CL_FALSE, 0, obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(inputDataType)) * sizeof(inputDataType), reinterpret_cast< void * >(input[beam]->at(second)->data()));
             } else {
@@ -497,7 +497,7 @@ int main(int argc, char * argv[]) {
           if ( print ) {
             // TODO: add support for splitSeconds
             std::cout << std::fixed << std::setprecision(3);
-            if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+            if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
             } else {
               for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
                 std::cout << channel << " : ";
@@ -532,14 +532,14 @@ int main(int argc, char * argv[]) {
       } catch ( cl::Error & err ) {
         std::cerr << "Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
       }
-      if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() && (second < obs.getNrDelaySeconds()) ) {
+      if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() && (second < obs.getNrDelaySeconds()) ) {
         // Not enough seconds in the buffer
         continue;
       }
 
       // Dedispersion
       try {
-        if ( dedispersionParameters[deviceName][obs.getNrDMs()].getSplitSeconds() ) {
+        if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
           dedispersionK[beam]->setArg(0, second % obs.getNrDelaySeconds());
         }
         if ( SYNC ) {
