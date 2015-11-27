@@ -375,7 +375,7 @@ int main(int argc, char * argv[]) {
   if ( DEBUG && workers.rank() == 0 ) {
     std::cout << "Dedispersion" << std::endl;
     std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1() << std::endl;
-    std::cout << "Local: " << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0 << ", " << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD1() << std::endl;
+    std::cout << "Local: " << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0() << ", " << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD1() << std::endl;
     std::cout << "Parameters: ";
     std::cout << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->print() << std::endl;
     std::cout << std::endl;
