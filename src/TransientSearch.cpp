@@ -80,7 +80,7 @@ int main(int argc, char * argv[]) {
     integrationFile = args.getSwitchArgument< std::string >("-integration_steps");
     PulsarSearch::readTunedDedispersionConf(dedispersionParameters, args.getSwitchArgument< std::string >("-dedispersion_file"));
     PulsarSearch::readTunedIntegrationConf(integrationParameters, args.getSwitchArgument< std::string >("-integration_file"));
-    PulsarSearch::readTunedSNRDMsSamplesConf(snrParameters, args.getSwitchArgument< std::string >("-snr_file"));
+    PulsarSearch::readTunedSNRConf(snrParameters, args.getSwitchArgument< std::string >("-snr_file"));
 
     compactResults = args.getSwitch("-compact_results");
     print = args.getSwitch("-print");
