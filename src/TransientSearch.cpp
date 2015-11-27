@@ -62,7 +62,7 @@ int main(int argc, char * argv[]) {
   AstroData::paddingConf padding;
   PulsarSearch::tunedDedispersionConf dedispersionParameters;
   PulsarSearch::tunedIntegrationConf integrationParameters;
-  PulsarSearch::tunedSNRDMsSamplesConf snrParameters;
+  PulsarSearch::tunedSNRConf snrParameters;
   // PSRDada
   key_t dadaKey;
   dada_hdu_t * ringBuffer;
@@ -322,7 +322,7 @@ int main(int argc, char * argv[]) {
 	}
   delete shifts;
   delete code;
-  code = PulsarSearch::getSNRDMsSamplesOpenCL< outputDataType >(snrParameters[deviceName][obs.getNrDMs()][obs.getNrSamplesPerSecond()], outputDataName, obs.getNrSamplesPerSecond(), padding[deviceName]);
+  code = PulsarSearch::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerSecond())), outputDataName, obs.getNrSamplesPerSecond(), padding[deviceName]);
   try {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       snrDMsSamplesK[beam] = std::vector< cl::Kernel * >(integrationSteps.size() + 1);
@@ -355,7 +355,7 @@ int main(int argc, char * argv[]) {
         return 1;
       }
       delete code;
-      code = PulsarSearch::getSNRDMsSamplesOpenCL< outputDataType >(snrParameters[deviceName][obs.getNrDMs()][obs.getNrSamplesPerSecond() / *step], outputDataName, obs.getNrSamplesPerSecond() / *step, padding[deviceName]);
+      code = PulsarSearch::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerSecond() / *step)), outputDataName, obs.getNrSamplesPerSecond() / *step, padding[deviceName]);
       try {
         snrDMsSamplesK[beam][stepNumber] = isa::OpenCL::compile("snrDMsSamples" + isa::utils::toString(obs.getNrSamplesPerSecond() / *step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
         snrDMsSamplesK[beam][stepNumber]->setArg(0, integratedData_d[beam]);
@@ -384,15 +384,15 @@ int main(int argc, char * argv[]) {
   std::vector< cl::NDRange > integrationLocal(integrationSteps.size());
   std::vector< cl::NDRange > snrDMsSamplesGlobal(integrationSteps.size());
   std::vector< cl::NDRange > snrDMsSamplesLocal(integrationSteps.size());
-  nrThreads = snrParameters[deviceName][obs.getNrDMs()][obs.getNrSamplesPerSecond()].getNrSamplesPerBlock();
+  nrThreads = snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerSecond())->getNrThreadsD0();
   snrDMsSamplesGlobal[integrationSteps.size()] = cl::NDRange(nrThreads, obs.getNrDMs());
-  snrDMsSamplesLocal[integrationSteps.size()] = cl::NDRange(snrParameters[deviceName][obs.getNrDMs()][obs.getNrSamplesPerSecond()].getNrSamplesPerBlock(), 1);
+  snrDMsSamplesLocal[integrationSteps.size()] = cl::NDRange(nrThreads, 1);
   if ( DEBUG && workers.rank() == 0 ) {
     std::cout << "SNRDMsSamples (" + isa::utils::toString(obs.getNrSamplesPerSecond()) + ")" << std::endl;
     std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() << std::endl;
-    std::cout << "Local: " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrSamplesPerSecond()].getNrSamplesPerBlock() << ", 1" << std::endl;
+    std::cout << "Local: " << nrThreads << ", 1" << std::endl;
     std::cout << "Parameters: ";
-    std::cout << snrParameters[deviceName][obs.getNrDMs()][obs.getNrSamplesPerSecond()].print() << std::endl;
+    std::cout << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerSecond())->print() << std::endl;
     std::cout << std::endl;
   }
   for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
@@ -412,15 +412,15 @@ int main(int argc, char * argv[]) {
       std::cout << integrationParameters[deviceName]->at(obs.getNrSamplesPerSecond())->at(*step)->print() << std::endl;
       std::cout << std::endl;
     }
-    nrThreads = snrParameters[deviceName][obs.getNrDMs()][obs.getNrSamplesPerSecond() / *step].getNrSamplesPerBlock();
+    nrThreads = snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerSecond() / *step)->getNrThreadsD0();
     snrDMsSamplesGlobal[stepNumber] = cl::NDRange(nrThreads, obs.getNrDMs());
-    snrDMsSamplesLocal[stepNumber] = cl::NDRange(snrParameters[deviceName][obs.getNrDMs()][obs.getNrSamplesPerSecond() / *step].getNrSamplesPerBlock(), 1);
+    snrDMsSamplesLocal[stepNumber] = cl::NDRange(nrThreads, 1);
     if ( DEBUG && workers.rank() == 0 ) {
       std::cout << "SNRDMsSamples (" + isa::utils::toString(obs.getNrSamplesPerSecond() / *step) + ")" << std::endl;
       std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() << std::endl;
-      std::cout << "Local: " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrSamplesPerSecond() / *step].getNrSamplesPerBlock() << ", 1" << std::endl;
+      std::cout << "Local: " << nrThreads << ", 1" << std::endl;
       std::cout << "Parameters: ";
-      std::cout << snrParameters[deviceName][obs.getNrDMs()][obs.getNrSamplesPerSecond() / *step].print() << std::endl;
+      std::cout << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerSecond() / *step)->print() << std::endl;
       std::cout << std::endl;
     }
   }
