@@ -51,7 +51,7 @@ CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $
 DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o
 
 
-all: bin/TransientSearch
+all: bin/TransientSearch bin/printTimeSeries
 
 bin/TransientSearch: $(CL_DEPS) $(DADA_DEPS) $(KERNELS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp include/configuration.hpp src/TransientSearch.cpp
 	$(MPI) -o bin/TransientSearch src/TransientSearch.cpp $(KERNELS) $(CL_DEPS) $(DADA_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(HDF5_LIBS) $(BOOST_LIBS) $(CL_LDFLAGS) $(HDF5_LDFLAGS) $(BOOST_LDFLAGS) $(CFLAGS)
