@@ -56,8 +56,8 @@ all: bin/TransientSearch bin/printTimeSeries
 bin/TransientSearch: $(CL_DEPS) $(DADA_DEPS) $(KERNELS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp include/configuration.hpp src/TransientSearch.cpp
 	$(MPI) -o bin/TransientSearch src/TransientSearch.cpp $(KERNELS) $(CL_DEPS) $(DADA_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(HDF5_LIBS) $(BOOST_LIBS) $(CL_LDFLAGS) $(HDF5_LDFLAGS) $(BOOST_LDFLAGS) $(CFLAGS)
 
-bin/printTimeSeries: $(DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/printTimeSeries.cpp
-	$(CC) -o bin/printTimeSeries src/printTimeSeries.cpp $(DEPS) $(ASTRODATA)/bin/ReadData.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" -I"$(HDF5)/include" $(HDF5_LIBS) $(LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
+bin/printTimeSeries: $(DEPS) $(DADA_DEPS) $(DEDISPERSION)/bin/Shifts.o $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/printTimeSeries.cpp
+	$(CC) -o bin/printTimeSeries src/printTimeSeries.cpp $(DEPS) $(DEDISPERSION)/bin/Shifts.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" -I"$(HDF5)/include" $(HDF5_LIBS) $(CL_LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
