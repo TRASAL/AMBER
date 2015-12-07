@@ -401,15 +401,15 @@ int main(int argc, char * argv[]) {
     for ( unsigned int i = 0; i < stepNumber; i++ ) {
       ++step;
     }
-    nrThreads = integrationParameters[deviceName]->at(obs.getNrSamplesPerSecond())->at(*step)->getNrThreadsD0() * ((obs.getNrSamplesPerSecond() / *step) / integrationParameters[deviceName]->at(obs.getNrSamplesPerSecond())->at(*step)->getNrItemsD0());
+    nrThreads = integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrThreadsD0() * ((obs.getNrSamplesPerSecond() / *step) / integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrItemsD0());
     integrationGlobal[stepNumber] = cl::NDRange(nrThreads, obs.getNrDMs());
-    integrationLocal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrSamplesPerSecond())->at(*step)->getNrThreadsD0(), 1);
+    integrationLocal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrThreadsD0(), 1);
     if ( DEBUG && workers.rank() == 0 ) {
       std::cout << "integrationDMsSamples (" + isa::utils::toString(*step) + ")" << std::endl;
       std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() << std::endl;
-      std::cout << "Local: " << integrationParameters[deviceName]->at(obs.getNrSamplesPerSecond())->at(*step)->getNrThreadsD0() << ", 1" << std::endl;
+      std::cout << "Local: " << integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrThreadsD0() << ", 1" << std::endl;
       std::cout << "Parameters: ";
-      std::cout << integrationParameters[deviceName]->at(obs.getNrSamplesPerSecond())->at(*step)->print() << std::endl;
+      std::cout << integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->print() << std::endl;
       std::cout << std::endl;
     }
     nrThreads = snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerSecond() / *step)->getNrThreadsD0();
