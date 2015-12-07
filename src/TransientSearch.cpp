@@ -343,7 +343,7 @@ int main(int argc, char * argv[]) {
       for ( unsigned int i = 0; i < stepNumber; i++ ) {
         ++step;
       }
-      code = PulsarSearch::getIntegrationDMsSamplesOpenCL< outputDataType >(*(integrationParameters[deviceName]->at(obs.getNrSamplesPerSecond())->at(*step)), obs.getNrSamplesPerSecond(), outputDataName, *step, padding[deviceName]);
+      code = PulsarSearch::getIntegrationDMsSamplesOpenCL< outputDataType >(*(integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)), obs.getNrSamplesPerSecond(), outputDataName, *step, padding[deviceName]);
       try {
         if ( *step > 1 ) {
           integrationDMsSamplesK[beam][stepNumber] = isa::OpenCL::compile("integrationDMsSamples" + isa::utils::toString(*step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
