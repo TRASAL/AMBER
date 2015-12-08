@@ -530,7 +530,7 @@ int main(int argc, char * argv[]) {
           }
         }
       } catch ( cl::Error & err ) {
-        std::cerr << "Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
+        std::cerr << "Input copy error -- Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
       }
       if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() && (second < obs.getNrDelaySeconds()) ) {
         // Not enough seconds in the buffer
@@ -550,21 +550,25 @@ int main(int argc, char * argv[]) {
         } else {
           clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*dedispersionK[beam], cl::NullRange, dedispersionGlobal, dedispersionLocal);
         }
-        if ( DEBUG && workers.rank() == 0 ) {
-          if ( print ) {
-            clQueues->at(clDeviceID)[beam].enqueueReadBuffer(dedispersedData_d[beam], CL_TRUE, 0, dedispersedData[beam].size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData[beam].data()));
-            std::cout << std::fixed << std::setprecision(3);
-            for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-              std::cout << dm << " : ";
-              for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
-                std::cout << dedispersedData[beam][(dm * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
-              }
-              std::cout << std::endl;
+      } catch ( cl::Error & err ) {
+        std::cerr << "Dedispersion error -- Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
+      }
+      if ( DEBUG && workers.rank() == 0 ) {
+        if ( print ) {
+          clQueues->at(clDeviceID)[beam].enqueueReadBuffer(dedispersedData_d[beam], CL_TRUE, 0, dedispersedData[beam].size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData[beam].data()));
+          std::cout << std::fixed << std::setprecision(3);
+          for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+            std::cout << dm << " : ";
+            for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
+              std::cout << dedispersedData[beam][(dm * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
             }
             std::cout << std::endl;
           }
+          std::cout << std::endl;
         }
+      }
         // SNR of dedispersed data
+      try {
         if ( SYNC ) {
           snrDMsSamplesTime[beam].start();
           clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*snrDMsSamplesK[beam][integrationSteps.size()], cl::NullRange, snrDMsSamplesGlobal[integrationSteps.size()], snrDMsSamplesLocal[integrationSteps.size()], 0, &syncPoint[beam]);
@@ -579,23 +583,27 @@ int main(int argc, char * argv[]) {
           clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_FALSE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()));
           clQueues->at(clDeviceID)[beam].finish();
         }
-        trigger(compactResults, second, 0, threshold, obs, triggerTime[beam], workers, snrData[beam], output[beam]);
-        if ( DEBUG && workers.rank() == 0 ) {
-          if ( print ) {
-            std::cout << std::fixed << std::setprecision(6);
-            for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-              std::cout << dm << ": " << snrData[beam][dm] << std::endl;
-            }
-            std::cout << std::endl;
+      } catch ( cl::Error & err ) {
+        std::cerr << "SNR dedispersed data error -- Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
+      }
+      trigger(compactResults, second, 0, threshold, obs, triggerTime[beam], workers, snrData[beam], output[beam]);
+      if ( DEBUG && workers.rank() == 0 ) {
+        if ( print ) {
+          std::cout << std::fixed << std::setprecision(6);
+          for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+            std::cout << dm << ": " << snrData[beam][dm] << std::endl;
           }
+          std::cout << std::endl;
         }
+      }
         // SNR of integrated dedispersed data
-        for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
-          auto step = integrationSteps.begin();
+      for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
+        auto step = integrationSteps.begin();
 
-          for ( unsigned int i = 0; i < stepNumber; i++ ) {
-            ++step;
-          }
+        for ( unsigned int i = 0; i < stepNumber; i++ ) {
+          ++step;
+        }
+        try {
           if ( SYNC ) {
             integrationTime[beam].start();
             clQueues->at(clDeviceID)[beam].enqueueNDRangeKernel(*integrationDMsSamplesK[beam][stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber], 0, &syncPoint[beam]);
@@ -615,33 +623,33 @@ int main(int argc, char * argv[]) {
             clQueues->at(clDeviceID)[beam].enqueueReadBuffer(snrData_d[beam], CL_FALSE, 0, snrData[beam].size() * sizeof(float), reinterpret_cast< void * >(snrData[beam].data()));
             clQueues->at(clDeviceID)[beam].finish();
           }
-          if ( DEBUG && workers.rank() == 0 ) {
-            if ( print ) {
-              clQueues->at(clDeviceID)[beam].enqueueReadBuffer(integratedData_d[beam], CL_TRUE, 0, integratedData[beam].size() * sizeof(outputDataType), reinterpret_cast< void * >(integratedData[beam].data()));
-              std::cout << std::fixed << std::setprecision(3);
-              for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-                std::cout << dm << " : ";
-                for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond() / *step; sample++ ) {
-                  std::cout << integratedData[beam][(dm * isa::utils::pad(obs.getNrSamplesPerSecond() / *step, padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
-                }
-                std::cout << std::endl;
+        } catch ( cl::Error & err ) {
+          std::cerr << "SNR integration loop error -- Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", Step: " << isa::utils::toString(*step) << ", " << err.what() << " " << err.err() << std::endl;
+        }
+        if ( DEBUG && workers.rank() == 0 ) {
+          if ( print ) {
+            clQueues->at(clDeviceID)[beam].enqueueReadBuffer(integratedData_d[beam], CL_TRUE, 0, integratedData[beam].size() * sizeof(outputDataType), reinterpret_cast< void * >(integratedData[beam].data()));
+            std::cout << std::fixed << std::setprecision(3);
+            for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+              std::cout << dm << " : ";
+              for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond() / *step; sample++ ) {
+                std::cout << integratedData[beam][(dm * isa::utils::pad(obs.getNrSamplesPerSecond() / *step, padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
               }
               std::cout << std::endl;
             }
-          }
-          trigger(compactResults, second, *step, threshold, obs, triggerTime[beam], workers, snrData[beam], output[beam]);
-          if ( DEBUG && workers.rank() == 0 ) {
-            if ( print ) {
-              std::cout << std::fixed << std::setprecision(6);
-              for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-                std::cout << dm << ": " << snrData[beam][dm] << std::endl;
-              }
-              std::cout << std::endl;
-            }
+            std::cout << std::endl;
           }
         }
-      } catch ( cl::Error & err ) {
-        std::cerr << "Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
+        trigger(compactResults, second, *step, threshold, obs, triggerTime[beam], workers, snrData[beam], output[beam]);
+        if ( DEBUG && workers.rank() == 0 ) {
+          if ( print ) {
+            std::cout << std::fixed << std::setprecision(6);
+            for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+              std::cout << dm << ": " << snrData[beam][dm] << std::endl;
+            }
+            std::cout << std::endl;
+          }
+        }
       }
       searchTime[beam].stop();
     }
