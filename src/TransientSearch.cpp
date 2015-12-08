@@ -382,8 +382,8 @@ int main(int argc, char * argv[]) {
   }
   std::vector< cl::NDRange > integrationGlobal(integrationSteps.size());
   std::vector< cl::NDRange > integrationLocal(integrationSteps.size());
-  std::vector< cl::NDRange > snrDMsSamplesGlobal(integrationSteps.size());
-  std::vector< cl::NDRange > snrDMsSamplesLocal(integrationSteps.size());
+  std::vector< cl::NDRange > snrDMsSamplesGlobal(integrationSteps.size() + 1);
+  std::vector< cl::NDRange > snrDMsSamplesLocal(integrationSteps.size() + 1);
   nrThreads = snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerSecond())->getNrThreadsD0();
   snrDMsSamplesGlobal[integrationSteps.size()] = cl::NDRange(nrThreads, obs.getNrDMs());
   snrDMsSamplesLocal[integrationSteps.size()] = cl::NDRange(nrThreads, 1);
