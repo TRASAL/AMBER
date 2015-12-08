@@ -219,7 +219,7 @@ int main(int argc, char * argv[]) {
       }
     }
     dedispersedData[beam] = std::vector< outputDataType >(obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond(padding[deviceName] / sizeof(outputDataType)));
-    integratedData[beam] = std::vector< outputDataType >(obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerSecond() / *(--(integrationSteps.end())), padding[deviceName] / sizeof(outputDataType)));
+    integratedData[beam] = std::vector< outputDataType >(obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerSecond() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
     snrData[beam] = std::vector< float >(obs.getNrPaddedDMs(padding[deviceName] / sizeof(float)));
   }
 
