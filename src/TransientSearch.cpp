@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cmath>
 #include <chrono>
+#include <iterator>
 #include <boost/mpi.hpp>
 
 #include <configuration.hpp>
@@ -340,9 +341,7 @@ int main(int argc, char * argv[]) {
     for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
       auto step = integrationSteps.begin();
 
-      for ( unsigned int i = 0; i < stepNumber; i++ ) {
-        ++step;
-      }
+      std::advance(step, stepNumber);
       code = PulsarSearch::getIntegrationDMsSamplesOpenCL< outputDataType >(*(integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)), obs.getNrSamplesPerSecond(), outputDataName, *step, padding[deviceName]);
       try {
         if ( *step > 1 ) {
@@ -398,9 +397,7 @@ int main(int argc, char * argv[]) {
   for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
     auto step = integrationSteps.begin();
 
-    for ( unsigned int i = 0; i < stepNumber; i++ ) {
-      ++step;
-    }
+    std::advance(step, stepNumber);
     nrThreads = integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrThreadsD0() * ((obs.getNrSamplesPerSecond() / *step) / integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrItemsD0());
     integrationGlobal[stepNumber] = cl::NDRange(nrThreads, obs.getNrDMs());
     integrationLocal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrThreadsD0(), 1);
@@ -600,9 +597,7 @@ int main(int argc, char * argv[]) {
       for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
         auto step = integrationSteps.begin();
 
-        for ( unsigned int i = 0; i < stepNumber; i++ ) {
-          ++step;
-        }
+        std::advance(step, stepNumber);
         try {
           if ( SYNC ) {
             integrationTime[beam].start();
