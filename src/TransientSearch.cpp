@@ -182,6 +182,7 @@ int main(int argc, char * argv[]) {
     std::cout << "Channels: " << obs.getNrChannels() << " (" << obs.getChannelBandwidth() << " MHz)" << std::endl;
     std::cout << "Zapped Channels: " << obs.getNrZappedChannels() << std::endl;
     std::cout << "Integration steps: " << integrationSteps.size() << std::endl;
+    std::cout << "DMs: " << obs.getNrDMs() << " (" << obs.getFirstDM() << ", " << obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()) << ")" << std::endl;
     std::cout << std::endl;
     if ( (dataLOFAR || dataSIGPROC) ) {
       std::cout << "Time to load the input: " << std::fixed << std::setprecision(6) << loadTime.getTotalTime() << " seconds." << std::endl;
