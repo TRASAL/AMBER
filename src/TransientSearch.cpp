@@ -424,6 +424,7 @@ int main(int argc, char * argv[]) {
   }
 
 	// Search loop
+  bool errorDetected = false;
   isa::utils::Timer nodeTime;
   std::vector< cl::Event > syncPoint(obs.getNrBeams());
   std::vector< isa::utils::Timer > searchTime(obs.getNrBeams()), inputHandlingTime(obs.getNrBeams()), inputCopyTime(obs.getNrBeams()), dedispTime(obs.getNrBeams()), integrationTime(obs.getNrBeams()), snrDMsSamplesTime(obs.getNrBeams()), outputCopyTime(obs.getNrBeams()), triggerTime(obs.getNrBeams());
@@ -529,7 +530,7 @@ int main(int argc, char * argv[]) {
         }
       } catch ( cl::Error & err ) {
         std::cerr << "Input copy error -- Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
-        return 1;
+        errorDetected = true;
       }
       if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() && (second < obs.getNrDelaySeconds()) ) {
         // Not enough seconds in the buffer
@@ -551,7 +552,7 @@ int main(int argc, char * argv[]) {
         }
       } catch ( cl::Error & err ) {
         std::cerr << "Dedispersion error -- Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
-        return 1;
+        errorDetected = true;
       }
       if ( DEBUG && workers.rank() == 0 ) {
         if ( print ) {
@@ -585,7 +586,7 @@ int main(int argc, char * argv[]) {
         }
       } catch ( cl::Error & err ) {
         std::cerr << "SNR dedispersed data error -- Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
-        return 1;
+        errorDetected = true;
       }
       trigger(compactResults, second, 0, threshold, obs, triggerTime[beam], workers, snrData[beam], output[beam]);
       if ( DEBUG && workers.rank() == 0 ) {
@@ -624,7 +625,7 @@ int main(int argc, char * argv[]) {
           }
         } catch ( cl::Error & err ) {
           std::cerr << "SNR integration loop error -- Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", Step: " << isa::utils::toString(*step) << ", " << err.what() << " " << err.err() << std::endl;
-          return 1;
+          errorDetected = true;
         }
         if ( DEBUG && workers.rank() == 0 ) {
           if ( print ) {
@@ -652,6 +653,12 @@ int main(int argc, char * argv[]) {
         }
       }
       searchTime[beam].stop();
+    }
+    if ( errorDetected ) {
+      for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+        output[beam].close();
+      }
+      return 1;
     }
   }
   nodeTime.stop();
