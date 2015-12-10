@@ -529,6 +529,7 @@ int main(int argc, char * argv[]) {
         }
       } catch ( cl::Error & err ) {
         std::cerr << "Input copy error -- Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
+        return 1;
       }
       if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() && (second < obs.getNrDelaySeconds()) ) {
         // Not enough seconds in the buffer
@@ -550,6 +551,7 @@ int main(int argc, char * argv[]) {
         }
       } catch ( cl::Error & err ) {
         std::cerr << "Dedispersion error -- Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
+        return 1;
       }
       if ( DEBUG && workers.rank() == 0 ) {
         if ( print ) {
@@ -583,6 +585,7 @@ int main(int argc, char * argv[]) {
         }
       } catch ( cl::Error & err ) {
         std::cerr << "SNR dedispersed data error -- Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", " << err.what() << " " << err.err() << std::endl;
+        return 1;
       }
       trigger(compactResults, second, 0, threshold, obs, triggerTime[beam], workers, snrData[beam], output[beam]);
       if ( DEBUG && workers.rank() == 0 ) {
@@ -621,6 +624,7 @@ int main(int argc, char * argv[]) {
           }
         } catch ( cl::Error & err ) {
           std::cerr << "SNR integration loop error -- Beam: " << isa::utils::toString(beam) << ", Second: " << isa::utils::toString(second) << ", Step: " << isa::utils::toString(*step) << ", " << err.what() << " " << err.err() << std::endl;
+          return 1;
         }
         if ( DEBUG && workers.rank() == 0 ) {
           if ( print ) {
