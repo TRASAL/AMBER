@@ -3,6 +3,10 @@
 
 A many-core transient searching pipeline.
 
+## Publications
+
+* Alessio Sclocco, Joeri van Leeuwen, Henri E. Bal, Rob V. van Nieuwpoort. _A Real-Time Radio Transient Pipeline for ARTS_. **3rd IEEE Global Conference on Signal & Information Processing**, December 14-16, 2015, Orlando (Florida), USA. (print) ([preprint](http://alessio.sclocco.eu/pubs/sclocco2015a.pdf)) ([slides](http://alessio.sclocco.eu/pubs/Presentation_GlobalSIP2015.pdf))
+
 ## Dependencies
 
 * [AstroData](https://github.com/isazi/AstroData) - master branch
