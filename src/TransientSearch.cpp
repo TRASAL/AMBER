@@ -28,7 +28,7 @@
 
 #include <configuration.hpp>
 
-void trigger(const bool compactResults, const unsigned int second, const unsigned int integration, const float threshold, const AstroData::Observation & obs, isa::utils::Timer & timer, const std::vector< float > & snrData, std::ofstream & output);
+void trigger(const bool compactResults, bool subbandDedispersion, const unsigned int padding, const unsigned int second, const unsigned int integration, const float threshold, const AstroData::Observation & obs, isa::utils::Timer & timer, const std::vector< float > & snrData, std::ofstream & output);
 
 
 int main(int argc, char * argv[]) {
@@ -534,7 +534,7 @@ int main(int argc, char * argv[]) {
 
   searchTimer.start();
   output.open(outputFile + ".trigger");
-  output << "# beam second integration DM SNR" << std::endl;
+  output << "# second beam integration_step DM SNR" << std::endl;
   for ( unsigned int second = 0; second < obs.getNrSeconds() - obs.getNrDelaySeconds(); second++ ) {
     // Load the input
     inputHandlingTimer.start();
@@ -694,7 +694,7 @@ int main(int argc, char * argv[]) {
       std::cerr << "SNR dedispersed data error -- Second: " << std::to_string(second) << ", " << err.what() << " " << err.err() << std::endl;
       errorDetected = true;
     }
-    trigger(compactResults, second, 0, threshold, obs, triggerTimer, snrData, output);
+    trigger(compactResults, subbandDedispersion, padding[deviceName], second, 0, threshold, obs, triggerTimer, snrData, output);
     if ( DEBUG ) {
       if ( print ) {
         // TODO: add support for printing dispersedData to std::cerr
@@ -735,7 +735,7 @@ int main(int argc, char * argv[]) {
           // TODO: add support for printing dispersedData to std::cerr
         }
       }
-      trigger(compactResults, second, *step, threshold, obs, triggerTime, snrData, output);
+      trigger(compactResults, subbandDedispersion, padding[deviceName], second, *step, threshold, obs, triggerTime, snrData, output);
       if ( DEBUG ) {
         if ( print ) {
           // TODO: add support for printing dispersedData to std::cerr
@@ -756,7 +756,6 @@ int main(int argc, char * argv[]) {
 
   // Store statistics before shutting down
   output.open(outputFile + ".stats");
-  output << "# nrDMs searchTimer searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionAvg err integrationTotal integrationAvg err snrDMsSamplesTotal snrDMsSamplesAvg err outputCopyTotal outputCopyAvg err triggerTimeTotal triggerTimeAvg err" << std::endl;
   output << std::fixed << std::setprecision(6);
   output << "# nrDMs" << std::endl;
   output << obs.getNrDMs() << std::endl;
@@ -785,39 +784,51 @@ int main(int argc, char * argv[]) {
   return 0;
 }
 
-void trigger(const bool compactResults, const unsigned int second, const unsigned int integration, const float threshold, const AstroData::Observation & obs, isa::utils::Timer & timer, const std::vector< float > & snrData, std::ofstream & output) {
+void trigger(const bool compactResults, bool subbandDedispersion, const unsigned int padding, const unsigned int second, const unsigned int integration, const float threshold, const AstroData::Observation & obs, isa::utils::Timer & timer, const std::vector< float > & snrData, std::ofstream & output) {
   bool previous = false;
-  unsigned int maxDM = 0;
-  double maxSNR = 0.0;
+  unsigned int nrDMs = 0;
+  float firstDM = 0.0f;
 
+  if ( subbandDedispersion ) {
+    nrDMs = obs.getNrDMsSubbanding() * obs.getNrDMs();
+    firstDM = obs.getFirstDMSubbanding();
+  } else {
+    nrDMs = obs.getNrDMs();
+    firstDM = obs.getFirstDM();
+  }
   timer.start();
-  for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-    if ( compactResults ) {
-      if ( snrData[dm] >= threshold ) {
-        if ( previous ) {
-          if ( snrData[dm] > maxSNR ) {
+  for ( unsigned int beam = 0; beam < obs.getNrSyntheticBeams(); beam++ ) {
+    unsigned int maxDM = 0;
+    double maxSNR = 0.0;
+
+    for ( unsigned int dm = 0; dm < nrDMs; dm++ ) {
+      if ( compactResults ) {
+        if ( snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm] >= threshold ) {
+          if ( previous ) {
+            if ( snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm] > maxSNR ) {
+              maxDM = dm;
+              maxSNR = snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm];
+            }
+          } else {
+            previous = true;
             maxDM = dm;
-            maxSNR = snrData[dm];
+            maxSNR = snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm];
           }
-        } else {
-          previous = true;
-          maxDM = dm;
-          maxSNR = snrData[dm];
+        } else if ( previous ) {
+          output << second << " " << beam << " " << firstDM + (maxDM * obs.getDMStep()) << " " << maxSNR << std::endl;
+          previous = false;
+          maxDM = 0;
+          maxSNR = 0;
         }
-      } else if ( previous ) {
-        output << second << " " << obs.getFirstDM() + (maxDM * obs.getDMStep()) << " " << maxSNR << std::endl;
-        previous = false;
-        maxDM = 0;
-        maxSNR = 0;
-      }
-    } else {
-      if ( snrData[dm] >= threshold ) {
-        output << second << " " << integration << " " << obs.getFirstDM() + (dm * obs.getDMStep()) << " " << snrData[dm] << std::endl;
+      } else {
+        if ( snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm] >= threshold ) {
+          output << second << " " << beam << " " << integration << " " << firstDM + (dm * obs.getDMStep()) << " " << snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm] << std::endl;
+        }
       }
     }
-  }
-  if ( previous ) {
-    output << second << " " << integration << " " << obs.getFirstDM() + (maxDM * obs.getDMStep()) << " " << maxSNR << std::endl;
+    if ( previous ) {
+      output << second << " " << beam << " " << integration << " " << firstDM + (maxDM * obs.getDMStep()) << " " << maxSNR << std::endl;
+    }
   }
   timer.stop();
 }
