@@ -1,24 +1,26 @@
 
+ROOT ?= $(HOME)
+
 # https://github.com/isazi/utils
-UTILS := $(HOME)/src/utils
+UTILS := $(ROOT)/src/utils
 # https://github.com/isazi/OpenCL
-OPENCL := $(HOME)/src/OpenCL
+OPENCL := $(ROOT)/src/OpenCL
 # https://github.com/isazi/AstroData
-ASTRODATA := $(HOME)/src/AstroData
+ASTRODATA := $(ROOT)/src/AstroData
 # https://github.com/isazi/Dedispersion
-DEDISPERSION := $(HOME)/src/Dedispersion
+DEDISPERSION := $(ROOT)/src/Dedispersion
 # https://github.com/isazi/Integration
-INTEGRATION := $(HOME)/src/Integration
+INTEGRATION := $(ROOT)/src/Integration
 # https://github.com/isazi/SNR
-SNR := $(HOME)/src/SNR
+SNR := $(ROOT)/src/SNR
 # HDF5
-HDF5 := $(HOME)/src/HDF5
+HDF5 := $(ROOT)/src/HDF5
 # http://psrdada.sourceforge.net/
-PSRDADA  := $(HOME)/src/psrdada
+PSRDADA  := $(ROOT)/src/psrdada
 # Boost
-BOOST := $(HOME)/src/boost
+BOOST := $(ROOT)/src/boost
 # MPI
-MPI := $(HOME)/src/mpi
+MPI := $(ROOT)/src/mpi
 
 INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include" -I"$(DEDISPERSION)/include" -I"$(INTEGRATION)/include" -I"$(SNR)/include" -I"$(HDF5)/include" -I"$(PSRDADA)/src/" -I"$(MPI)/include" 
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
@@ -37,9 +39,9 @@ ifeq ($(openmp), 1)
 endif
 
 LDFLAGS := -lm
-CL_LDFLAGS := $(LDFLAGS) -lOpenCL
+CL_LDFLAGS := $(LDFLAGS) -L/usr/local/cuda-6.0/targets/x86_64-linux/lib -lOpenCL
 HDF5_LDFLAGS := -lhdf5 -lhdf5_cpp
-BOOST_LDFLAGS := -lboost_mpi -lboost_serialization
+BOOST_LDFLAGS := -lboost_mpi-mt -lboost_serialization
 
 CC := g++
 MPI := mpicxx
@@ -48,7 +50,7 @@ MPI := mpicxx
 KERNELS := $(DEDISPERSION)/bin/Shifts.o $(DEDISPERSION)/bin/Dedispersion.o $(INTEGRATION)/bin/Integration.o $(SNR)/bin/SNR.o
 DEPS := $(ASTRODATA)/bin/Observation.o $(ASTRODATA)/bin/Platform.o $(ASTRODATA)/bin/ReadData.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/Timer.o $(UTILS)/bin/utils.o
 CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o 
-DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o
+DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o $(PSRDADA)/src/tmutil.o
 
 
 all: bin/TransientSearch bin/printTimeSeries
