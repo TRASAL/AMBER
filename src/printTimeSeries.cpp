@@ -72,6 +72,7 @@ int main(int argc, char * argv[]) {
 			bytesToSkip = args.getSwitchArgument< unsigned int >("-header");
 			dataFile = args.getSwitchArgument< std::string >("-data");
 			observation.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
+      // TODO: implement subbanding
       observation.setFrequencyRange(1, args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 			observation.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
     } else if ( dataPSRDada ) {
@@ -120,6 +121,7 @@ int main(int argc, char * argv[]) {
 
 	// Host memory allocation
   std::vector< float > * shifts = PulsarSearch::getShifts(observation, padding);
+  std::vector< unsigned int > beamDriver(observation.getNrBeams() * observation.getNrPaddedChannels(padding / sizeof(unsigned int)));
   observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shifts->at(0) * observation.getFirstDM()));
   observation.setNrDelaySeconds(static_cast< unsigned int >(std::ceil(static_cast< double >(observation.getNrSamplesPerDispersedChannel()) / observation.getNrSamplesPerBatch())));
   std::vector< std::vector< inputDataType > > dispersedData(observation.getNrBeams());
@@ -134,6 +136,9 @@ int main(int argc, char * argv[]) {
     }
     dedispersedData[beam] = std::vector< outputDataType >(observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
     integratedData[beam] = std::vector< outputDataType >(isa::utils::pad(observation.getNrSamplesPerBatch() / outputIntegration, padding / sizeof(outputDataType)));
+    for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+      beamDriver[(beam * observation.getNrPaddedChannels(padding / sizeof(unsigned int))) + beam] = beam;
+    }
   }
 
   // Open output files
@@ -167,7 +172,7 @@ int main(int argc, char * argv[]) {
           }
         }
       }
-      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData[beam], dedispersedData[beam], *shifts, padding, inputBits);
+      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriver, dispersedData[beam], dedispersedData[beam], *shifts, padding, inputBits);
       PulsarSearch::integrationDMsSamples< outputDataType >(observation, outputIntegration, padding, dedispersedData[beam], integratedData[beam]);
       for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / outputIntegration; sample++ ) {
         output[beam] << static_cast< uint64_t >((second * observation.getNrSamplesPerBatch()) + (sample / outputIntegration)) * (observation.getSamplingRate() * outputIntegration) << " " << integratedData[beam][sample] << std::endl;
