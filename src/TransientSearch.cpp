@@ -732,7 +732,7 @@ int main(int argc, char * argv[]) {
           // TODO: add support for printing dispersedData to std::cerr
         }
       }
-      trigger(compactResults, subbandDedispersion, padding[deviceName], second, *step, threshold, obs, triggerTime, snrData, output);
+      trigger(compactResults, subbandDedispersion, padding[deviceName], second, *step, threshold, obs, triggerTimer, snrData, output);
       if ( DEBUG ) {
         if ( print ) {
           // TODO: add support for printing dispersedData to std::cerr
@@ -757,7 +757,7 @@ int main(int argc, char * argv[]) {
   output << "# nrDMs" << std::endl;
   output << obs.getNrDMs() << std::endl;
   output << "# searchTimer" << std::endl;
-  output << searchTime.getTotalTime() << std::endl;
+  output << searchTimer.getTotalTime() << std::endl;
   output << "# inputHandlingTotal inputHandlingAvg err" << std::endl;
   output << inputHandlingTimer.getTotalTime() << " " << inputHandlingTimer.getAverageTime() << " " << inputHandlingTimer.getStandardDeviation() << std::endl;
   output << "# inputCopyTotal inputCopyAvg err" << std::endl;
