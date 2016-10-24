@@ -580,13 +580,13 @@ int main(int argc, char * argv[]) {
           if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMsSubbanding())->getSplitSeconds() ) {
             // TODO: add support for splitSeconds
           } else {
-            clQueues->at(clDeviceID).enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, &syncPoint);
+            clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, &syncPoint);
           }
         } else {
           if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
             // TODO: add support for splitSeconds
           } else {
-            clQueues->at(clDeviceID).enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, &syncPoint);
+            clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, &syncPoint);
           }
         }
         syncPoint.wait();
@@ -596,13 +596,13 @@ int main(int argc, char * argv[]) {
           if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMsSubbanding())->getSplitSeconds() ) {
             // TODO: add support for splitSeconds
           } else {
-            clQueues->at(clDeviceID).enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()));
+            clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()));
           }
         } else {
           if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
             // TODO: add support for splitSeconds
           } else {
-            clQueues->at(clDeviceID).enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()));
+            clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()));
           }
         }
       }
@@ -636,17 +636,17 @@ int main(int argc, char * argv[]) {
         if ( SYNC ) {
           dedispersionTimer.start();
           dedispersionStepOneTimer.start();
-          clQueues->at(clDeviceID).enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, &syncPoint);
+          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, &syncPoint);
           syncPoint.wait();
           dedispersionStepOneTimer.stop();
           dedispersionStepTwoTimer.start();
-          clQueues->at(clDeviceID).enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, &syncPoint);
+          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, &syncPoint);
           syncPoint.wait();
           dedispersionStepTwoTimer.stop();
           dedispersionTimer.stop();
         } else {
-          clQueues->at(clDeviceID).enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, 0);
-          clQueues->at(clDeviceID).enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, 0);
+          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, 0);
+          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, 0);
         }
       } else {
         if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
@@ -654,11 +654,11 @@ int main(int argc, char * argv[]) {
         }
         if ( SYNC ) {
           dedispersionTimer.start();
-          clQueues->at(clDeviceID).enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint);
+          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint);
           syncPoint.wait();
           dedispersionTimer.stop();
         } else {
-          clQueues->at(clDeviceID).enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal);
+          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal);
         }
       }
     } catch ( cl::Error & err ) {
@@ -675,17 +675,17 @@ int main(int argc, char * argv[]) {
     try {
       if ( SYNC ) {
         snrDMsSamplesTimer.start();
-        clQueues->at(clDeviceID).enqueueNDRangeKernel(*snrDMsSamplesK[integrationSteps.size()], cl::NullRange, snrDMsSamplesGlobal[integrationSteps.size()], snrDMsSamplesLocal[integrationSteps.size()], 0, &syncPoint);
+        clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[integrationSteps.size()], cl::NullRange, snrDMsSamplesGlobal[integrationSteps.size()], snrDMsSamplesLocal[integrationSteps.size()], 0, &syncPoint);
         syncPoint.wait();
         snrDMsSamplesTimer.stop();
         outputCopyTimer.start();
-        clQueues->at(clDeviceID).enqueueReadBuffer(snrData_d, CL_TRUE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()), 0, &syncPoint);
+        clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrData_d, CL_TRUE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()), 0, &syncPoint);
         syncPoint.wait();
         outputCopyTimer.stop();
       } else {
-        clQueues->at(clDeviceID).enqueueNDRangeKernel(*snrDMsSamplesK[integrationSteps.size()], cl::NullRange, snrDMsSamplesGlobal[integrationSteps.size()], snrDMsSamplesLocal[integrationSteps.size()]);
-        clQueues->at(clDeviceID).enqueueReadBuffer(snrData_d, CL_FALSE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()));
-        clQueues->at(clDeviceID).finish();
+        clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[integrationSteps.size()], cl::NullRange, snrDMsSamplesGlobal[integrationSteps.size()], snrDMsSamplesLocal[integrationSteps.size()]);
+        clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrData_d, CL_FALSE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()));
+        clQueues->at(clDeviceID)[0].finish();
       }
     } catch ( cl::Error & err ) {
       std::cerr << "SNR dedispersed data error -- Second: " << std::to_string(second) << ", " << err.what() << " " << err.err() << std::endl;
@@ -706,22 +706,22 @@ int main(int argc, char * argv[]) {
       try {
         if ( SYNC ) {
           integrationTimer.start();
-          clQueues->at(clDeviceID).enqueueNDRangeKernel(*integrationDMsSamplesK[stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber], 0, &syncPoint);
+          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*integrationDMsSamplesK[stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber], 0, &syncPoint);
           syncPoint.wait();
           integrationTimer.stop();
           snrDMsSamplesTimer.start();
-          clQueues->at(clDeviceID).enqueueNDRangeKernel(*snrDMsSamplesK[stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber], 0, &syncPoint);
+          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber], 0, &syncPoint);
           syncPoint.wait();
           snrDMsSamplesTimer.stop();
           outputCopyTimer.start();
-          clQueues->at(clDeviceID).enqueueReadBuffer(snrData_d, CL_TRUE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()), 0, &syncPoint);
+          clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrData_d, CL_TRUE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()), 0, &syncPoint);
           syncPoint.wait();
           outputCopyTimer.stop();
         } else {
-          clQueues->at(clDeviceID).enqueueNDRangeKernel(*integrationDMsSamplesK[stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber]);
-          clQueues->at(clDeviceID).enqueueNDRangeKernel(*snrDMsSamplesK[stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber]);
-          clQueues->at(clDeviceID).enqueueReadBuffer(snrData_d, CL_FALSE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()));
-          clQueues->at(clDeviceID).finish();
+          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*integrationDMsSamplesK[stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber]);
+          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber]);
+          clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrData_d, CL_FALSE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()));
+          clQueues->at(clDeviceID)[0].finish();
         }
       } catch ( cl::Error & err ) {
         std::cerr << "SNR integration loop error -- Second: " << std::to_string(second) << ", Step: " << std::to_string(*step) << ", " << err.what() << " " << err.err() << std::endl;
