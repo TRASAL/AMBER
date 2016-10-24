@@ -643,7 +643,7 @@ int main(int argc, char * argv[]) {
           clQueues->at(clDeviceID).enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, &syncPoint);
           syncPoint.wait();
           dedispersionStepTwoTimer.stop();
-          dedispTimer.stop();
+          dedispersionTimer.stop();
         } else {
           clQueues->at(clDeviceID).enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, 0);
           clQueues->at(clDeviceID).enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, 0);
