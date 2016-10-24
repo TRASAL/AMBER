@@ -414,7 +414,7 @@ int main(int argc, char * argv[]) {
   // Set execution parameters
   cl::NDRange dedispersionGlobal, dedispersionLocal;
   cl::NDRange dedispersionStepOneGlobal, dedispersionStepOneLocal;
-  cl::NDrange dedispersionStepTwoGlobal, dedispersionStepTwoLocal;
+  cl::NDRange dedispersionStepTwoGlobal, dedispersionStepTwoLocal;
   if ( subbandDedispersion ) {
     dedispersionStepOneGlobal = cl::NDRange(isa::utils::pad(obs.getNrSamplesPerBatchSubbanding() / dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMsSubbanding())->getNrItemsD0(), dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMsSubbanding())->getNrThreadsD0()), obs.getNrDMsSubbanding() / dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMsSubbanding())->getNrItemsD1(), obs.getNrBeams() * obs.getNrSubbands());
     dedispersionStepOneLocal = cl::NDRange(dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMsSubbanding())->getNrThreadsD0(), dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMsSubbanding())->getNrThreadsD1(), 1);
