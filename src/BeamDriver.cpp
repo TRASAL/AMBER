@@ -15,7 +15,7 @@
 #include <BeamDriver.hpp>
 
 
-void generateBeamDriver(bool subbandDedisperion, AstroData::Observation & observation, std::vector< uint8_t > & beamDriver, unsigned int padding) {
+void generateBeamDriver(bool subbandDedispersion, AstroData::Observation & observation, std::vector< uint8_t > & beamDriver, unsigned int padding) {
   // This driver is just for testing.
   // All subbands/channels will use the same beam, and all beams will be used in a circular way.
   for ( unsigned int beam = 0; beam < observation.getNrSyntheticBeams(); beam++ ) {

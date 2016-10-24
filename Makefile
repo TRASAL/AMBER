@@ -47,7 +47,7 @@ DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ip
 all: bin/BeamDriver.o bin/TransientSearch bin/printTimeSeries
 
 bin/BeamDriver.o: include/BeamDriver.hpp src/BeamDriver.cpp
-	$(CC) -o bin/BeamDriver.o -c src/BeamDrier.cpp $(INCLUDES) $(CFLAGS)
+	$(CC) -o bin/BeamDriver.o -c src/BeamDriver.cpp $(INCLUDES) $(CFLAGS)
 
 bin/TransientSearch: $(CL_DEPS) $(DADA_DEPS) $(KERNELS) bin/BeamDriver.o $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp include/configuration.hpp src/TransientSearch.cpp
 	$(CC) -o bin/TransientSearch src/TransientSearch.cpp bin/BeamDriver.o $(KERNELS) $(CL_DEPS) $(DADA_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(HDF5_LIBS) $(CL_LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)

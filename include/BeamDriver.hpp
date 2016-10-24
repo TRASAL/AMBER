@@ -1,4 +1,4 @@
-// Copyright 2016 Alessio Sclocco <a.sclocco@vu.nl>
+s// Copyright 2016 Alessio Sclocco <a.sclocco@vu.nl>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,5 +19,5 @@
 
 #pragma once
 
-void generateBeamDriver(bool subbandDedisperion, AstroData::Observation & observation, std::vector< uint8_t > & beamDriver, unsigned int padding);
+void generateBeamDriver(bool subbandDedispersion, AstroData::Observation & observation, std::vector< uint8_t > & beamDriver, unsigned int padding);
 
