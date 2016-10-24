@@ -173,7 +173,8 @@ int main(int argc, char * argv[]) {
         }
       }
       PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriver, dispersedData[beam], dedispersedData[beam], *shifts, padding, inputBits);
-      PulsarSearch::integrationDMsSamples< outputDataType >(observation, outputIntegration, padding, dedispersedData[beam], integratedData[beam]);
+      // TODO: implement subbanding
+      PulsarSearch::integrationDMsSamples< outputDataType >(false, observation, outputIntegration, padding, dedispersedData[beam], integratedData[beam]);
       for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / outputIntegration; sample++ ) {
         output[beam] << static_cast< uint64_t >((second * observation.getNrSamplesPerBatch()) + (sample / outputIntegration)) * (observation.getSamplingRate() * outputIntegration) << " " << integratedData[beam][sample] << std::endl;
       }
