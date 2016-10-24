@@ -25,6 +25,7 @@
 #include <iterator>
 
 #include <configuration.hpp>
+#include <BeamDriver.hpp>
 
 void trigger(const bool compactResults, bool subbandDedispersion, const unsigned int padding, const unsigned int second, const unsigned int integration, const float threshold, const AstroData::Observation & obs, isa::utils::Timer & timer, const std::vector< float > & snrData, std::ofstream & output);
 
@@ -268,6 +269,7 @@ int main(int argc, char * argv[]) {
     integratedData.resize(obs.getNrSyntheticBeams() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
     snrData.resize(obs.getNrSyntheticBeams() * isa::utils::pad(obs.getNrDMs(), padding[deviceName] / sizeof(float)));
   }
+  generateBeamDriver(subbandDedispersion, observation, beamDriver, padding[deviceName]);
 
   if ( obs.getNrDelaySeconds() > obs.getNrSeconds() ) {
     std::cerr << "Not enough input seconds for the search." << std::endl;
