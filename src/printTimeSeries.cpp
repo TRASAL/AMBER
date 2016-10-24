@@ -121,7 +121,7 @@ int main(int argc, char * argv[]) {
 
 	// Host memory allocation
   std::vector< float > * shifts = PulsarSearch::getShifts(observation, padding);
-  std::vector< unsigned char > beamDriver(observation.getNrBeams() * observation.getNrPaddedChannels(padding / sizeof(unsigned char)));
+  std::vector< uint8_t > beamDriver(observation.getNrBeams() * observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
   observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shifts->at(0) * observation.getFirstDM()));
   observation.setNrDelaySeconds(static_cast< unsigned int >(std::ceil(static_cast< double >(observation.getNrSamplesPerDispersedChannel()) / observation.getNrSamplesPerBatch())));
   std::vector< std::vector< inputDataType > > dispersedData(observation.getNrBeams());
@@ -137,7 +137,7 @@ int main(int argc, char * argv[]) {
     dedispersedData[beam] = std::vector< outputDataType >(observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
     integratedData[beam] = std::vector< outputDataType >(isa::utils::pad(observation.getNrSamplesPerBatch() / outputIntegration, padding / sizeof(outputDataType)));
     for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-      beamDriver[(beam * observation.getNrPaddedChannels(padding / sizeof(unsigned char))) + beam] = beam;
+      beamDriver[(beam * observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + beam] = beam;
     }
   }
 
