@@ -269,7 +269,7 @@ int main(int argc, char * argv[]) {
     integratedData.resize(obs.getNrSyntheticBeams() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
     snrData.resize(obs.getNrSyntheticBeams() * isa::utils::pad(obs.getNrDMs(), padding[deviceName] / sizeof(float)));
   }
-  generateBeamDriver(subbandDedispersion, observation, beamDriver, padding[deviceName]);
+  generateBeamDriver(subbandDedispersion, obs, beamDriver, padding[deviceName]);
 
   if ( obs.getNrDelaySeconds() > obs.getNrSeconds() ) {
     std::cerr << "Not enough input seconds for the search." << std::endl;
