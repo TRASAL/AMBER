@@ -303,7 +303,7 @@ int main(int argc, char * argv[]) {
     if ( subbandDedispersion ) {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shiftsStepTwo_d, CL_FALSE, 0, shiftsStepTwo->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepTwo->data()));
     }
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(beamDriver_d, CL_FALSE, 0, beamDriver.size() * sizeof(float), reinterpret_cast< void * >(beamDriver.data()));
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(beamDriver_d, CL_FALSE, 0, beamDriver.size() * sizeof(uint8_t), reinterpret_cast< void * >(beamDriver.data()));
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()));
     clQueues->at(clDeviceID)[0].finish();
   } catch ( cl::Error & err ) {
