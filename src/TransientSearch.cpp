@@ -758,7 +758,11 @@ int main(int argc, char * argv[]) {
   output.open(outputFile + ".stats");
   output << std::fixed << std::setprecision(6);
   output << "# nrDMs" << std::endl;
-  output << obs.getNrDMs() << std::endl;
+  if ( subbandDedispersion ) {
+    output << obs.getNrDMsSubbanding() * obs.getNrDMs() << std::endl;
+  } else {
+    output << obs.getNrDMs() << std::endl;
+  }
   output << "# searchTimer" << std::endl;
   output << searchTimer.getTotalTime() << std::endl;
   output << "# inputHandlingTotal inputHandlingAvg err" << std::endl;
