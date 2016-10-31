@@ -354,8 +354,9 @@ int main(int argc, char * argv[]) {
       } else {
         dedispersionK->setArg(0, dispersedData_d);
         dedispersionK->setArg(1, dedispersedData_d);
-        dedispersionK->setArg(2, zappedChannels_d);
-        dedispersionK->setArg(3, shiftsStepOne_d);
+        dedispersionK->setArg(2, beamDriver_d);
+        dedispersionK->setArg(3, zappedChannels_d);
+        dedispersionK->setArg(4, shiftsStepOne_d);
       }
     } catch ( isa::OpenCL::OpenCLError & err ) {
       std::cerr << err.what() << std::endl;
