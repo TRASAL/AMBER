@@ -132,9 +132,9 @@ int main(int argc, char * argv[]) {
     inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
     outputFile = args.getSwitchArgument< std::string >("-output");
     if ( subbandDedispersion ) {
-      obs.setDMSubbandingRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), args.getSwitchArgument< unsigned int >("-subbanding_dm_first"), args.getSwitchArgument< unsigned int >("-subbanding_dm_step"));
+      obs.setDMSubbandingRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), args.getSwitchArgument< float >("-subbanding_dm_first"), args.getSwitchArgument< float >("-subbanding_dm_step"));
     }
-    obs.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< unsigned int >("-dm_first"), args.getSwitchArgument< unsigned int >("-dm_step"));
+    obs.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
     threshold = args.getSwitchArgument< float >("-threshold");
   } catch ( isa::utils::EmptyCommandLine & err ) {
     std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ... -snr_file ... [-subband_dedispersion] [-print] [-compact_results] [-lofar] [-sigproc] [-dada] -input_bits ... -output ... -dms ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
