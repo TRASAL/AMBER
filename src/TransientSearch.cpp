@@ -618,7 +618,7 @@ int main(int argc, char * argv[]) {
               for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
                 for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
                   for ( unsigned int sample = 0; sample < obs.getNrSamplesPerPaddedSubbandingDispersedChannel(padding[deviceName] / sizeof(inputDataType)); sample++ ) {
-                    std::cerr << dispersedData[(beam * obs.getNrChannels() * obs.getNrSamplesPerPaddedSubbandingDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerPaddedSubbandingDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + sample] << " ";
+                    std::cerr << static_cast< float >(dispersedData[(beam * obs.getNrChannels() * obs.getNrSamplesPerPaddedSubbandingDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerPaddedSubbandingDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + sample]) << " ";
                   }
                   std::cerr << std::endl;
                 }
@@ -632,7 +632,7 @@ int main(int argc, char * argv[]) {
               for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
                 for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
                   for ( unsigned int sample = 0; sample < obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType)); sample++ ) {
-                    std::cerr << dispersedData[(beam * obs.getNrChannels() * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + sample] << " ";
+                    std::cerr << static_cast< float >(dispersedData[(beam * obs.getNrChannels() * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + sample]) << " ";
                   }
                   std::cerr << std::endl;
                 }
