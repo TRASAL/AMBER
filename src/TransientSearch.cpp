@@ -320,7 +320,7 @@ int main(int argc, char * argv[]) {
     code = PulsarSearch::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(*(dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMsSubbanding())), padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shiftsStepOne);
     try {
       dedispersionStepOneK = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
-      if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
+      if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMsSubbanding())->getSplitSeconds() ) {
         // TODO: add support for splitSeconds
       } else {
         dedispersionStepOneK->setArg(0, dispersedData_d);
