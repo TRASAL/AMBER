@@ -611,7 +611,37 @@ int main(int argc, char * argv[]) {
       }
       if ( DEBUG ) {
         if ( print ) {
-          // TODO: add support for printing dispersedData to std::cerr
+          // TODO: add support for splitSeconds
+          std::cerr << "dispersedData" << std::endl;
+          if ( subbandDedispersion ) {
+            if ( inputBits >= 8 ) {
+              for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+                for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
+                  for ( unsigned int sample = 0; sample < obs.getNrSamplesPerPaddedSubbandingDispersedChannel(padding[deviceName] / sizeof(inputDataType)); sample++ ) {
+                    std::cerr << dispersedData[(beam * obs.getNrChannels() * obs.getNrSamplesPerPaddedSubbandingDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerPaddedSubbandingDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + sample] << " ";
+                  }
+                  std::cerr << std::endl;
+                }
+                std::cerr << std::endl;
+              }
+            } else {
+              // TODO: add support for input data less than 8 bit
+            }
+          } else {
+            if ( inputBits >= 8 ) {
+              for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+                for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
+                  for ( unsigned int sample = 0; sample < obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType)); sample++ ) {
+                    std::cerr << dispersedData[(beam * obs.getNrChannels() * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + sample] << " ";
+                  }
+                  std::cerr << std::endl;
+                }
+                std::cerr << std::endl;
+              }
+            } else {
+              // TODO: add support for input data less than 8 bit
+            }
+          }
         }
       }
     } catch ( cl::Error & err ) {
