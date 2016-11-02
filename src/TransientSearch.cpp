@@ -238,6 +238,7 @@ int main(int argc, char * argv[]) {
         }
         std::cerr << std::endl;
       }
+      std::cerr << std::endl;
     }
   }
   if ( subbandDedispersion ) {
