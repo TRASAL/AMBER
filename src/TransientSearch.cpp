@@ -616,6 +616,7 @@ int main(int argc, char * argv[]) {
           if ( subbandDedispersion ) {
             if ( inputBits >= 8 ) {
               for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+                std::cerr << "Beam: " << beam << std::endl;
                 for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
                   for ( unsigned int sample = 0; sample < obs.getNrSamplesPerPaddedSubbandingDispersedChannel(padding[deviceName] / sizeof(inputDataType)); sample++ ) {
                     std::cerr << static_cast< float >(dispersedData[(beam * obs.getNrChannels() * obs.getNrSamplesPerPaddedSubbandingDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerPaddedSubbandingDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + sample]) << " ";
@@ -630,6 +631,7 @@ int main(int argc, char * argv[]) {
           } else {
             if ( inputBits >= 8 ) {
               for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+                std::cerr << "Beam: " << beam << std::endl;
                 for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
                   for ( unsigned int sample = 0; sample < obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType)); sample++ ) {
                     std::cerr << static_cast< float >(dispersedData[(beam * obs.getNrChannels() * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerPaddedDispersedChannel(padding[deviceName] / sizeof(inputDataType))) + sample]) << " ";
@@ -700,7 +702,67 @@ int main(int argc, char * argv[]) {
     }
     if ( DEBUG ) {
       if ( print ) {
-        // TODO: add support for printing dispersedData to std::cerr
+        if ( subbandDedispersion ) {
+          try {
+            clQueues->at(clDeviceID)[0].enqueueReadBuffer(subbandedData_d, CL_TRUE, 0, subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(subbandedData.data()), 0, &syncPoint);
+            syncPoint.wait();
+            clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()), 0, &syncPoint);
+            syncPoint.wait();
+            std::cerr << "subbandedData" << std::endl;
+            for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+              std::cerr << "Beam: " << beam << std::endl;
+              for ( unsigned int dm = 0; dm < obs.getNrDMsSubbanding(); dm++ ) {
+                std::cerr << "Subbanding DM: " << dm << std::endl;
+                for ( unsigned int subband = 0; subband < obs.getNrSubbands(); subband++ ) {
+                  for ( unsigned int sample = 0; sample < obs.getNrSamplesPerBatchSubbanding(); sample++ ) {
+                    std::cerr << subbandedData[(beam * obs.getNrDMsSubbanding() * obs.getNrSubbands() * obs.getNrSamplesPerPaddedBatchSubbanding(padding[deviceName] / sizeof(outputDataType))) + (dm * * obs.getNrSubbands() * obs.getNrSamplesPerPaddedBatchSubbanding(padding[deviceName] / sizeof(outputDataType))) + (subband * obs.getNrSamplesPerPaddedBatchSubbanding(padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
+                  }
+                  std::cerr << std::endl;
+                }
+                std::cerr << std::endl;
+              }
+              std::cerr << std::endl;
+            }
+            std::cerr << "dedispersedData" << std::endl;
+            for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+              std::cerr << "sBeam: " << sBeam << std::endl;
+              for ( unsigned int subbandingDM = 0; subbandingDM < obs.getNrDMsSubbanding(); subbandingDM++ ) {
+                for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+                  std::cerr << "DM: " << (subbandingDM * obs.getNrDMs()) + dm << std::endl;
+                  for ( unsigned int sample = 0; sample < obs.getNrSamplesPerBatch(); sample++ ) {
+                    std::cerr << dedispersedData[(sBeam * obs.getNrDMsSubbanding() * obs.getNrDMs() * obs.getNrSamplesPerPaddedBatch(padding[deviceName] / sizeof(outputDataType))) + (subbandingDM * obs.getNrDMs() * obs.getNrSamplesPerPaddedBatch(padding[deviceName] / sizeof(outputDataType))) + (dm * obs.getNrSamplesPerPaddedBatch(padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
+                  }
+                  std::cerr << std::endl;
+                }
+                std::cerr << std::endl;
+              }
+              std::cerr << std::endl;
+            }
+          } catch ( cl::Error & err) {
+            std::cerr << "Impossible to read subbandedData_d and dedispersedData_d: " << err.what() << " " << err.err() << std::endl;
+            errorDetected = true;
+          }
+        } else {
+          try {
+            clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()), 0, &syncPoint);
+            syncPoint.wait();
+            std::cerr << "dedispersedData" << std::endl;
+            for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+              std::cerr << "sBeam: " << sBeam << std::endl;
+              for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+                std::cerr << "DM: " << dm << std::endl;
+                for ( unsigned int sample = 0; sample < obs.getNrSamplesPerBatch(); sample++ ) {
+                  std::cerr << dedispersedData[(sBeam * obs.getNrDMs() * obs.getNrSamplesPerPaddedBatch(padding[deviceName] / sizeof(outputDataType))) + (dm * obs.getNrSamplesPerPaddedBatch(padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
+                }
+                std::cerr << std::endl;
+              }
+              std::cerr << std::endl;
+            }
+          } catch ( cl::Error & err ) {
+            std::cerr << "Impossible to read dedispersedData_d: " << err.what() << " " << err.err() << std::endl;
+            errorDetected = true;
+          }
+        }
       }
     }
 
