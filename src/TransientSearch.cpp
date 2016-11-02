@@ -715,7 +715,7 @@ int main(int argc, char * argv[]) {
                 std::cerr << "Subbanding DM: " << dm << std::endl;
                 for ( unsigned int subband = 0; subband < obs.getNrSubbands(); subband++ ) {
                   for ( unsigned int sample = 0; sample < obs.getNrSamplesPerBatchSubbanding(); sample++ ) {
-                    std::cerr << subbandedData[(beam * obs.getNrDMsSubbanding() * obs.getNrSubbands() * obs.getNrSamplesPerPaddedBatchSubbanding(padding[deviceName] / sizeof(outputDataType))) + (dm * * obs.getNrSubbands() * obs.getNrSamplesPerPaddedBatchSubbanding(padding[deviceName] / sizeof(outputDataType))) + (subband * obs.getNrSamplesPerPaddedBatchSubbanding(padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
+                    std::cerr << subbandedData[(beam * obs.getNrDMsSubbanding() * obs.getNrSubbands() * obs.getNrSamplesPerPaddedBatchSubbanding(padding[deviceName] / sizeof(outputDataType))) + (dm * obs.getNrSubbands() * obs.getNrSamplesPerPaddedBatchSubbanding(padding[deviceName] / sizeof(outputDataType))) + (subband * obs.getNrSamplesPerPaddedBatchSubbanding(padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
                   }
                   std::cerr << std::endl;
                 }
