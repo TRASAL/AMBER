@@ -267,7 +267,7 @@ int main(int argc, char * argv[]) {
     beamDriver.resize(obs.getNrSyntheticBeams() * obs.getNrPaddedChannels(padding[deviceName] / sizeof(uint8_t)));
     dedispersedData.resize(obs.getNrSyntheticBeams() * obs.getNrDMs() * obs.getNrSamplesPerPaddedBatch(padding[deviceName] / sizeof(outputDataType)));
     integratedData.resize(obs.getNrSyntheticBeams() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
-    snrData.resize(obs.getNrSyntheticBeams() * isa::utils::pad(obs.getNrDMs(), padding[deviceName] / sizeof(float)));
+    snrData.resize(obs.getNrSyntheticBeams() * obs.getNrPaddedDMs(padding[deviceName] / sizeof(float)));
   }
   generateBeamDriver(subbandDedispersion, obs, beamDriver, padding[deviceName]);
 
@@ -789,7 +789,27 @@ int main(int argc, char * argv[]) {
     trigger(compactResults, subbandDedispersion, padding[deviceName], second, 0, threshold, obs, triggerTimer, snrData, output);
     if ( DEBUG ) {
       if ( print ) {
-        // TODO: add support for printing dispersedData to std::cerr
+        if ( subbandDedispersion ) {
+          std::cerr << "snrData" << std::endl;
+          for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+            std::cerr << "sBeam: " << sBeam << std::endl;
+            for ( unsigned int subbandingDM = 0; subbandingDM < obs.getNrDMsSubbanding(); subbandingDM++ ) {
+              for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+                std::cerr << snrData[(sBeam * isa::utils::pad(obs.getNrDMsSubbanding() * obs.getNrDMs(), padding[deviceName] / sizeof(float))) + (subbandingDM * obs.getNrDMs()) + dm] << " ";
+              }
+            }
+            std::cerr << std::endl;
+          }
+        } else {
+          std::cerr << "snrData" << std::endl;
+          for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+            std::cerr << "sBeam: " << sBeam << std::endl;
+            for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+              std::cerr << snrData[(sBeam * obs.getNrPaddedDMs(padding[deviceName] / sizeof(float))) + dm] << " ";
+            }
+            std::cerr << std::endl;
+          }
+        }
       }
     }
 
@@ -824,13 +844,66 @@ int main(int argc, char * argv[]) {
       }
       if ( DEBUG ) {
         if ( print ) {
-          // TODO: add support for printing dispersedData to std::cerr
+          try {
+            clQueues->at(clDeviceID)[0].enqueueReadBuffer(integratedData_d, CL_TRUE, 0, integratedData.size() * sizeof(outputDataType), 0, &syncPoint);
+            syncPoint.wait();
+          } catch ( cl::Error & err ) {
+            std::cerr << "Impossible to read integratedData_d: " << err.what() << " " << err.err() << std::endl;
+            errorDetected = true;
+          }
+          std::cerr << "integratedData" << std::endl;
+          if ( subbandDedispersion ) {
+            for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+              std::cerr << "sBeam: " << sBeam << std::endl;
+              for ( unsigned int subbandingDM = 0; subbandingDM < obs.getNrDMsSubbanding(); subbandingDM++ ) {
+                for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+                  std::cerr << "DM: " << (subbandingDM * obs.getNrDMs()) + dm << std::endl;
+                  for ( unsigned int sample = 0; sample < obs.getNrSamplesPerBatch() / *step; sample++ ) {
+                    std::cerr << integratedData[(sBeam * obs.getNrDMsSubbanding() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType))) + (subbandingDM * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
+                  }
+                  std::cerr << std::endl;
+                }
+              }
+              std::cerr << std::endl;
+            }
+          } else {
+            for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+              std::cerr << "sBeam: " << sBeam << std::endl;
+              for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+                std::cerr << "DM: " << dm << std::endl;
+                for ( unsigned int sample = 0; sample < obs.getNrSamplesPerBatch() / *step; sample++ ) {
+                  std::cerr << integratedData[(sBeam * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
+                }
+                std::cerr << std::endl;
+              }
+            }
+          }
         }
       }
       trigger(compactResults, subbandDedispersion, padding[deviceName], second, *step, threshold, obs, triggerTimer, snrData, output);
       if ( DEBUG ) {
         if ( print ) {
-          // TODO: add support for printing dispersedData to std::cerr
+          if ( subbandDedispersion ) {
+            std::cerr << "snrData" << std::endl;
+            for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+              std::cerr << "sBeam: " << sBeam << std::endl;
+              for ( unsigned int subbandingDM = 0; subbandingDM < obs.getNrDMsSubbanding(); subbandingDM++ ) {
+                for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+                  std::cerr << snrData[(sBeam * isa::utils::pad(obs.getNrDMsSubbanding() * obs.getNrDMs(), padding[deviceName] / sizeof(float))) + (subbandingDM * obs.getNrDMs()) + dm] << " ";
+                }
+              }
+              std::cerr << std::endl;
+            }
+          } else {
+            std::cerr << "snrData" << std::endl;
+            for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+              std::cerr << "sBeam: " << sBeam << std::endl;
+              for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+                std::cerr << snrData[(sBeam * obs.getNrPaddedDMs(padding[deviceName] / sizeof(float))) + dm] << " ";
+              }
+              std::cerr << std::endl;
+            }
+          }
         }
       }
     }
