@@ -845,7 +845,7 @@ int main(int argc, char * argv[]) {
       if ( DEBUG ) {
         if ( print ) {
           try {
-            clQueues->at(clDeviceID)[0].enqueueReadBuffer(integratedData_d, CL_TRUE, 0, integratedData.size() * sizeof(outputDataType), 0, &syncPoint);
+            clQueues->at(clDeviceID)[0].enqueueReadBuffer(integratedData_d, CL_TRUE, 0, integratedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(integratedData.data()), 0, &syncPoint);
             syncPoint.wait();
           } catch ( cl::Error & err ) {
             std::cerr << "Impossible to read integratedData_d: " << err.what() << " " << err.err() << std::endl;
