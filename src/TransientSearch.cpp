@@ -234,7 +234,7 @@ int main(int argc, char * argv[]) {
       if ( subbandDedispersion ) {
         std::cerr << "shiftsStepTwo" << std::endl;
         for ( unsigned int subband = 0; subband < obs.getNrSubbands(); subband++ ) {
-          std::cerr << shiftStepTwo->at(subband) << " ";
+          std::cerr << shiftsStepTwo->at(subband) << " ";
         }
         std::cerr << std::endl;
       }
