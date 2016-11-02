@@ -224,6 +224,22 @@ int main(int argc, char * argv[]) {
   // Host memory allocation
   std::vector< float > * shiftsStepOne = PulsarSearch::getShifts(obs, padding[deviceName]);
   std::vector< float > * shiftsStepTwo = PulsarSearch::getSubbandStepTwoShifts(obs, padding[deviceName]);
+  if ( DEBUG ) {
+    if ( print ) {
+      std::cerr << "shiftsStepOne" << std::endl;
+      for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
+        std::cerr << shiftsStepOne->at(channel) << " ";
+      }
+      std::cerr << std::endl;
+      if ( subbandDedispersion ) {
+        std::cerr << "shiftsStepTwo" << std::endl;
+        for ( unsigned int subband = 0; subband < obs.getNrSubbands(); subband++ ) {
+          std::cerr << shiftStepTwo->at(subband) << " ";
+        }
+        std::cerr << std::endl;
+      }
+    }
+  }
   if ( subbandDedispersion ) {
     obs.setNrSamplesPerBatchSubbanding(obs.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()))));
     obs.setNrSamplesPerSubbandingDispersedChannel(obs.getNrSamplesPerBatchSubbanding() + static_cast< unsigned int >(shiftsStepOne->at(0) * (obs.getFirstDMSubbanding() + ((obs.getNrDMsSubbanding() - 1) * obs.getDMSubbandingStep()))));
