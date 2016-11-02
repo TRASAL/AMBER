@@ -350,7 +350,7 @@ int main(int argc, char * argv[]) {
       return 1;
     }
     delete code;
-    code = PulsarSearch::getSubbandDedispersionStepTwoOpenCL< inputDataType >(*(dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())), padding[deviceName], inputDataName, obs, *shiftsStepTwo);
+    code = PulsarSearch::getSubbandDedispersionStepTwoOpenCL< outputDataType >(*(dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())), padding[deviceName], inputDataName, obs, *shiftsStepTwo);
     try {
       dedispersionStepTwoK = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
       dedispersionStepTwoK->setArg(0, subbandedData_d);
