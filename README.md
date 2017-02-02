@@ -11,11 +11,10 @@ A many-core transient searching pipeline.
 
 * [utils](https://github.com/isazi/utils) - master branch
 * [OpenCL](https://github.com/isazi/OpenCL) - master branch
-* [AstroData](https://github.com/isazi/AstroData) - 2.0 branch
-* [Dedispersion](https://github.com/isazi/Dedispersion) - 3.0 branch
-* [Integration](https://github.com/isazi/Integration) - 1.0 branch
-* [SNR](https://github.com/isazi/SNR) - 2.0 branch
-* [Boost](http://www.boost.org/)
+* [AstroData](https://github.com/isazi/AstroData) - master branch
+* [Dedispersion](https://github.com/isazi/Dedispersion) - master branch
+* [Integration](https://github.com/isazi/Integration) - master branch
+* [SNR](https://github.com/isazi/SNR) - master branch
 
 ## License
 
