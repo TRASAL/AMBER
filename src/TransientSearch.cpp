@@ -114,10 +114,11 @@ int main(int argc, char * argv[]) {
     } else if ( dataPSRDada ) {
       dadaKey = args.getSwitchArgument< key_t >("-dada_key");
       obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
+      obs.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-sythesized_beams"));
       obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
     } else {
       obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
-      obs.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthetic_beams"));
+      obs.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthesized_beams"));
       obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
       if ( subbandDedispersion ) {
         obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-subbands"), args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
@@ -143,8 +144,8 @@ int main(int argc, char * argv[]) {
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -seconds ..." << std::endl;
     std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
-    std::cerr << "\t -dada -dada_key ... -beams ... -seconds ..." << std::endl;
-    std::cerr << "\t [-random] -width ... -dm ... -beams ... -synthetic_beams ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
+    std::cerr << "\t -dada -dada_key ... -beams ... -synthesized_beams ... -seconds ..." << std::endl;
+    std::cerr << "\t [-random] -width ... -dm ... -beams ... -synthesized_beams ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
     return 1;
   } catch ( std::exception & err ) {
     std::cerr << err.what() << std::endl;
@@ -177,7 +178,7 @@ int main(int argc, char * argv[]) {
     dada_hdu_lock_read(ringBuffer);
   } else {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-      // TODO: if there are multiple synthetic beams, the generated data should take this into account
+      // TODO: if there are multiple synthesized beams, the generated data should take this into account
       input[beam] = new std::vector< std::vector< inputDataType > * >(obs.getNrSeconds());
       AstroData::generateSinglePulse(width, DM, obs, padding[deviceName], *(input[beam]), inputBits, random);
     }
