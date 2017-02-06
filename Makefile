@@ -36,10 +36,6 @@ endif
 LDFLAGS := -lm
 CL_LDFLAGS := $(LDFLAGS) -L/usr/local/cuda-6.0/targets/x86_64-linux/lib -lOpenCL
 HDF5_LDFLAGS := -lhdf5 -lhdf5_cpp
-<<<<<<< HEAD
-BOOST_LDFLAGS := -lboost_mpi-mt -lboost_serialization
-=======
->>>>>>> 24ded2538f79a8b4cdc421fccd7578e00f021075
 
 CC := g++
 
