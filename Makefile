@@ -1,26 +1,26 @@
 
-ROOT ?= $(HOME)
+SOURCE_ROOT ?= $(HOME)
 
 # https://github.com/isazi/utils
-UTILS := $(ROOT)/src/utils
+UTILS := $(SOURCE_ROOT)/src/utils
 # https://github.com/isazi/OpenCL
-OPENCL := $(ROOT)/src/OpenCL
+OPENCL := $(SOURCE_ROOT)/src/OpenCL
 # https://github.com/isazi/AstroData
-ASTRODATA := $(ROOT)/src/AstroData
+ASTRODATA := $(SOURCE_ROOT)/src/AstroData
 # https://github.com/isazi/Dedispersion
-DEDISPERSION := $(ROOT)/src/Dedispersion
+DEDISPERSION := $(SOURCE_ROOT)/src/Dedispersion
 # https://github.com/isazi/Integration
-INTEGRATION := $(ROOT)/src/Integration
+INTEGRATION := $(SOURCE_ROOT)/src/Integration
 # https://github.com/isazi/SNR
-SNR := $(ROOT)/src/SNR
+SNR := $(SOURCE_ROOT)/src/SNR
 # HDF5
-HDF5 := $(ROOT)/src/HDF5
+HDF5 := $(SOURCE_ROOT)/src/HDF5
 # http://psrdada.sourceforge.net/
-PSRDADA  := $(ROOT)/src/psrdada
+PSRDADA  := $(SOURCE_ROOT)/src/psrdada
 # Boost
-BOOST := $(ROOT)/src/boost
+BOOST := $(SOURCE_ROOT)/src/boost
 # MPI
-MPI := $(ROOT)/src/mpi
+MPI := $(SOURCE_ROOT)/src/mpi
 
 INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include" -I"$(DEDISPERSION)/include" -I"$(INTEGRATION)/include" -I"$(SNR)/include" -I"$(HDF5)/include" -I"$(PSRDADA)/src/" -I"$(MPI)/include" 
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"

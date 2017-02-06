@@ -19,6 +19,46 @@ A many-core transient searching pipeline.
 * [HDF5](http://www.hdfgroup.org/HDF5/) - (to read LOFAR data)
 * [PSRDada](http://psrdada.sourceforge.net/)
 
+
+
+./bin/TransientSearch
+-opencl_platform ...
+-opencl_device ...
+
+-device_name allows you to use predefined configs from the input files
+
+Files made by tuning the separate parts (ie. output of tuning / analyse scripts and some editing)
+-padding_file ...
+-dedispersion_file ...
+-integration_file ...
+-snr_file ...
+
+-zapped_channels ...     see Dedispersion
+-integration_steps ...   see Integration
+
+[-print]                 Prints extra info
+[-compact_results]       Merge consecutive candidates into a single one
+-input_bits ...          see Dedispersion
+-output ...              Output file name
+-dm_node ...             Number of DMs per node (split via MPI)
+-dm_first ...            see Desispersion
+-dm_step ...             see Desispersion
+-threshold ...           signal to noise threshold
+
+Data sources:
+Lofar:
+-lofar -header ...  -data ...  [-limit] -limit -seconds ...
+
+Sigproc:
+-sigproc -header ...  -data ...  -seconds ...  -channels ...  -min_freq ...  -channel_bandwidth ...  -samples ...
+
+PSR DADA ring buffer:
+-dada -dada_key ... -beams ... -seconds ...
+
+default, Generated data:
+[-random] -width ... -dm ... -beams ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ...
+
+
 ## License
 
 Licensed under the Apache License, Version 2.0.
