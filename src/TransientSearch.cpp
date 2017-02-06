@@ -117,7 +117,7 @@ int main(int argc, char * argv[]) {
       obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
     } else {
       obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
-      obs.setNrSyntheticBeams(args.getSwitchArgument< unsigned int >("-synthetic_beams"));
+      obs.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthetic_beams"));
       obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
       if ( subbandDedispersion ) {
         obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-subbands"), args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
@@ -189,7 +189,7 @@ int main(int argc, char * argv[]) {
     std::cout << "Padding: " << padding[deviceName] << " bytes" << std::endl;
     std::cout << std::endl;
     std::cout << "Beams: " << obs.getNrBeams() << std::endl;
-    std::cout << "Synthetic Beams: " << obs.getNrSyntheticBeams() << std::endl;
+    std::cout << "Synthesized Beams: " << obs.getNrSynthesizedBeams() << std::endl;
     std::cout << "Seconds: " << obs.getNrSeconds() << std::endl;
     std::cout << "Samples: " << obs.getNrSamplesPerBatch() << std::endl;
     std::cout << "Frequency range: " << obs.getMinFreq() << " MHz, " << obs.getMaxFreq() << " MHz" << std::endl;
@@ -266,11 +266,11 @@ int main(int argc, char * argv[]) {
         dispersedData.resize(obs.getNrBeams() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)));
       }
     }
-    beamDriver.resize(obs.getNrSyntheticBeams() * obs.getNrPaddedSubbands(padding[deviceName] / sizeof(uint8_t)));
+    beamDriver.resize(obs.getNrSynthesizedBeams() * obs.getNrPaddedSubbands(padding[deviceName] / sizeof(uint8_t)));
     subbandedData.resize(obs.getNrBeams() * obs.getNrDMsSubbanding() * obs.getNrSubbands() * obs.getNrSamplesPerPaddedBatchSubbanding(padding[deviceName] / sizeof(outputDataType)));
-    dedispersedData.resize(obs.getNrSyntheticBeams() * obs.getNrDMsSubbanding() * obs.getNrDMs() * obs.getNrSamplesPerPaddedBatch(padding[deviceName] / sizeof(outputDataType)));
-    integratedData.resize(obs.getNrSyntheticBeams() * obs.getNrDMsSubbanding() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
-    snrData.resize(obs.getNrSyntheticBeams() * isa::utils::pad(obs.getNrDMsSubbanding() * obs.getNrDMs(), padding[deviceName] / sizeof(float)));
+    dedispersedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMsSubbanding() * obs.getNrDMs() * obs.getNrSamplesPerPaddedBatch(padding[deviceName] / sizeof(outputDataType)));
+    integratedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMsSubbanding() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
+    snrData.resize(obs.getNrSynthesizedBeams() * isa::utils::pad(obs.getNrDMsSubbanding() * obs.getNrDMs(), padding[deviceName] / sizeof(float)));
   } else {
     if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitSeconds() ) {
       // TODO: add support for splitSeconds
@@ -281,10 +281,10 @@ int main(int argc, char * argv[]) {
         dispersedData.resize(obs.getNrBeams() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)));
       }
     }
-    beamDriver.resize(obs.getNrSyntheticBeams() * obs.getNrPaddedChannels(padding[deviceName] / sizeof(uint8_t)));
-    dedispersedData.resize(obs.getNrSyntheticBeams() * obs.getNrDMs() * obs.getNrSamplesPerPaddedBatch(padding[deviceName] / sizeof(outputDataType)));
-    integratedData.resize(obs.getNrSyntheticBeams() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
-    snrData.resize(obs.getNrSyntheticBeams() * obs.getNrPaddedDMs(padding[deviceName] / sizeof(float)));
+    beamDriver.resize(obs.getNrSynthesizedBeams() * obs.getNrPaddedChannels(padding[deviceName] / sizeof(uint8_t)));
+    dedispersedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs() * obs.getNrSamplesPerPaddedBatch(padding[deviceName] / sizeof(outputDataType)));
+    integratedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
+    snrData.resize(obs.getNrSynthesizedBeams() * obs.getNrPaddedDMs(padding[deviceName] / sizeof(float)));
   }
   generateBeamDriver(subbandDedispersion, obs, beamDriver, padding[deviceName]);
 
@@ -450,18 +450,18 @@ int main(int argc, char * argv[]) {
     dedispersionStepTwoLocal = cl::NDRange(dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0(), dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD1(), 1);
     if ( DEBUG ) {
       std::cout << "DedispersionStepTwo" << std::endl;
-        std::cout << "Global: " << isa::utils::pad(obs.getNrSamplesPerBatchSubbanding() / dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD0(), dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0()) << ", " << obs.getNrDMs() / dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1() << ", " << obs.getNrSyntheticBeams() * obs.getNrDMsSubbanding() << std::endl;
+        std::cout << "Global: " << isa::utils::pad(obs.getNrSamplesPerBatchSubbanding() / dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD0(), dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0()) << ", " << obs.getNrDMs() / dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1() << ", " << obs.getNrSynthesizedBeams() * obs.getNrDMsSubbanding() << std::endl;
         std::cout << "Local: " << dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0() << ", " << dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD1() << ", 1" << std::endl;
         std::cout << "Parameters: ";
         std::cout << dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->print() << std::endl;
         std::cout << std::endl;
     }
   } else {
-    dedispersionGlobal = cl::NDRange(isa::utils::pad(obs.getNrSamplesPerBatch() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD0(), dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0()), obs.getNrDMs() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1(), obs.getNrSyntheticBeams());
+    dedispersionGlobal = cl::NDRange(isa::utils::pad(obs.getNrSamplesPerBatch() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD0(), dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0()), obs.getNrDMs() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1(), obs.getNrSynthesizedBeams());
     dedispersionLocal = cl::NDRange(dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0(), dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD1(), 1);
     if ( DEBUG ) {
       std::cout << "Dedispersion" << std::endl;
-      std::cout << "Global: " << isa::utils::pad(obs.getNrSamplesPerBatch() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD0(), dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0()) << ", " << obs.getNrDMs() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1() << ", " << obs.getNrSyntheticBeams() << std::endl;
+      std::cout << "Global: " << isa::utils::pad(obs.getNrSamplesPerBatch() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD0(), dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0()) << ", " << obs.getNrDMs() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1() << ", " << obs.getNrSynthesizedBeams() << std::endl;
       std::cout << "Local: " << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0() << ", " << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD1() << ", 1" << std::endl;
       std::cout << "Parameters: ";
       std::cout << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->print() << std::endl;
@@ -473,22 +473,22 @@ int main(int argc, char * argv[]) {
   std::vector< cl::NDRange > snrDMsSamplesGlobal(integrationSteps.size() + 1);
   std::vector< cl::NDRange > snrDMsSamplesLocal(integrationSteps.size() + 1);
   if ( subbandDedispersion ) {
-    snrDMsSamplesGlobal[integrationSteps.size()] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0(), obs.getNrDMsSubbanding() * obs.getNrDMs(), obs.getNrSyntheticBeams());
+    snrDMsSamplesGlobal[integrationSteps.size()] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0(), obs.getNrDMsSubbanding() * obs.getNrDMs(), obs.getNrSynthesizedBeams());
     snrDMsSamplesLocal[integrationSteps.size()] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
     if ( DEBUG ) {
       std::cout << "SNRDMsSamples (" + std::to_string(obs.getNrSamplesPerBatch()) + ")" << std::endl;
-      std::cout << "Global: " << snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0() << ", " << obs.getNrDMsSubbanding() * obs.getNrDMs() << " " << obs.getNrSyntheticBeams() << std::endl;
+      std::cout << "Global: " << snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0() << ", " << obs.getNrDMsSubbanding() * obs.getNrDMs() << " " << obs.getNrSynthesizedBeams() << std::endl;
       std::cout << "Local: " << snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0() << ", 1, 1" << std::endl;
       std::cout << "Parameters: ";
       std::cout << snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->print() << std::endl;
       std::cout << std::endl;
     }
   } else {
-    snrDMsSamplesGlobal[integrationSteps.size()] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0(), obs.getNrDMs(), obs.getNrSyntheticBeams());
+    snrDMsSamplesGlobal[integrationSteps.size()] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0(), obs.getNrDMs(), obs.getNrSynthesizedBeams());
     snrDMsSamplesLocal[integrationSteps.size()] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
     if ( DEBUG ) {
       std::cout << "SNRDMsSamples (" + std::to_string(obs.getNrSamplesPerBatch()) + ")" << std::endl;
-      std::cout << "Global: " << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0() << ", " << obs.getNrDMs() << ", " << obs.getNrSyntheticBeams() << std::endl;
+      std::cout << "Global: " << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0() << ", " << obs.getNrDMs() << ", " << obs.getNrSynthesizedBeams() << std::endl;
       std::cout << "Local: " << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0() << ", 1, 1" << std::endl;
       std::cout << "Parameters: ";
       std::cout << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->print() << std::endl;
@@ -500,7 +500,7 @@ int main(int argc, char * argv[]) {
 
     std::advance(step, stepNumber);
     if ( subbandDedispersion ) {
-      integrationGlobal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->getNrThreadsD0() * ((obs.getNrSamplesPerBatch() / *step) / integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->getNrItemsD0()), obs.getNrDMsSubbanding() * obs.getNrDMs(), obs.getNrSyntheticBeams());
+      integrationGlobal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->getNrThreadsD0() * ((obs.getNrSamplesPerBatch() / *step) / integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->getNrItemsD0()), obs.getNrDMsSubbanding() * obs.getNrDMs(), obs.getNrSynthesizedBeams());
       integrationLocal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->getNrThreadsD0(), 1, 1);
       if ( DEBUG ) {
         std::cout << "integrationDMsSamples (" + std::to_string(*step) + ")" << std::endl;
@@ -510,18 +510,18 @@ int main(int argc, char * argv[]) {
         std::cout << integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->print() << std::endl;
         std::cout << std::endl;
       }
-      snrDMsSamplesGlobal[stepNumber] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), obs.getNrDMsSubbanding() * obs.getNrDMs(), obs.getNrSyntheticBeams());
+      snrDMsSamplesGlobal[stepNumber] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), obs.getNrDMsSubbanding() * obs.getNrDMs(), obs.getNrSynthesizedBeams());
       snrDMsSamplesLocal[stepNumber] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
       if ( DEBUG ) {
         std::cout << "SNRDMsSamples (" + std::to_string(obs.getNrSamplesPerBatch() / *step) + ")" << std::endl;
-        std::cout << "Global: " << snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", " << obs.getNrDMsSubbanding() * obs.getNrDMs() << " " << obs.getNrSyntheticBeams() << std::endl;
+        std::cout << "Global: " << snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", " << obs.getNrDMsSubbanding() * obs.getNrDMs() << " " << obs.getNrSynthesizedBeams() << std::endl;
         std::cout << "Local: " << snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", 1, 1" << std::endl;
         std::cout << "Parameters: ";
         std::cout << snrParameters.at(deviceName)->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->print() << std::endl;
         std::cout << std::endl;
       }
     } else {
-      integrationGlobal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrThreadsD0() * ((obs.getNrSamplesPerBatch() / *step) / integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrItemsD0()), obs.getNrDMs(), obs.getNrSyntheticBeams());
+      integrationGlobal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrThreadsD0() * ((obs.getNrSamplesPerBatch() / *step) / integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrItemsD0()), obs.getNrDMs(), obs.getNrSynthesizedBeams());
       integrationLocal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrThreadsD0(), 1, 1);
       if ( DEBUG ) {
         std::cout << "integrationDMsSamples (" + std::to_string(*step) + ")" << std::endl;
@@ -531,11 +531,11 @@ int main(int argc, char * argv[]) {
         std::cout << integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->print() << std::endl;
         std::cout << std::endl;
       }
-      snrDMsSamplesGlobal[stepNumber] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), obs.getNrDMs(), obs.getNrSyntheticBeams());
+      snrDMsSamplesGlobal[stepNumber] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), obs.getNrDMs(), obs.getNrSynthesizedBeams());
       snrDMsSamplesLocal[stepNumber] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
       if ( DEBUG ) {
         std::cout << "SNRDMsSamples (" + std::to_string(obs.getNrSamplesPerBatch() / *step) + ")" << std::endl;
-        std::cout << "Global: " << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", " << obs.getNrDMs() << " " << obs.getNrSyntheticBeams() << std::endl;
+        std::cout << "Global: " << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", " << obs.getNrDMs() << " " << obs.getNrSynthesizedBeams() << std::endl;
         std::cout << "Local: " << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", 1, 1" << std::endl;
         std::cout << "Parameters: ";
         std::cout << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->print() << std::endl;
@@ -741,7 +741,7 @@ int main(int argc, char * argv[]) {
               std::cerr << std::endl;
             }
             std::cerr << "dedispersedData" << std::endl;
-            for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+            for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
               std::cerr << "sBeam: " << sBeam << std::endl;
               for ( unsigned int subbandingDM = 0; subbandingDM < obs.getNrDMsSubbanding(); subbandingDM++ ) {
                 for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
@@ -764,7 +764,7 @@ int main(int argc, char * argv[]) {
             clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()), 0, &syncPoint);
             syncPoint.wait();
             std::cerr << "dedispersedData" << std::endl;
-            for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+            for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
               std::cerr << "sBeam: " << sBeam << std::endl;
               for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
                 std::cerr << "DM: " << dm << std::endl;
@@ -808,7 +808,7 @@ int main(int argc, char * argv[]) {
       if ( print ) {
         if ( subbandDedispersion ) {
           std::cerr << "snrData" << std::endl;
-          for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+          for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
             std::cerr << "sBeam: " << sBeam << std::endl;
             for ( unsigned int subbandingDM = 0; subbandingDM < obs.getNrDMsSubbanding(); subbandingDM++ ) {
               for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
@@ -819,7 +819,7 @@ int main(int argc, char * argv[]) {
           }
         } else {
           std::cerr << "snrData" << std::endl;
-          for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+          for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
             std::cerr << "sBeam: " << sBeam << std::endl;
             for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
               std::cerr << snrData[(sBeam * obs.getNrPaddedDMs(padding[deviceName] / sizeof(float))) + dm] << " ";
@@ -871,7 +871,7 @@ int main(int argc, char * argv[]) {
           }
           std::cerr << "integratedData" << std::endl;
           if ( subbandDedispersion ) {
-            for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+            for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
               std::cerr << "sBeam: " << sBeam << std::endl;
               for ( unsigned int subbandingDM = 0; subbandingDM < obs.getNrDMsSubbanding(); subbandingDM++ ) {
                 for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
@@ -885,7 +885,7 @@ int main(int argc, char * argv[]) {
               std::cerr << std::endl;
             }
           } else {
-            for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+            for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
               std::cerr << "sBeam: " << sBeam << std::endl;
               for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
                 std::cerr << "DM: " << dm << std::endl;
@@ -904,7 +904,7 @@ int main(int argc, char * argv[]) {
         if ( print ) {
           if ( subbandDedispersion ) {
             std::cerr << "snrData" << std::endl;
-            for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+            for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
               std::cerr << "sBeam: " << sBeam << std::endl;
               for ( unsigned int subbandingDM = 0; subbandingDM < obs.getNrDMsSubbanding(); subbandingDM++ ) {
                 for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
@@ -915,7 +915,7 @@ int main(int argc, char * argv[]) {
             }
           } else {
             std::cerr << "snrData" << std::endl;
-            for ( unsigned int sBeam = 0; sBeam < obs.getNrSyntheticBeams(); sBeam++ ) {
+            for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
               std::cerr << "sBeam: " << sBeam << std::endl;
               for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
                 std::cerr << snrData[(sBeam * obs.getNrPaddedDMs(padding[deviceName] / sizeof(float))) + dm] << " ";
@@ -986,7 +986,7 @@ void trigger(const bool compactResults, bool subbandDedispersion, const unsigned
     firstDM = obs.getFirstDM();
   }
   timer.start();
-  for ( unsigned int beam = 0; beam < obs.getNrSyntheticBeams(); beam++ ) {
+  for ( unsigned int beam = 0; beam < obs.getNrSynthesizedBeams(); beam++ ) {
     unsigned int maxDM = 0;
     double maxSNR = 0.0;
 
