@@ -223,7 +223,7 @@ int main(int argc, char * argv[]) {
 
   // Host memory allocation
   std::vector< float > * shiftsStepOne = PulsarSearch::getShifts(obs, padding[deviceName]);
-  std::vector< float > * shiftsStepTwo = PulsarSearch::getSubbandStepTwoShifts(obs, padding[deviceName]);
+  std::vector< float > * shiftsStepTwo = PulsarSearch::getShiftsStepTwo(obs, padding[deviceName]);
   if ( DEBUG ) {
     if ( print ) {
       std::cerr << "shiftsStepOne" << std::endl;
