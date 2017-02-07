@@ -176,6 +176,13 @@ int main(int argc, char * argv[]) {
     ringBuffer = dada_hdu_create(0);
     dada_hdu_set_key(ringBuffer, dadaKey);
     dada_hdu_connect(ringBuffer);
+    try {
+      AstroData::readPSRDADAHeader(obs, ringBuffer);
+    } catch ( AstroData::RingBufferError & err ) {
+      std::cerr << "Cannot read PSRDADA header: ";
+      std::cerr << err.what() << std::endl;
+      return -1;
+    }
   } else {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       // TODO: if there are multiple synthesized beams, the generated data should take this into account
