@@ -629,9 +629,9 @@ int main(int argc, char * argv[]) {
       dada_hdu_lock_read(ringBuffer);
       try {
         if ( subbandDedispersion ) {
-          AstroData::readPSRDADA(*ringBuffer, &inputDADA.at(batch % obs.getNrDelayBatchesSubbanding()));
+          AstroData::readPSRDADA(*ringBuffer, inputDADA.at(batch % obs.getNrDelayBatchesSubbanding()));
         } else {
-          AstroData::readPSRDADA(*ringBuffer, &inputDADA.at(batch % obs.getNrDelayBatches()));
+          AstroData::readPSRDADA(*ringBuffer, inputDADA.at(batch % obs.getNrDelayBatches()));
         }
       } catch ( AstroData::RingBufferError & err ) {
         std::cerr << " Impossible to read the PSRDADA buffer: ";
