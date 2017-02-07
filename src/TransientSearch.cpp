@@ -114,7 +114,7 @@ int main(int argc, char * argv[]) {
     } else if ( dataPSRDADA ) {
       dadaKey = args.getSwitchArgument< key_t >("-dada_key");
       obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
-      obs.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-sythesized_beams"));
+      obs.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthesized_beams"));
       obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
     } else {
       obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
