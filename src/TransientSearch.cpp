@@ -177,7 +177,7 @@ int main(int argc, char * argv[]) {
     dada_hdu_set_key(ringBuffer, dadaKey);
     dada_hdu_connect(ringBuffer);
     try {
-      AstroData::readPSRDADAHeader(obs, ringBuffer);
+      AstroData::readPSRDADAHeader(obs, *ringBuffer);
     } catch ( AstroData::RingBufferError & err ) {
       std::cerr << "Cannot read PSRDADA header: ";
       std::cerr << err.what() << std::endl;
