@@ -157,7 +157,6 @@ int main(int argc, char * argv[]) {
   isa::utils::Timer loadTime;
   std::vector< std::vector< std::vector< inputDataType > * > * > input(obs.getNrBeams());
   std::vector< std::vector< inputDataType > * > inputDADA;
-  std::vector< uint8_t > zappedChannels(obs.getNrPaddedChannels(padding[deviceName] / sizeof(uint8_t)));
   std::set< unsigned int > integrationSteps;
   if ( dataLOFAR ) {
     input[0] = new std::vector< std::vector< inputDataType > * >(obs.getNrBatches());
@@ -196,6 +195,7 @@ int main(int argc, char * argv[]) {
       AstroData::generateSinglePulse(width, DM, obs, padding[deviceName], *(input[beam]), inputBits, random);
     }
   }
+  std::vector< uint8_t > zappedChannels(obs.getNrPaddedChannels(padding[deviceName] / sizeof(uint8_t)));
   AstroData::readZappedChannels(obs, channelsFile, zappedChannels);
   AstroData::readIntegrationSteps(obs, integrationFile, integrationSteps);
   if ( DEBUG ) {
