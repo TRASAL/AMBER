@@ -184,8 +184,7 @@ int main(int argc, char * argv[]) {
     try {
       AstroData::readPSRDADAHeader(obs, *ringBuffer);
     } catch ( AstroData::RingBufferError & err ) {
-      std::cerr << "Cannot read PSRDADA header: ";
-      std::cerr << err.what() << std::endl;
+      std::cerr << "Error: " << err.what() << std::endl;
       return -1;
     }
   } else {
@@ -646,8 +645,7 @@ int main(int argc, char * argv[]) {
           AstroData::readPSRDADA(*ringBuffer, inputDADA.at(batch % obs.getNrDelayBatches()));
         }
       } catch ( AstroData::RingBufferError & err ) {
-        std::cerr << " Impossible to read the PSRDADA buffer: ";
-        std::cerr << err.what() << std::endl;
+        std::cerr << "Error: " << err.what() << std::endl;
         return -1;
       }
       // If there are enough data buffered, proceed with the computation
