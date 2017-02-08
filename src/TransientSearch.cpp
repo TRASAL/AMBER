@@ -179,14 +179,11 @@ int main(int argc, char * argv[]) {
     if ( dada_hdu_connect(ringBuffer) != 0 ) {
       std::cerr << "Impossible to connect to PSRDADA ringbuffer." << std::endl;
     }
+    if ( dada_hdu_lock_read(ringBuffer) != 0 ) {
+      std::cerr << "Impossible to lock the PSRDADA ringbuffer for reading the header." << std::endl;
+    }
     try {
-      if ( dada_hdu_lock_read(ringBuffer) != 0 ) {
-        std::cerr << "Impossible to lock the PSRDADA ringbuffer for reading the header." << std::endl;
-      }
       AstroData::readPSRDADAHeader(obs, *ringBuffer);
-      if ( dada_hdu_unlock_read(ringBuffer) != 0 ) {
-        std::cerr << "Impossible to unlock the PSRDADA ringbuffer for reading the header." << std::endl;
-      }
     } catch ( AstroData::RingBufferError & err ) {
       std::cerr << "Cannot read PSRDADA header: ";
       std::cerr << err.what() << std::endl;
@@ -642,7 +639,6 @@ int main(int argc, char * argv[]) {
         }
       }
     } else {
-      dada_hdu_lock_read(ringBuffer);
       try {
         if ( subbandDedispersion ) {
           AstroData::readPSRDADA(*ringBuffer, inputDADA.at(batch % obs.getNrDelayBatchesSubbanding()));
@@ -654,7 +650,6 @@ int main(int argc, char * argv[]) {
         std::cerr << err.what() << std::endl;
         return -1;
       }
-      dada_hdu_unlock_read(ringBuffer);
       // If there are enough data buffered, proceed with the computation
       // Otherwise, move to the next iteration of the search loop
       if ( subbandDedispersion ) {
@@ -1045,12 +1040,18 @@ int main(int argc, char * argv[]) {
     if ( errorDetected ) {
       output.close();
       if ( dataPSRDADA ) {
+        if ( dada_hdu_unlock_read(ringBuffer) != 0 ) {
+          std::cerr << "Impossible to unlock the PSRDADA ringbuffer for reading the header." << std::endl;
+        }
         dada_hdu_disconnect(ringBuffer);
       }
       return 1;
     }
   }
   if ( dataPSRDADA ) {
+    if ( dada_hdu_unlock_read(ringBuffer) != 0 ) {
+      std::cerr << "Impossible to unlock the PSRDADA ringbuffer for reading the header." << std::endl;
+    }
     dada_hdu_disconnect(ringBuffer);
   }
   output.close();
