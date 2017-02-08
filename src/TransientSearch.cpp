@@ -112,7 +112,8 @@ int main(int argc, char * argv[]) {
       obs.setFrequencyRange(1, args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
       obs.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
     } else if ( dataPSRDADA ) {
-      dadaKey = args.getSwitchArgument< key_t >("-dada_key");
+      std::string temp = args.getSwitchArgument< std::string >("-dada_key");
+      dadaKey = std::stoi("0x" + temp, 0, 16);
       obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
       obs.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthesized_beams"));
       obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
