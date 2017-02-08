@@ -180,7 +180,13 @@ int main(int argc, char * argv[]) {
       std::cerr << "Impossible to connect to PSRDADA ringbuffer." << std::endl;
     }
     try {
+      if ( dada_hdu_lock_read(ringBuffer) != 0 ) {
+        std::cerr << "Impossible to lock the PSRDADA ringbuffer for reading the header." << std::endl;
+      }
       AstroData::readPSRDADAHeader(obs, *ringBuffer);
+      if ( dada_hdu_unlock_read(ringBuffer) != 0 ) {
+        std::cerr << "Impossible to unlock the PSRDADA ringbuffer for reading the header." << std::endl;
+      }
     } catch ( AstroData::RingBufferError & err ) {
       std::cerr << "Cannot read PSRDADA header: ";
       std::cerr << err.what() << std::endl;
