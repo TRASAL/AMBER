@@ -176,7 +176,9 @@ int main(int argc, char * argv[]) {
   } else if ( dataPSRDADA ) {
     ringBuffer = dada_hdu_create(0);
     dada_hdu_set_key(ringBuffer, dadaKey);
-    dada_hdu_connect(ringBuffer);
+    if ( dada_hdu_connect(ringBuffer) != 0 ) {
+      std::cerr << "Impossible to connect to PSRDADA ringbuffer." << std::endl;
+    }
     try {
       AstroData::readPSRDADAHeader(obs, *ringBuffer);
     } catch ( AstroData::RingBufferError & err ) {
