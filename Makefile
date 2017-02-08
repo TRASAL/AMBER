@@ -24,7 +24,7 @@ CL_LIBS := -L"$(OPENCL_LIB)"
 HDF5_LIBS := -L"$(HDF5)/lib"
 
 CFLAGS := -std=c++11 -Wall
-ifneq ($(debug), 1)
+ifneq ($(DEBUG), 1)
 	CFLAGS += -O3 -g0
 else
 	CFLAGS += -O0 -g3
