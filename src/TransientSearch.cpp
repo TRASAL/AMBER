@@ -639,7 +639,7 @@ int main(int argc, char * argv[]) {
       }
     } else {
       try {
-        if ( ipcbuf_eod(reinterpret_cast< ipcbuf_t * >(ringBuffer.data_block)) ) {
+        if ( ipcbuf_eod(reinterpret_cast< ipcbuf_t * >(ringBuffer->data_block)) ) {
           errorDetected = true;
           break;
         }
