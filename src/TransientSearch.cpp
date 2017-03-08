@@ -69,23 +69,30 @@ int main(int argc, char * argv[]) {
   dada_hdu_t * ringBuffer;
 
   try {
+    std::string fileName;
     clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
     clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
     deviceName = args.getSwitchArgument< std::string >("-device_name");
 
     subbandDedispersion = args.getSwitch("-subband_dedispersion");
 
-    AstroData::readPaddingConf(padding, args.getSwitchArgument< std::string >("-padding_file"));
+    fileName = args.getSwitchArgument< std::string >("-padding_file");
+    AstroData::readPaddingConf(padding, fileName);
     channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     integrationFile = args.getSwitchArgument< std::string >("-integration_steps");
     if ( !subbandDedispersion ) {
-      PulsarSearch::readTunedDedispersionConf(dedispersionParameters, args.getSwitchArgument< std::string >("-dedispersion_file"));
+      fileName = args.getSwitchArgument< std::string >("-dedispersion_file");
+      PulsarSearch::readTunedDedispersionConf(dedispersionParameters, fileName);
     } else {
-      PulsarSearch::readTunedDedispersionConf(dedispersionStepOneParameters, args.getSwitchArgument< std::string >("-dedispersion_step_one_file"));
-      PulsarSearch::readTunedDedispersionConf(dedispersionStepTwoParameters, args.getSwitchArgument< std::string >("-dedispersion_step_two_file"));
+      fileName = args.getSwitchArgument< std::string >("-dedispersion_step_one_file");
+      PulsarSearch::readTunedDedispersionConf(dedispersionStepOneParameters, fileName);
+      fileName = args.getSwitchArgument< std::string >("-dedispersion_step_two_file");
+      PulsarSearch::readTunedDedispersionConf(dedispersionStepTwoParameters, fileName);
     }
-    PulsarSearch::readTunedIntegrationConf(integrationParameters, args.getSwitchArgument< std::string >("-integration_file"));
-    PulsarSearch::readTunedSNRConf(snrParameters, args.getSwitchArgument< std::string >("-snr_file"));
+    fileName = args.getSwitchArgument< std::string >("-integration_file");
+    PulsarSearch::readTunedIntegrationConf(integrationParameters, fileName);
+    fileName = args.getSwitchArgument< std::string >("-snr_file");
+    PulsarSearch::readTunedSNRConf(snrParameters, fileName);
 
     compactResults = args.getSwitch("-compact_results");
     print = args.getSwitch("-print");
