@@ -364,7 +364,7 @@ int main(int argc, char * argv[]) {
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()));
     clQueues->at(clDeviceID)[0].finish();
   } catch ( cl::Error & err ) {
-    std::cerr << err.what() << std::endl;
+    std::cerr << "Memory error: " << err.what() << " " << err.err() << std::endl;
     return 1;
   }
 
