@@ -49,12 +49,15 @@ DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ip
 all: bin/BeamDriver.o bin/TransientSearch bin/printTimeSeries
 
 bin/BeamDriver.o: include/BeamDriver.hpp src/BeamDriver.cpp
+	-@mkdir -p bin
 	$(CC) -o bin/BeamDriver.o -c src/BeamDriver.cpp $(INCLUDES) $(CFLAGS)
 
 bin/TransientSearch: $(CL_DEPS) $(DADA_DEPS) $(KERNELS) bin/BeamDriver.o $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp include/configuration.hpp src/TransientSearch.cpp
+	-@mkdir -p bin
 	$(CC) -o bin/TransientSearch src/TransientSearch.cpp bin/BeamDriver.o $(KERNELS) $(CL_DEPS) $(DADA_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(HDF5_LIBS) $(CL_LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
 
 bin/printTimeSeries: $(DEPS) $(DADA_DEPS) $(DEDISPERSION)/bin/Shifts.o $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/printTimeSeries.cpp
+	-@mkdir -p bin
 	$(CC) -o bin/printTimeSeries src/printTimeSeries.cpp $(DEPS) $(DEDISPERSION)/bin/Shifts.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" -I"$(HDF5)/include" $(HDF5_LIBS) $(CL_LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
 
 clean:
