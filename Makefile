@@ -2,19 +2,19 @@
 SOURCE_ROOT ?= $(HOME)
 
 # https://github.com/isazi/utils
-UTILS := $(SOURCE_ROOT)/src/utils
+UTILS := $(SOURCE_ROOT)/utils
 # https://github.com/isazi/OpenCL
-OPENCL := $(SOURCE_ROOT)/src/OpenCL
+OPENCL := $(SOURCE_ROOT)/OpenCL
 # https://github.com/isazi/AstroData
-ASTRODATA := $(SOURCE_ROOT)/src/AstroData
+ASTRODATA := $(SOURCE_ROOT)/AstroData
 # https://github.com/isazi/Dedispersion
-DEDISPERSION := $(SOURCE_ROOT)/src/Dedispersion
+DEDISPERSION := $(SOURCE_ROOT)/Dedispersion
 # https://github.com/isazi/Integration
-INTEGRATION := $(SOURCE_ROOT)/src/Integration
+INTEGRATION := $(SOURCE_ROOT)/Integration
 # https://github.com/isazi/SNR
-SNR := $(SOURCE_ROOT)/src/SNR
+SNR := $(SOURCE_ROOT)/SNR
 # http://psrdada.sourceforge.net/
-PSRDADA  := $(SOURCE_ROOT)/src/psrdada
+PSRDADA  := $(SOURCE_ROOT)/psrdada
 
 # HDF5
 HDF5_INCLUDE ?= -I/usr/include
