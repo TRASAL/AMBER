@@ -48,8 +48,10 @@ int main(int argc, char * argv[]) {
   unsigned int bytesToSkip = 0;
   // PSRDada
   bool dataPSRDada = false;
+#ifdef HAVE_PSRDADA
   key_t dadaKey;
   dada_hdu_t * ringBuffer;
+#endif
 
   try {
     padding = args.getSwitchArgument< unsigned int >("-padding");
@@ -76,9 +78,14 @@ int main(int argc, char * argv[]) {
       observation.setFrequencyRange(1, args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 			observation.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
     } else if ( dataPSRDada ) {
+#ifdef HAVE_PSRDADA
       dadaKey = args.getSwitchArgument< key_t >("-dada_key");
       observation.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
       observation.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
+#else
+      std::cerr << "Not compiled with PSRDADA support" << std::endl;
+      throw std::exception();
+#endif
 		}
     channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
@@ -110,11 +117,13 @@ int main(int argc, char * argv[]) {
 	} else if ( dataSIGPROC ) {
     input[0] = new std::vector< std::vector< inputDataType > * >(observation.getNrBatches());
     AstroData::readSIGPROC(observation, padding, inputBits, bytesToSkip, dataFile, *(input[0]));
+#ifdef HAVE_PSRDADA
   } else if ( dataPSRDada ) {
     ringBuffer = dada_hdu_create(0);
     dada_hdu_set_key(ringBuffer, dadaKey);
     dada_hdu_connect(ringBuffer);
     dada_hdu_lock_read(ringBuffer);
+#endif
 	}
   AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
   output = std::vector< std::ofstream >(observation.getNrBeams());
@@ -180,10 +189,12 @@ int main(int argc, char * argv[]) {
       }
     }
   }
+#ifdef HAVE_PSRDADA
   if ( dataPSRDada ) {
     dada_hdu_unlock_read(ringBuffer);
     dada_hdu_disconnect(ringBuffer);
   }
+#endif
 
   // Close output files
   for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {

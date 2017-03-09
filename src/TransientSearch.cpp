@@ -64,9 +64,11 @@ int main(int argc, char * argv[]) {
   PulsarSearch::tunedDedispersionConf dedispersionStepTwoParameters;
   PulsarSearch::tunedIntegrationConf integrationParameters;
   PulsarSearch::tunedSNRConf snrParameters;
+#ifdef HAVE_PSRDADA
   // PSRDADA
   key_t dadaKey;
   dada_hdu_t * ringBuffer;
+#endif
 
   try {
     std::string fileName;
@@ -100,6 +102,13 @@ int main(int argc, char * argv[]) {
     dataLOFAR = args.getSwitch("-lofar");
     dataSIGPROC = args.getSwitch("-sigproc");
     dataPSRDADA = args.getSwitch("-dada");
+#ifdef HAVE_PSRDADA
+#else
+    if (dataPSRDADA) {
+      std::cerr << "Not compiled with PSRDADA support" << std::endl;
+      throw std::exception();
+    };
+#endif
     if ( !((((!(dataLOFAR && dataSIGPROC) && dataPSRDADA) || (!(dataLOFAR && dataPSRDADA) && dataSIGPROC)) || (!(dataSIGPROC && dataPSRDADA) && dataLOFAR)) || ((!dataLOFAR && !dataSIGPROC) && !dataPSRDADA)) ) {
       std::cerr << "-lofar -sigproc and -dada are mutually exclusive." << std::endl;
       throw std::exception();
@@ -118,12 +127,14 @@ int main(int argc, char * argv[]) {
       obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
       obs.setFrequencyRange(1, args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
       obs.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
+#ifdef HAVE_PSRDADA
     } else if ( dataPSRDADA ) {
       std::string temp = args.getSwitchArgument< std::string >("-dada_key");
       dadaKey = std::stoi("0x" + temp, 0, 16);
       obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
       obs.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthesized_beams"));
       obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
+#endif
     } else {
       obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
       obs.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthesized_beams"));
@@ -179,6 +190,7 @@ int main(int argc, char * argv[]) {
     loadTime.start();
     AstroData::readSIGPROC(obs, padding[deviceName], inputBits, bytesToSkip, dataFile, *(input[0]));
     loadTime.stop();
+#ifdef HAVE_PSRDADA
   } else if ( dataPSRDADA ) {
     ringBuffer = dada_hdu_create(0);
     dada_hdu_set_key(ringBuffer, dadaKey);
@@ -194,6 +206,7 @@ int main(int argc, char * argv[]) {
       std::cerr << "Error: " << err.what() << std::endl;
       return -1;
     }
+#endif
   } else {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       // TODO: if there are multiple synthesized beams, the generated data should take this into account
@@ -277,6 +290,7 @@ int main(int argc, char * argv[]) {
   std::vector< float > snrData;
 
   if ( subbandDedispersion ) {
+#ifdef HAVE_PSRDADA
     if ( dataPSRDADA ) {
       inputDADA.resize(obs.getNrDelayBatchesSubbanding());
       for ( unsigned int batch = 0; batch < obs.getNrDelayBatchesSubbanding(); batch++ ) {
@@ -287,6 +301,7 @@ int main(int argc, char * argv[]) {
         }
       }
     }
+#endif
     if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMsSubbanding())->getSplitBatches() ) {
       // TODO: add support for splitBatches
     } else {
@@ -302,6 +317,7 @@ int main(int argc, char * argv[]) {
     integratedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMsSubbanding() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
     snrData.resize(obs.getNrSynthesizedBeams() * isa::utils::pad(obs.getNrDMsSubbanding() * obs.getNrDMs(), padding[deviceName] / sizeof(float)));
   } else {
+#ifdef HAVE_PSRDADA
     if ( dataPSRDADA ) {
       inputDADA.resize(obs.getNrDelayBatches());
       for ( unsigned int batch = 0; batch < obs.getNrDelayBatches(); batch++ ) {
@@ -312,6 +328,7 @@ int main(int argc, char * argv[]) {
         }
       }
     }
+#endif
     if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitBatches() ) {
       // TODO: add support for splitBatches
     } else {
@@ -645,6 +662,7 @@ int main(int argc, char * argv[]) {
         }
       }
     } else {
+#ifdef HAVE_PSRDADA
       try {
         if ( ipcbuf_eod(reinterpret_cast< ipcbuf_t * >(ringBuffer->data_block)) ) {
           errorDetected = true;
@@ -709,6 +727,7 @@ int main(int argc, char * argv[]) {
           }
         }
       }
+#endif
     }
     inputHandlingTimer.stop();
     // Copy input from host to device
@@ -1048,21 +1067,25 @@ int main(int argc, char * argv[]) {
     }
     if ( errorDetected ) {
       output.close();
+#ifdef HAVE_PSRDADA
       if ( dataPSRDADA ) {
         if ( dada_hdu_unlock_read(ringBuffer) != 0 ) {
           std::cerr << "Impossible to unlock the PSRDADA ringbuffer for reading the header." << std::endl;
         }
         dada_hdu_disconnect(ringBuffer);
       }
+#endif
       return 1;
     }
   }
+#ifdef HAVE_PSRDADA
   if ( dataPSRDADA ) {
     if ( dada_hdu_unlock_read(ringBuffer) != 0 ) {
       std::cerr << "Impossible to unlock the PSRDADA ringbuffer for reading the header." << std::endl;
     }
     dada_hdu_disconnect(ringBuffer);
   }
+#endif
   output.close();
   searchTimer.stop();
 

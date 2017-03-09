@@ -13,8 +13,6 @@ DEDISPERSION := $(SOURCE_ROOT)/Dedispersion
 INTEGRATION := $(SOURCE_ROOT)/Integration
 # https://github.com/isazi/SNR
 SNR := $(SOURCE_ROOT)/SNR
-# http://psrdada.sourceforge.net/
-PSRDADA  := $(SOURCE_ROOT)/psrdada
 
 # HDF5
 HDF5_INCLUDE ?= -I/usr/include
@@ -34,6 +32,13 @@ ifeq ($(openmp), 1)
 	CFLAGS += -fopenmp
 endif
 
+ifdef PSRDADA
+CFLAGS += -DHAVE_PSRDADA
+DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o $(PSRDADA)/src/tmutil.o
+else
+DADA_DEPS := 
+endif
+
 LDFLAGS := -lm
 CL_LDFLAGS := $(LDFLAGS) -lOpenCL
 
@@ -43,7 +48,6 @@ CC := g++
 KERNELS := $(DEDISPERSION)/bin/Shifts.o $(DEDISPERSION)/bin/Dedispersion.o $(INTEGRATION)/bin/Integration.o $(SNR)/bin/SNR.o
 DEPS := $(ASTRODATA)/bin/Observation.o $(ASTRODATA)/bin/Platform.o $(ASTRODATA)/bin/ReadData.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/Timer.o $(UTILS)/bin/utils.o
 CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o
-DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o $(PSRDADA)/src/tmutil.o
 
 
 all: bin/BeamDriver.o bin/TransientSearch bin/printTimeSeries
