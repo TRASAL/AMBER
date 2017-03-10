@@ -215,8 +215,12 @@ int main(int argc, char * argv[]) {
     }
   }
   std::vector< uint8_t > zappedChannels(obs.getNrPaddedChannels(padding[deviceName] / sizeof(uint8_t)));
-  AstroData::readZappedChannels(obs, channelsFile, zappedChannels);
-  AstroData::readIntegrationSteps(obs, integrationFile, integrationSteps);
+  try {
+    AstroData::readZappedChannels(obs, channelsFile, zappedChannels);
+    AstroData::readIntegrationSteps(obs, integrationFile, integrationSteps);
+  } catch ( AstroData::FileError & err ) {
+    std::cerr << err.what() << std::endl;
+  }
   if ( DEBUG ) {
     std::cout << "Device: " << deviceName << std::endl;
     std::cout << "Padding: " << padding[deviceName] << " bytes" << std::endl;
