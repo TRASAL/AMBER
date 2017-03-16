@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <Observation.hpp>
+#include <Platform.hpp>
 
 
 #pragma once
