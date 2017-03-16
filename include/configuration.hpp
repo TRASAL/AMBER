@@ -31,8 +31,8 @@
 #define CONFIGURATION_HPP
 
 // Types for the data
-typedef float inputDataType;
-const std::string inputDataName("float");
+typedef std::uint8_t inputDataType;
+const std::string inputDataName("uchar");
 typedef float intermediateDataType;
 const std::string intermediateDataName("float");
 typedef float outputDataType;
