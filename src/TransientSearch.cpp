@@ -71,30 +71,23 @@ int main(int argc, char * argv[]) {
 #endif
 
   try {
-    std::string fileName;
     clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
     clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
     deviceName = args.getSwitchArgument< std::string >("-device_name");
 
     subbandDedispersion = args.getSwitch("-subband_dedispersion");
 
-    fileName = args.getSwitchArgument< std::string >("-padding_file");
-    AstroData::readPaddingConf(padding, fileName);
+    AstroData::readPaddingConf(padding, args.getSwitchArgument< std::string >("-padding_file"));
     channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     integrationFile = args.getSwitchArgument< std::string >("-integration_steps");
     if ( !subbandDedispersion ) {
-      fileName = args.getSwitchArgument< std::string >("-dedispersion_file");
-      PulsarSearch::readTunedDedispersionConf(dedispersionParameters, fileName);
+      PulsarSearch::readTunedDedispersionConf(dedispersionParameters, args.getSwitchArgument< std::string >("-dedispersion_file"));
     } else {
-      fileName = args.getSwitchArgument< std::string >("-dedispersion_step_one_file");
-      PulsarSearch::readTunedDedispersionConf(dedispersionStepOneParameters, fileName);
-      fileName = args.getSwitchArgument< std::string >("-dedispersion_step_two_file");
-      PulsarSearch::readTunedDedispersionConf(dedispersionStepTwoParameters, fileName);
+      PulsarSearch::readTunedDedispersionConf(dedispersionStepOneParameters, args.getSwitchArgument< std::string >("-dedispersion_step_one_file"));
+      PulsarSearch::readTunedDedispersionConf(dedispersionStepTwoParameters, args.getSwitchArgument< std::string >("-dedispersion_step_two_file"));
     }
-    fileName = args.getSwitchArgument< std::string >("-integration_file");
-    PulsarSearch::readTunedIntegrationConf(integrationParameters, fileName);
-    fileName = args.getSwitchArgument< std::string >("-snr_file");
-    PulsarSearch::readTunedSNRConf(snrParameters, fileName);
+    PulsarSearch::readTunedIntegrationConf(integrationParameters, args.getSwitchArgument< std::string >("-integration_file"));
+    PulsarSearch::readTunedSNRConf(snrParameters, args.getSwitchArgument< std::string >("-snr_file"));
 
     compactResults = args.getSwitch("-compact_results");
     print = args.getSwitch("-print");
@@ -122,6 +115,7 @@ int main(int argc, char * argv[]) {
       }
     } else if ( dataSIGPROC ) {
       obs.setNrBeams(1);
+      obs.setNrSynthesizedBeams(1);
       bytesToSkip = args.getSwitchArgument< unsigned int >("-header");
       dataFile = args.getSwitchArgument< std::string >("-data");
       obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
