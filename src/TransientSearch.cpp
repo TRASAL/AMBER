@@ -606,7 +606,11 @@ int main(int argc, char * argv[]) {
 
   searchTimer.start();
   output.open(outputFile + ".trigger");
-  output << "# batch beam integration_step DM SNR" << std::endl;
+  if ( compactResults ) {
+    output << "# batch beam integration_step DM compactedDMs SNR" << std::endl;
+  } else {
+    output << "# batch beam integration_step DM SNR" << std::endl;
+  }
   for ( unsigned int batch = 0; batch < obs.getNrBatches(); batch++ ) {
     // Load the input
     inputHandlingTimer.start();
@@ -1135,6 +1139,7 @@ void trigger(const bool compactResults, bool subbandDedispersion, const unsigned
   }
   timer.start();
   for ( unsigned int beam = 0; beam < obs.getNrSynthesizedBeams(); beam++ ) {
+    unsigned int compactedDMs = 0;
     unsigned int maxDM = 0;
     double maxSNR = 0.0;
 
@@ -1143,17 +1148,20 @@ void trigger(const bool compactResults, bool subbandDedispersion, const unsigned
         if ( snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm] >= threshold ) {
           if ( previous ) {
             if ( snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm] > maxSNR ) {
+              compactedDMs++;
               maxDM = dm;
               maxSNR = snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm];
             }
           } else {
             previous = true;
+            compactedDMs++;
             maxDM = dm;
             maxSNR = snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm];
           }
         } else if ( previous ) {
-          output << batch << " " << beam << " " << firstDM + (maxDM * obs.getDMStep()) << " " << maxSNR << std::endl;
+          output << batch << " " << beam << " " << integration << " " << firstDM + (maxDM * obs.getDMStep()) << " " << compactedDMs << " " << maxSNR << std::endl;
           previous = false;
+          compactedDMs = 0;
           maxDM = 0;
           maxSNR = 0;
         }
@@ -1164,7 +1172,7 @@ void trigger(const bool compactResults, bool subbandDedispersion, const unsigned
       }
     }
     if ( previous ) {
-      output << batch << " " << beam << " " << integration << " " << firstDM + (maxDM * obs.getDMStep()) << " " << maxSNR << std::endl;
+      output << batch << " " << beam << " " << integration << " " << firstDM + (maxDM * obs.getDMStep()) << " " << compactedDMs << " " << maxSNR << std::endl;
     }
   }
   timer.stop();
