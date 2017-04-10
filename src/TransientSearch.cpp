@@ -559,8 +559,8 @@ int main(int argc, char * argv[]) {
       integrationLocal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->getNrThreadsD0(), 1, 1);
       if ( DEBUG ) {
         std::cout << "integrationDMsSamples (" + std::to_string(*step) + ")" << std::endl;
-        std::cout << "Global: " << integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->getNrThreadsD0() * ((obs.getNrSamplesPerBatch() / *step) / integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->getNrItemsD0()) << ", " << obs.getNrDMsSubbanding() * obs.getNrDMs() << std::endl;
-        std::cout << "Local: " << integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->getNrThreadsD0() << ", 1" << std::endl;
+        std::cout << "Global: " << integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->getNrThreadsD0() * ((obs.getNrSamplesPerBatch() / *step) / integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->getNrItemsD0()) << ", " << obs.getNrDMsSubbanding() * obs.getNrDMs() << ", " << obs.getNrSynthesizedBeams() << std::endl;
+        std::cout << "Local: " << integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->getNrThreadsD0() << ", 1, 1" << std::endl;
         std::cout << "Parameters: ";
         std::cout << integrationParameters[deviceName]->at(obs.getNrDMsSubbanding() * obs.getNrDMs())->at(*step)->print() << std::endl;
         std::cout << std::endl;
