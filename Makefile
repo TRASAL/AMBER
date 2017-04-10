@@ -24,9 +24,9 @@ CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
 
 CFLAGS := -std=c++11 -Wall
 ifdef DEBUG
-	CFLAGS += -O3 -g0
-else
 	CFLAGS += -O0 -g3
+else
+	CFLAGS += -O3 -g0
 endif
 ifdef OPENMP
 	CFLAGS += -fopenmp
