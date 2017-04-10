@@ -28,7 +28,7 @@ ifneq ($(DEBUG), 1)
 else
 	CFLAGS += -O0 -g3
 endif
-ifeq ($(openmp), 1)
+ifeq ($(OPENMP), 1)
 	CFLAGS += -fopenmp
 endif
 
