@@ -234,7 +234,7 @@ int main(int argc, char * argv[]) {
     std::cout << "DMs: " << obs.getNrDMs() << " (" << obs.getFirstDM() << ", " << obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()) << ")" << std::endl;
     std::cout << std::endl;
     if ( (dataLOFAR || dataSIGPROC) ) {
-      std::cout << "Time to load the input: " << std::fixed << std::setprecision(6) << loadTime.getTotalTime() << " batches." << std::endl;
+      std::cout << "Time to load the input: " << std::fixed << std::setprecision(6) << loadTime.getTotalTime() << " seconds." << std::endl;
       std::cout << std::endl;
     }
   }
