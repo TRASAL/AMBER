@@ -23,15 +23,14 @@ INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include" -I"$(DEDIS
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
 
 CFLAGS := -std=c++11 -Wall
-ifneq ($(DEBUG), 1)
+ifdef DEBUG
 	CFLAGS += -O3 -g0
 else
 	CFLAGS += -O0 -g3
 endif
-ifeq ($(OPENMP), 1)
+ifdef OPENMP
 	CFLAGS += -fopenmp
 endif
-
 ifdef PSRDADA
 CFLAGS += -DHAVE_PSRDADA
 DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o $(PSRDADA)/src/tmutil.o
