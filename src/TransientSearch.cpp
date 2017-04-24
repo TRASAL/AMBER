@@ -27,7 +27,7 @@
 #include <configuration.hpp>
 #include <BeamDriver.hpp>
 
-void trigger(const bool compactResults, bool subbandDedispersion, const unsigned int padding, const unsigned int batch, const unsigned int integration, const float threshold, const AstroData::Observation & obs, isa::utils::Timer & timer, const std::vector< float > & snrData, std::ofstream & output);
+void trigger(const bool compactResults, bool subbandDedispersion, const unsigned int padding, const unsigned int batch, const unsigned int integration, const float threshold, const AstroData::Observation & obs, isa::utils::Timer & timer, const std::vector< float > & snrData, const std::vector< unsigned int > & snrSamples, std::ofstream & output);
 
 
 int main(int argc, char * argv[]) {
@@ -288,6 +288,7 @@ int main(int argc, char * argv[]) {
   std::vector< outputDataType > dedispersedData;
   std::vector< outputDataType > integratedData;
   std::vector< float > snrData;
+  std::vector< unsigned int > snrSamples;
 
   if ( subbandDedispersion ) {
 #ifdef HAVE_PSRDADA
@@ -316,6 +317,7 @@ int main(int argc, char * argv[]) {
     dedispersedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMsSubbanding() * obs.getNrDMs() * obs.getNrSamplesPerPaddedBatch(padding[deviceName] / sizeof(outputDataType)));
     integratedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMsSubbanding() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
     snrData.resize(obs.getNrSynthesizedBeams() * isa::utils::pad(obs.getNrDMsSubbanding() * obs.getNrDMs(), padding[deviceName] / sizeof(float)));
+    snrSamples.resize(obs.getNrSynthesizedBeams() * isa::utils::pad(obs.getNrDMsSubbanding() * obs.getNrDMs(), padding[deviceName] / sizeof(unsigned int)));
   } else {
 #ifdef HAVE_PSRDADA
     if ( dataPSRDADA ) {
@@ -342,6 +344,7 @@ int main(int argc, char * argv[]) {
     dedispersedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs() * obs.getNrSamplesPerPaddedBatch(padding[deviceName] / sizeof(outputDataType)));
     integratedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
     snrData.resize(obs.getNrSynthesizedBeams() * obs.getNrPaddedDMs(padding[deviceName] / sizeof(float)));
+    snrSamples.resize(obs.getNrSynthesizedBeams() * obs.getNrPaddedDMs(padding[deviceName] / sizeof(unsigned int)));
   }
   generateBeamDriver(subbandDedispersion, obs, beamDriver, padding[deviceName]);
 
@@ -360,6 +363,7 @@ int main(int argc, char * argv[]) {
   cl::Buffer dedispersedData_d;
   cl::Buffer integratedData_d;
   cl::Buffer snrData_d;
+  cl::Buffer snrSamples_d;
 
   try {
     shiftsStepOne_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsStepOne->size() * sizeof(float), 0, 0);
@@ -369,6 +373,7 @@ int main(int argc, char * argv[]) {
     dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData.size() * sizeof(outputDataType), 0, 0);
     integratedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, integratedData.size() * sizeof(outputDataType), 0, 0);
     snrData_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, snrData.size() * sizeof(float), 0, 0);
+    snrSamples_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, snrSamples.size() * sizeof(unsigned int), 0, 0);
     if ( subbandDedispersion ) {
       shiftsStepTwo_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsStepTwo->size() * sizeof(float), 0, 0);
       subbandedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, subbandedData.size() * sizeof(outputDataType), 0, 0);
@@ -447,6 +452,7 @@ int main(int argc, char * argv[]) {
     snrDMsSamplesK[integrationSteps.size()] = isa::OpenCL::compile("snrDMsSamples" + std::to_string(obs.getNrSamplesPerBatch()), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
     snrDMsSamplesK[integrationSteps.size()]->setArg(0, dedispersedData_d);
     snrDMsSamplesK[integrationSteps.size()]->setArg(1, snrData_d);
+    snrDMsSamplesK[integrationSteps.size()]->setArg(2, snrSamples_d);
   } catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
@@ -481,6 +487,7 @@ int main(int argc, char * argv[]) {
       snrDMsSamplesK[stepNumber] = isa::OpenCL::compile("snrDMsSamples" + std::to_string(obs.getNrSamplesPerBatch() / *step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
       snrDMsSamplesK[stepNumber]->setArg(0, integratedData_d);
       snrDMsSamplesK[stepNumber]->setArg(1, snrData_d);
+      snrDMsSamplesK[stepNumber]->setArg(2, snrSamples_d);
     } catch ( isa::OpenCL::OpenCLError & err ) {
       std::cerr << err.what() << std::endl;
       return 1;
@@ -935,17 +942,20 @@ int main(int argc, char * argv[]) {
         outputCopyTimer.start();
         clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrData_d, CL_TRUE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()), 0, &syncPoint);
         syncPoint.wait();
+        clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrSamples_d, CL_TRUE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()), 0, &syncPoint);
+        syncPoint.wait();
         outputCopyTimer.stop();
       } else {
         clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[integrationSteps.size()], cl::NullRange, snrDMsSamplesGlobal[integrationSteps.size()], snrDMsSamplesLocal[integrationSteps.size()]);
         clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrData_d, CL_FALSE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()));
+        clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrSamples_d, CL_FALSE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()));
         clQueues->at(clDeviceID)[0].finish();
       }
     } catch ( cl::Error & err ) {
       std::cerr << "SNR dedispersed data error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
       errorDetected = true;
     }
-    trigger(compactResults, subbandDedispersion, padding[deviceName], batch, 0, threshold, obs, triggerTimer, snrData, output);
+    trigger(compactResults, subbandDedispersion, padding[deviceName], batch, 0, threshold, obs, triggerTimer, snrData, snrSamples, output);
     if ( DEBUG ) {
       if ( print ) {
         if ( subbandDedispersion ) {
@@ -991,11 +1001,14 @@ int main(int argc, char * argv[]) {
           outputCopyTimer.start();
           clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrData_d, CL_TRUE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()), 0, &syncPoint);
           syncPoint.wait();
+          clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrSamples_d, CL_TRUE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()), 0, &syncPoint);
+          syncPoint.wait();
           outputCopyTimer.stop();
         } else {
           clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*integrationDMsSamplesK[stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber]);
           clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber]);
           clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrData_d, CL_FALSE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()));
+          clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrSamples_d, CL_FALSE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()));
           clQueues->at(clDeviceID)[0].finish();
         }
       } catch ( cl::Error & err ) {
@@ -1041,7 +1054,7 @@ int main(int argc, char * argv[]) {
           }
         }
       }
-      trigger(compactResults, subbandDedispersion, padding[deviceName], batch, *step, threshold, obs, triggerTimer, snrData, output);
+      trigger(compactResults, subbandDedispersion, padding[deviceName], batch, *step, threshold, obs, triggerTimer, snrData, snrSamples, output);
       if ( DEBUG ) {
         if ( print ) {
           if ( subbandDedispersion ) {
@@ -1127,7 +1140,7 @@ int main(int argc, char * argv[]) {
   return 0;
 }
 
-void trigger(const bool compactResults, bool subbandDedispersion, const unsigned int padding, const unsigned int batch, const unsigned int integration, const float threshold, const AstroData::Observation & obs, isa::utils::Timer & timer, const std::vector< float > & snrData, std::ofstream & output) {
+void trigger(const bool compactResults, bool subbandDedispersion, const unsigned int padding, const unsigned int batch, const unsigned int integration, const float threshold, const AstroData::Observation & obs, isa::utils::Timer & timer, const std::vector< float > & snrData, const std::vector< unsigned int > & snrSamples, std::ofstream & output) {
   bool previous = false;
   unsigned int nrDMs = 0;
   float firstDM = 0.0f;
@@ -1143,6 +1156,7 @@ void trigger(const bool compactResults, bool subbandDedispersion, const unsigned
   for ( unsigned int beam = 0; beam < obs.getNrSynthesizedBeams(); beam++ ) {
     unsigned int compactedDMs = 0;
     unsigned int maxDM = 0;
+    unsigned int maxSample = 0;
     double maxSNR = 0.0;
 
     for ( unsigned int dm = 0; dm < nrDMs; dm++ ) {
@@ -1153,28 +1167,52 @@ void trigger(const bool compactResults, bool subbandDedispersion, const unsigned
               compactedDMs++;
               maxDM = dm;
               maxSNR = snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm];
+              maxSample = snrSamples[(beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm];
             }
           } else {
             previous = true;
             compactedDMs++;
             maxDM = dm;
             maxSNR = snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm];
+            maxSample = snrSamples[(beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm];
           }
         } else if ( previous ) {
-          output << batch << " " << beam << " " << integration << " " << firstDM + (maxDM * obs.getDMStep()) << " " << compactedDMs << " " << maxSNR << std::endl;
+          float time = 0.0f;
+
+          if ( integration > 0 ) {
+            time = ((batch * obs.getNrSamplesPerBatch()) + (maxSample * integration)) * obs.getSamplingRate();
+          } else {
+            time = ((batch * obs.getNrSamplesPerBatch()) + maxSample) * obs.getSamplingRate();
+          }
+          output << beam << " " << batch << " " << maxSample << " " << integration << " " << time << " " << firstDM + (maxDM * obs.getDMStep()) << " " << compactedDMs << " " << maxSNR << std::endl;
           previous = false;
           compactedDMs = 0;
           maxDM = 0;
-          maxSNR = 0;
+          maxSample = 0;
+          maxSNR = 0.0;
         }
       } else {
         if ( snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm] >= threshold ) {
-          output << batch << " " << beam << " " << integration << " " << firstDM + (dm * obs.getDMStep()) << " " << snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm] << std::endl;
+          float time = 0.0f;
+
+          if ( integration > 0 ) {
+            time = ((batch * obs.getNrSamplesPerBatch()) + (snrSamples[(beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm] * integration)) * obs.getSamplingRate();
+          } else {
+            time = ((batch * obs.getNrSamplesPerBatch()) + snrSamples[(beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm]) * obs.getSamplingRate();
+          }
+          output << beam << " " << batch << " " << snrSamples[(beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm]  << " " << integration << " " << time << " " << firstDM + (dm * obs.getDMStep()) << " " << snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm] << std::endl;
         }
       }
     }
     if ( previous ) {
-      output << batch << " " << beam << " " << integration << " " << firstDM + (maxDM * obs.getDMStep()) << " " << compactedDMs << " " << maxSNR << std::endl;
+      float time = 0.0f;
+
+      if ( integration > 0 ) {
+        time = ((batch * obs.getNrSamplesPerBatch()) + (maxSample * integration)) * obs.getSamplingRate();
+      } else {
+        time = ((batch * obs.getNrSamplesPerBatch()) + maxSample) * obs.getSamplingRate();
+      }
+      output << beam << " " << batch << " " << maxSample << " " << integration << " " << time << " " << firstDM + (maxDM * obs.getDMStep()) << " " << compactedDMs << " " << maxSNR << std::endl;
     }
   }
   timer.stop();
