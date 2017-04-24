@@ -121,6 +121,7 @@ int main(int argc, char * argv[]) {
       obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
       obs.setFrequencyRange(1, args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
       obs.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
+      obs.setSamplingRate(args.getSwitchArgument< float >("-sampling_rate"));
 #ifdef HAVE_PSRDADA
     } else if ( dataPSRDADA ) {
       std::string temp = args.getSwitchArgument< std::string >("-dada_key");
@@ -139,6 +140,7 @@ int main(int argc, char * argv[]) {
         obs.setFrequencyRange(1, args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
       }
       obs.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
+      obs.setSamplingRate(args.getSwitchArgument< float >("-sampling_rate"));
       random = args.getSwitch("-random");
       width = args.getSwitchArgument< unsigned int >("-width");
       DM = args.getSwitchArgument< float >("-dm");
@@ -156,9 +158,9 @@ int main(int argc, char * argv[]) {
     std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_step_one_file ... -dedispersion_step_two_file ... -subbands ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ..." << std::endl;
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -batches ..." << std::endl;
-    std::cerr << "\t -sigproc -header ... -data ... -batches ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
+    std::cerr << "\t -sigproc -header ... -data ... -batches ... -channels ... -min_freq ... -channel_bandwidth ... -samples ... -sampling_rate ..." << std::endl;
     std::cerr << "\t -dada -dada_key ... -beams ... -synthesized_beams ... -batches ..." << std::endl;
-    std::cerr << "\t [-random] -width ... -dm ... -beams ... -synthesized_beams ... -batches ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
+    std::cerr << "\t [-random] -width ... -dm ... -beams ... -synthesized_beams ... -batches ... -channels ... -min_freq ... -channel_bandwidth ... -samples ... -sampling_rate ..." << std::endl;
     return 1;
   } catch ( std::exception & err ) {
     std::cerr << err.what() << std::endl;
