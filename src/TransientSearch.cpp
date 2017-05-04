@@ -121,7 +121,7 @@ int main(int argc, char * argv[]) {
       obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
       obs.setFrequencyRange(1, args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
       obs.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
-      obs.setSamplingRate(args.getSwitchArgument< float >("-sampling_time"));
+      obs.setSamplingTime(args.getSwitchArgument< float >("-sampling_time"));
 #ifdef HAVE_PSRDADA
     } else if ( dataPSRDADA ) {
       std::string temp = args.getSwitchArgument< std::string >("-dada_key");
@@ -140,7 +140,7 @@ int main(int argc, char * argv[]) {
         obs.setFrequencyRange(1, args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
       }
       obs.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
-      obs.setSamplingRate(args.getSwitchArgument< float >("-sampling_time"));
+      obs.setSamplingTime(args.getSwitchArgument< float >("-sampling_time"));
       random = args.getSwitch("-random");
       width = args.getSwitchArgument< unsigned int >("-width");
       DM = args.getSwitchArgument< float >("-dm");
@@ -1180,9 +1180,9 @@ void trigger(const bool compactResults, bool subbandDedispersion, const unsigned
           float time = 0.0f;
 
           if ( integration > 0 ) {
-            time = ((batch * obs.getNrSamplesPerBatch()) + (maxSample * integration)) * obs.getSamplingRate();
+            time = ((batch * obs.getNrSamplesPerBatch()) + (maxSample * integration)) * obs.getSamplingTime();
           } else {
-            time = ((batch * obs.getNrSamplesPerBatch()) + maxSample) * obs.getSamplingRate();
+            time = ((batch * obs.getNrSamplesPerBatch()) + maxSample) * obs.getSamplingTime();
           }
           output << beam << " " << batch << " " << maxSample << " " << integration << " " << time << " " << firstDM + (maxDM * obs.getDMStep()) << " " << compactedDMs << " " << maxSNR << std::endl;
           previous = false;
@@ -1196,9 +1196,9 @@ void trigger(const bool compactResults, bool subbandDedispersion, const unsigned
           float time = 0.0f;
 
           if ( integration > 0 ) {
-            time = ((batch * obs.getNrSamplesPerBatch()) + (snrSamples[(beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm] * integration)) * obs.getSamplingRate();
+            time = ((batch * obs.getNrSamplesPerBatch()) + (snrSamples[(beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm] * integration)) * obs.getSamplingTime();
           } else {
-            time = ((batch * obs.getNrSamplesPerBatch()) + snrSamples[(beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm]) * obs.getSamplingRate();
+            time = ((batch * obs.getNrSamplesPerBatch()) + snrSamples[(beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm]) * obs.getSamplingTime();
           }
           output << beam << " " << batch << " " << snrSamples[(beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm]  << " " << integration << " " << time << " " << firstDM + (dm * obs.getDMStep()) << " " << snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm] << std::endl;
         }
@@ -1208,9 +1208,9 @@ void trigger(const bool compactResults, bool subbandDedispersion, const unsigned
       float time = 0.0f;
 
       if ( integration > 0 ) {
-        time = ((batch * obs.getNrSamplesPerBatch()) + (maxSample * integration)) * obs.getSamplingRate();
+        time = ((batch * obs.getNrSamplesPerBatch()) + (maxSample * integration)) * obs.getSamplingTime();
       } else {
-        time = ((batch * obs.getNrSamplesPerBatch()) + maxSample) * obs.getSamplingRate();
+        time = ((batch * obs.getNrSamplesPerBatch()) + maxSample) * obs.getSamplingTime();
       }
       output << beam << " " << batch << " " << maxSample << " " << integration << " " << time << " " << firstDM + (maxDM * obs.getDMStep()) << " " << compactedDMs << " " << maxSNR << std::endl;
     }

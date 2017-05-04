@@ -49,7 +49,7 @@ DEPS := $(ASTRODATA)/bin/Observation.o $(ASTRODATA)/bin/Platform.o $(ASTRODATA)/
 CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o
 
 
-all: bin/BeamDriver.o bin/TransientSearch bin/printTimeSeries
+all: bin/BeamDriver.o bin/TransientSearch
 
 bin/BeamDriver.o: include/BeamDriver.hpp src/BeamDriver.cpp
 	-@mkdir -p bin
@@ -58,10 +58,6 @@ bin/BeamDriver.o: include/BeamDriver.hpp src/BeamDriver.cpp
 bin/TransientSearch: $(CL_DEPS) $(DADA_DEPS) $(KERNELS) bin/BeamDriver.o $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp include/configuration.hpp src/TransientSearch.cpp
 	-@mkdir -p bin
 	$(CC) -o bin/TransientSearch src/TransientSearch.cpp bin/BeamDriver.o $(KERNELS) $(CL_DEPS) $(DADA_DEPS) $(HDF5_INCLUDE) $(CL_INCLUDES) $(CL_LIBS) $(HDF5_LDFLAGS) $(HDF5_LIBS) $(CL_LDFLAGS) $(CFLAGS)
-
-bin/printTimeSeries: $(DEPS) $(DADA_DEPS) $(DEDISPERSION)/bin/Shifts.o $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/printTimeSeries.cpp
-	-@mkdir -p bin
-	$(CC) -o bin/printTimeSeries src/printTimeSeries.cpp $(DEPS) $(DEDISPERSION)/bin/Shifts.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" $(HDF5_INCLUDE) $(HDF5_LIBS) $(HDF5_LDFLAGS) $(CL_LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
