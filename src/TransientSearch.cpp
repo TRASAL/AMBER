@@ -829,42 +829,62 @@ int main(int argc, char * argv[]) {
     }
 
     // Dedispersion
-    try {
-      if ( subbandDedispersion ) {
-        if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMsSubbanding())->getSplitBatches() ) {
-          // TODO: add support for splitBatches
-        }
-        if ( SYNC ) {
+    if ( subbandDedispersion ) {
+      if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMsSubbanding())->getSplitBatches() ) {
+        // TODO: add support for splitBatches
+      }
+      if ( SYNC ) {
+        try {
           dedispersionTimer.start();
           dedispersionStepOneTimer.start();
           clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, &syncPoint);
           syncPoint.wait();
           dedispersionStepOneTimer.stop();
+        } catch ( cl::Error & err ) {
+          std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
+          errorDetected = true;
+        }
+        try {
           dedispersionStepTwoTimer.start();
           clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, &syncPoint);
           syncPoint.wait();
           dedispersionStepTwoTimer.stop();
           dedispersionTimer.stop();
-        } else {
-          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, 0);
-          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, 0);
+        } catch ( cl::Error & err ) {
+          std::cerr << "Dedispersion Step Two error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
+          errorDetected = true;
         }
       } else {
-        if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitBatches() ) {
-          // TODO: add support for splitBatches
+        try {
+          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, 0);
+        } catch ( cl::Error & err ) {
+          std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
+          errorDetected = true;
         }
-        if ( SYNC ) {
-          dedispersionTimer.start();
-          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint);
-          syncPoint.wait();
-          dedispersionTimer.stop();
-        } else {
-          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal);
+        try {
+          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, 0);
+        } catch ( cl::Error & err ) {
+          std::cerr << "Dedispersion Step Two error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
+          errorDetected = true;
         }
       }
-    } catch ( cl::Error & err ) {
-      std::cerr << "Dedispersion error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
-      errorDetected = true;
+    } else {
+      try {
+          if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitBatches() ) {
+            // TODO: add support for splitBatches
+          }
+          if ( SYNC ) {
+            dedispersionTimer.start();
+            clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint);
+            syncPoint.wait();
+            dedispersionTimer.stop();
+          } else {
+            clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal);
+          }
+      } catch ( cl::Error & err ) {
+        std::cerr << "Dedispersion error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
+        errorDetected = true;
+      }
     }
     if ( DEBUG ) {
       if ( print ) {
