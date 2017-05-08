@@ -248,7 +248,7 @@ int main(int argc, char * argv[]) {
   std::vector< std::vector< cl::CommandQueue > > * clQueues = new std::vector< std::vector < cl::CommandQueue > >();
 
   try {
-    isa::OpenCL::initializeOpenCL(clPlatformID, obs.getNrBeams(), clPlatforms, clContext, clDevices, clQueues);
+    isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
   } catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
