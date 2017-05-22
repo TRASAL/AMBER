@@ -23,15 +23,14 @@ INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include" -I"$(DEDIS
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
 
 CFLAGS := -std=c++11 -Wall
-ifneq ($(DEBUG), 1)
-	CFLAGS += -O3 -g0
-else
+ifdef DEBUG
 	CFLAGS += -O0 -g3
+else
+	CFLAGS += -O3 -g0
 endif
-ifeq ($(openmp), 1)
+ifdef OPENMP
 	CFLAGS += -fopenmp
 endif
-
 ifdef PSRDADA
 CFLAGS += -DHAVE_PSRDADA
 DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o $(PSRDADA)/src/tmutil.o
@@ -50,7 +49,7 @@ DEPS := $(ASTRODATA)/bin/Observation.o $(ASTRODATA)/bin/Platform.o $(ASTRODATA)/
 CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o
 
 
-all: bin/BeamDriver.o bin/TransientSearch bin/printTimeSeries
+all: bin/BeamDriver.o bin/TransientSearch
 
 bin/BeamDriver.o: include/BeamDriver.hpp src/BeamDriver.cpp
 	-@mkdir -p bin
@@ -59,10 +58,6 @@ bin/BeamDriver.o: include/BeamDriver.hpp src/BeamDriver.cpp
 bin/TransientSearch: $(CL_DEPS) $(DADA_DEPS) $(KERNELS) bin/BeamDriver.o $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp include/configuration.hpp src/TransientSearch.cpp
 	-@mkdir -p bin
 	$(CC) -o bin/TransientSearch src/TransientSearch.cpp bin/BeamDriver.o $(KERNELS) $(CL_DEPS) $(DADA_DEPS) $(HDF5_INCLUDE) $(CL_INCLUDES) $(CL_LIBS) $(HDF5_LDFLAGS) $(HDF5_LIBS) $(CL_LDFLAGS) $(CFLAGS)
-
-bin/printTimeSeries: $(DEPS) $(DADA_DEPS) $(DEDISPERSION)/bin/Shifts.o $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/printTimeSeries.cpp
-	-@mkdir -p bin
-	$(CC) -o bin/printTimeSeries src/printTimeSeries.cpp $(DEPS) $(DEDISPERSION)/bin/Shifts.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" $(HDF5_INCLUDE) $(HDF5_LIBS) $(HDF5_LDFLAGS) $(CL_LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
