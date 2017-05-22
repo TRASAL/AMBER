@@ -510,7 +510,7 @@ int main(int argc, char * argv[]) {
         std::cout << dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMsSubbanding())->print() << std::endl;
         std::cout << std::endl;
     }
-    dedispersionStepTwoGlobal = cl::NDRange(isa::utils::pad(obs.getNrSamplesPerBatchSubbanding() / dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD0(), dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0()), obs.getNrDMs() / dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1(), obs.getNrBeams() * obs.getNrDMsSubbanding());
+    dedispersionStepTwoGlobal = cl::NDRange(isa::utils::pad(obs.getNrSamplesPerBatchSubbanding() / dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD0(), dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0()), obs.getNrDMs() / dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1(), obs.getNrSynthesizedBeams() * obs.getNrDMsSubbanding());
     dedispersionStepTwoLocal = cl::NDRange(dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0(), dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD1(), 1);
     if ( DEBUG ) {
       std::cout << "DedispersionStepTwo" << std::endl;
