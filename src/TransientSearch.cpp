@@ -225,6 +225,7 @@ int main(int argc, char * argv[]) {
     std::cout << "Synthesized Beams: " << obs.getNrSynthesizedBeams() << std::endl;
     std::cout << "Batches: " << obs.getNrBatches() << std::endl;
     std::cout << "Samples: " << obs.getNrSamplesPerBatch() << std::endl;
+    std::cout << "Sampling time: " << obs.getSamplingTime() << std::endl;
     std::cout << "Frequency range: " << obs.getMinFreq() << " MHz, " << obs.getMaxFreq() << " MHz" << std::endl;
     std::cout << "Subbands: " << obs.getNrSubbands() << " (" << obs.getSubbandBandwidth() << " MHz)" << std::endl;
     std::cout << "Channels: " << obs.getNrChannels() << " (" << obs.getChannelBandwidth() << " MHz)" << std::endl;
