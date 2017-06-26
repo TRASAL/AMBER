@@ -32,7 +32,7 @@ void trigger(const bool subbandDedispersion, const unsigned int padding, const u
       if ( snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm] >= threshold ) {
         triggeredEvent event;
         event.beam = beam;
-        event.sample = snrSamples[(beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm];
+        event.sample = samplesData[(beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm];
         event.integration = integration;
         event.DM = dm;
         event.SNR = snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm];
