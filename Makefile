@@ -49,15 +49,19 @@ DEPS := $(ASTRODATA)/bin/Observation.o $(ASTRODATA)/bin/Platform.o $(ASTRODATA)/
 CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o
 
 
-all: bin/BeamDriver.o bin/TransientSearch
+all: bin/BeamDriver.o bin/Trigger.o bin/TransientSearch
 
 bin/BeamDriver.o: include/BeamDriver.hpp src/BeamDriver.cpp
 	-@mkdir -p bin
 	$(CC) -o bin/BeamDriver.o -c src/BeamDriver.cpp $(INCLUDES) $(CFLAGS)
 
-bin/TransientSearch: $(CL_DEPS) $(DADA_DEPS) $(KERNELS) bin/BeamDriver.o $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp include/configuration.hpp src/TransientSearch.cpp
+bin/Trigger.o: include/Trigger.hpp src/Trigger.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/TransientSearch src/TransientSearch.cpp bin/BeamDriver.o $(KERNELS) $(CL_DEPS) $(DADA_DEPS) $(HDF5_INCLUDE) $(CL_INCLUDES) $(CL_LIBS) $(HDF5_LDFLAGS) $(HDF5_LIBS) $(CL_LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/Trigger.o -c src/Trigger.cpp $(INCLUDES) $(CFLAGS)
+
+bin/TransientSearch: $(CL_DEPS) $(DADA_DEPS) $(KERNELS) bin/BeamDriver.o bin/Trigger.o $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp include/configuration.hpp src/TransientSearch.cpp
+	-@mkdir -p bin
+	$(CC) -o bin/TransientSearch src/TransientSearch.cpp bin/BeamDriver.o bin/Trigger.o $(KERNELS) $(CL_DEPS) $(DADA_DEPS) $(HDF5_INCLUDE) $(CL_INCLUDES) $(CL_LIBS) $(HDF5_LDFLAGS) $(HDF5_LIBS) $(CL_LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
