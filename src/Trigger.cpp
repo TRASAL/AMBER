@@ -87,7 +87,7 @@ void compact(const AstroData::Observation & observation, const triggeredEvents_t
         window++;
       }
       event += (window - 1);
-      compactedEvent.at(finalEvent.beam).push_back(finalEvent);
+      compactedEvents.at(finalEvent.beam).push_back(finalEvent);
     }
   }
 }
