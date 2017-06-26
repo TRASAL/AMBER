@@ -1145,7 +1145,7 @@ int main(int argc, char * argv[]) {
       }
     } else {
       for ( auto beamEvents = triggeredEvents.begin(); beamEvents != triggeredEvents.end(); ++beamEvents ) {
-        for ( auto event = beamEvents->second.begin(); event != beamEvents->second.end(); ++event ) {
+        for ( auto event = beamEvents->begin()->second.begin(); event != beamEvents->begin()->second.end(); ++event ) {
           unsigned int integration = 0;
           float firstDM = 0.0f;
 
