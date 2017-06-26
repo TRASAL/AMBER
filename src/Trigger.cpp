@@ -44,7 +44,7 @@ void trigger(const bool subbandDedispersion, const unsigned int padding, const u
           std::vector<triggeredEvent> events;
 
           events.push_back(event);
-          triggeredEvents.at(beam).insert(std::pair(dm, events));
+          triggeredEvents.at(beam).insert(std::pair<unsigned int, std::vector<triggeredEvnt>>(dm, events));
         }
       }
     }
