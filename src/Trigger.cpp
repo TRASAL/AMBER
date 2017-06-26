@@ -36,10 +36,10 @@ void trigger(const bool subbandDedispersion, const unsigned int padding, const u
         event.integration = integration;
         event.DM = dm;
         event.SNR = snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm];
-        if ( triggeredEvents.at(beam).at(dm) != std::out_of_range ) {
+        try {
           // Add event to its existing list
           triggeredEvents.at(beam).at(dm).push_back(event);
-        } else {
+        } catch ( std::out_of_range err ) {
           // Add event to new list
           std::vector<triggeredEvent> events;
 
