@@ -85,11 +85,12 @@ void compact(const AstroData::Observation & observation, const triggeredEvents_t
         finalEvent.integration = event->integration;
         finalEvent.DM = event->DM;
         finalEvent.SNR = event->SNR;
-        finalEvent.compactedDMs += window;
         window++;
       }
-      event += (window - 1);
+      finalEvent.compactedDMs = window;
       compactedEvents.at(finalEvent.beam).push_back(finalEvent);
+      // Move the iterator forward
+      event += (window - 1);
     }
   }
 }
