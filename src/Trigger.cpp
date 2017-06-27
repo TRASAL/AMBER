@@ -81,11 +81,11 @@ void compact(const AstroData::Observation & observation, const triggeredEvents_t
 
       while ( (event->DM + window) == (event + window)->DM ) {
         if ( (event + window)->SNR > finalEvent.SNR ) {
-          finalEvent.beam = event->beam;
-          finalEvent.sample = event->sample;
-          finalEvent.integration = event->integration;
-          finalEvent.DM = event->DM;
-          finalEvent.SNR = event->SNR;
+          finalEvent.beam = (event + window)->beam;
+          finalEvent.sample = (event + window)->sample;
+          finalEvent.integration = (event + window)->integration;
+          finalEvent.DM = (event + window)->DM;
+          finalEvent.SNR = (event + window)->SNR;
         }
         window++;
       }
