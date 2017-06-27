@@ -55,7 +55,6 @@ void compact(const AstroData::Observation & observation, const triggeredEvents_t
   compactedEvents_t temporaryEvents(observation.getNrSynthesizedBeams());
 
   // Compact integration
-#pragma omp parallel for
   for ( auto beamEvents = triggeredEvents.begin(); beamEvents != triggeredEvents.end(); ++beamEvents ) {
     for ( auto dmEvents = beamEvents->begin(); dmEvents != beamEvents->end(); ++dmEvents ) {
       compactedEvent event;
@@ -73,7 +72,6 @@ void compact(const AstroData::Observation & observation, const triggeredEvents_t
     }
   }
   // Compact DM
-#pragma omp parallel for
   for ( auto beamEvents = temporaryEvents.begin(); beamEvents != temporaryEvents.end(); ++beamEvents ) {
     for ( auto event = beamEvents->begin(); event != beamEvents->end(); ++event ) {
       compactedEvent finalEvent;
