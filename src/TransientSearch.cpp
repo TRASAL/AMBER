@@ -1145,21 +1145,23 @@ int main(int argc, char * argv[]) {
       }
     } else {
       for ( auto beamEvents = triggeredEvents.begin(); beamEvents != triggeredEvents.end(); ++beamEvents ) {
-        for ( auto event = beamEvents->begin()->second.begin(); event != beamEvents->begin()->second.end(); ++event ) {
-          unsigned int integration = 0;
-          float firstDM = 0.0f;
+        for ( auto dmEvents = beamEvents->begin(); dmEvents != beamEvents->end(); ++dmEvents) {
+          for ( auto event = dmEvents->second.begin(); event != dmEvents->second.end(); ++event ) {
+            unsigned int integration = 0;
+            float firstDM = 0.0f;
 
-          if ( event->integration == 0 ) {
-            integration = 1;
-          } else {
-            integration = event->integration;
+            if ( event->integration == 0 ) {
+              integration = 1;
+            } else {
+              integration = event->integration;
+            }
+            if ( subbandDedispersion ) {
+              firstDM = obs.getFirstDMSubbanding();
+            } else {
+              firstDM = obs.getFirstDM();
+            }
+            output << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << ((batch * obs.getNrSamplesPerBatch()) + (event->sample * integration)) * obs.getSamplingTime() << " " << firstDM + (event->DM * obs.getDMStep()) << " " << event->SNR << std::endl;
           }
-          if ( subbandDedispersion ) {
-            firstDM = obs.getFirstDMSubbanding();
-          } else {
-            firstDM = obs.getFirstDM();
-          }
-          output << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << ((batch * obs.getNrSamplesPerBatch()) + (event->sample * integration)) * obs.getSamplingTime() << " " << firstDM + (event->DM * obs.getDMStep()) << " " << event->SNR << std::endl;
         }
       }
     }
