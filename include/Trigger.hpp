@@ -31,6 +31,7 @@ struct triggeredEvent {
 };
 
 struct compactedEvent : triggeredEvent {
+  unsigned int compatedIntegration = 1;
   unsigned int compactedDMs = 1;
 };
 

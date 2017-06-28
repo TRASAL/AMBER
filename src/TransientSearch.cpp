@@ -616,7 +616,7 @@ int main(int argc, char * argv[]) {
   searchTimer.start();
   output.open(outputFile + ".trigger");
   if ( compactResults ) {
-    output << "# beam batch sample integration_step time DM compacted_DMs SNR" << std::endl;
+    output << "# beam batch sample integration_step compacted_integration_steps time DM compacted_DMs SNR" << std::endl;
   } else {
     output << "# beam batch sample integration_step time DM SNR" << std::endl;
   }
@@ -1140,7 +1140,7 @@ int main(int argc, char * argv[]) {
           } else {
             firstDM = obs.getFirstDM();
           }
-          output << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << ((batch * obs.getNrSamplesPerBatch()) + (event->sample * integration)) * obs.getSamplingTime() << " " << firstDM + (event->DM * obs.getDMStep()) << " " << event->compactedDMs << " " << event->SNR << std::endl;
+          output << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << event->compactedIntegration << " " << ((batch * obs.getNrSamplesPerBatch()) + (event->sample * integration)) * obs.getSamplingTime() << " " << firstDM + (event->DM * obs.getDMStep()) << " " << event->compactedDMs << " " << event->SNR << std::endl;
         }
       }
     } else {

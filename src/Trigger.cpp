@@ -68,6 +68,7 @@ void compact(const AstroData::Observation & observation, const triggeredEvents_t
           event.SNR = dmEvent->SNR;
         }
       }
+      event.compactedIntegration = dmEvents->second.size();
       temporaryEvents.at(event.beam).push_back(event);
     }
   }
@@ -82,6 +83,7 @@ void compact(const AstroData::Observation & observation, const triggeredEvents_t
           finalEvent.beam = (event + window)->beam;
           finalEvent.sample = (event + window)->sample;
           finalEvent.integration = (event + window)->integration;
+          finalEvent.compactedIntegration = (event + window)->compactedIntegration;
           finalEvent.DM = (event + window)->DM;
           finalEvent.SNR = (event + window)->SNR;
         }
