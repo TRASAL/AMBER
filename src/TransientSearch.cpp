@@ -616,9 +616,9 @@ int main(int argc, char * argv[]) {
   searchTimer.start();
   output.open(outputFile + ".trigger");
   if ( compactResults ) {
-    output << "# beam batch sample integration time DM compactedDMs SNR" << std::endl;
+    output << "# beam batch sample integration_step time DM compacted_DMs SNR" << std::endl;
   } else {
-    output << "# beam batch sample integration time DM SNR" << std::endl;
+    output << "# beam batch sample integration_step time DM SNR" << std::endl;
   }
   for ( unsigned int batch = 0; batch < obs.getNrBatches(); batch++ ) {
     triggeredEvents_t triggeredEvents(obs.getNrSynthesizedBeams());
