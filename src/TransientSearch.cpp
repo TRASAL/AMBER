@@ -59,11 +59,11 @@ int main(int argc, char * argv[]) {
   AstroData::Observation obs;
   // Configurations
   AstroData::paddingConf padding;
-  PulsarSearch::tunedDedispersionConf dedispersionParameters;
-  PulsarSearch::tunedDedispersionConf dedispersionStepOneParameters;
-  PulsarSearch::tunedDedispersionConf dedispersionStepTwoParameters;
-  PulsarSearch::tunedIntegrationConf integrationParameters;
-  PulsarSearch::tunedSNRConf snrParameters;
+  Dedispersion::tunedDedispersionConf dedispersionParameters;
+  Dedispersion::tunedDedispersionConf dedispersionStepOneParameters;
+  Dedispersion::tunedDedispersionConf dedispersionStepTwoParameters;
+  Integration::tunedIntegrationConf integrationParameters;
+  SNR::tunedSNRConf snrParameters;
 #ifdef HAVE_PSRDADA
   // PSRDADA
   key_t dadaKey;
@@ -81,13 +81,13 @@ int main(int argc, char * argv[]) {
     channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     integrationFile = args.getSwitchArgument< std::string >("-integration_steps");
     if ( !subbandDedispersion ) {
-      PulsarSearch::readTunedDedispersionConf(dedispersionParameters, args.getSwitchArgument< std::string >("-dedispersion_file"));
+      Dedispersion::readTunedDedispersionConf(dedispersionParameters, args.getSwitchArgument< std::string >("-dedispersion_file"));
     } else {
-      PulsarSearch::readTunedDedispersionConf(dedispersionStepOneParameters, args.getSwitchArgument< std::string >("-dedispersion_step_one_file"));
-      PulsarSearch::readTunedDedispersionConf(dedispersionStepTwoParameters, args.getSwitchArgument< std::string >("-dedispersion_step_two_file"));
+      Dedispersion::readTunedDedispersionConf(dedispersionStepOneParameters, args.getSwitchArgument< std::string >("-dedispersion_step_one_file"));
+      Dedispersion::readTunedDedispersionConf(dedispersionStepTwoParameters, args.getSwitchArgument< std::string >("-dedispersion_step_two_file"));
     }
-    PulsarSearch::readTunedIntegrationConf(integrationParameters, args.getSwitchArgument< std::string >("-integration_file"));
-    PulsarSearch::readTunedSNRConf(snrParameters, args.getSwitchArgument< std::string >("-snr_file"));
+    Integration::readTunedIntegrationConf(integrationParameters, args.getSwitchArgument< std::string >("-integration_file"));
+    SNR::readTunedSNRConf(snrParameters, args.getSwitchArgument< std::string >("-snr_file"));
 
     compactResults = args.getSwitch("-compact_results");
     print = args.getSwitch("-print");
@@ -256,8 +256,8 @@ int main(int argc, char * argv[]) {
   }
 
   // Host memory allocation
-  std::vector< float > * shiftsStepOne = PulsarSearch::getShifts(obs, padding[deviceName]);
-  std::vector< float > * shiftsStepTwo = PulsarSearch::getShiftsStepTwo(obs, padding[deviceName]);
+  std::vector< float > * shiftsStepOne = Dedispersion::getShifts(obs, padding[deviceName]);
+  std::vector< float > * shiftsStepTwo = Dedispersion::getShiftsStepTwo(obs, padding[deviceName]);
   if ( DEBUG ) {
     if ( print ) {
       std::cerr << "shiftsStepOne" << std::endl;
@@ -397,7 +397,7 @@ int main(int argc, char * argv[]) {
   std::vector< cl::Kernel * > integrationDMsSamplesK(integrationSteps.size() + 1), snrDMsSamplesK(integrationSteps.size() + 1);
 
   if ( subbandDedispersion ) {
-    code = PulsarSearch::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(*(dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))), padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shiftsStepOne);
+    code = Dedispersion::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(*(dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))), padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shiftsStepOne);
     try {
       dedispersionStepOneK = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
       if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getSplitBatches() ) {
@@ -413,7 +413,7 @@ int main(int argc, char * argv[]) {
       return 1;
     }
     delete code;
-    code = PulsarSearch::getSubbandDedispersionStepTwoOpenCL< outputDataType >(*(dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())), padding[deviceName], outputDataName, obs, *shiftsStepTwo);
+    code = Dedispersion::getSubbandDedispersionStepTwoOpenCL< outputDataType >(*(dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())), padding[deviceName], outputDataName, obs, *shiftsStepTwo);
     try {
       dedispersionStepTwoK = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
       dedispersionStepTwoK->setArg(0, subbandedData_d);
@@ -426,7 +426,7 @@ int main(int argc, char * argv[]) {
     }
     delete code;
   } else {
-    code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(*(dedispersionParameters.at(deviceName)->at(obs.getNrDMs())), padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shiftsStepOne);
+    code = Dedispersion::getDedispersionOpenCL< inputDataType, outputDataType >(*(dedispersionParameters.at(deviceName)->at(obs.getNrDMs())), padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shiftsStepOne);
     try {
       dedispersionK = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
       if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitBatches() ) {
@@ -445,9 +445,9 @@ int main(int argc, char * argv[]) {
     delete code;
   }
   if ( subbandDedispersion ) {
-    code = PulsarSearch::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())), outputDataName, obs, obs.getNrSamplesPerBatch(), padding[deviceName]);
+    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())), outputDataName, obs, obs.getNrSamplesPerBatch(), padding[deviceName]);
   } else {
-    code = PulsarSearch::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())), outputDataName, obs, obs.getNrSamplesPerBatch(), padding[deviceName]);
+    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())), outputDataName, obs, obs.getNrSamplesPerBatch(), padding[deviceName]);
   }
   try {
     snrDMsSamplesK[integrationSteps.size()] = isa::OpenCL::compile("snrDMsSamples" + std::to_string(obs.getNrSamplesPerBatch()), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
@@ -464,9 +464,9 @@ int main(int argc, char * argv[]) {
 
     std::advance(step, stepNumber);
     if ( subbandDedispersion ) {
-      code = PulsarSearch::getIntegrationDMsSamplesOpenCL< outputDataType >(*(integrationParameters[deviceName]->at(obs.getNrDMs(true) * obs.getNrDMs())->at(*step)), obs, outputDataName, *step, padding[deviceName]);
+      code = Integration::getIntegrationDMsSamplesOpenCL< outputDataType >(*(integrationParameters[deviceName]->at(obs.getNrDMs(true) * obs.getNrDMs())->at(*step)), obs, outputDataName, *step, padding[deviceName]);
     } else {
-      code = PulsarSearch::getIntegrationDMsSamplesOpenCL< outputDataType >(*(integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)), obs, outputDataName, *step, padding[deviceName]);
+      code = Integration::getIntegrationDMsSamplesOpenCL< outputDataType >(*(integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)), obs, outputDataName, *step, padding[deviceName]);
     }
     try {
       if ( *step > 1 ) {
@@ -480,9 +480,9 @@ int main(int argc, char * argv[]) {
     }
     delete code;
     if ( subbandDedispersion ) {
-      code = PulsarSearch::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)), outputDataName, obs, obs.getNrSamplesPerBatch() / *step, padding[deviceName]);
+      code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)), outputDataName, obs, obs.getNrSamplesPerBatch() / *step, padding[deviceName]);
     } else {
-      code = PulsarSearch::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)), outputDataName, obs, obs.getNrSamplesPerBatch() / *step, padding[deviceName]);
+      code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)), outputDataName, obs, obs.getNrSamplesPerBatch() / *step, padding[deviceName]);
     }
     try {
       snrDMsSamplesK[stepNumber] = isa::OpenCL::compile("snrDMsSamples" + std::to_string(obs.getNrSamplesPerBatch() / *step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
