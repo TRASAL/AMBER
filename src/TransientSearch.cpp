@@ -95,8 +95,13 @@ int main(int argc, char * argv[]) {
     dataLOFAR = args.getSwitch("-lofar");
     dataSIGPROC = args.getSwitch("-sigproc");
     dataPSRDADA = args.getSwitch("-dada");
-#ifdef HAVE_PSRDADA
-#else
+#ifndef HAVE_HDF5
+    if (dataLOFAR) {
+      std::cerr << "Not compiled with HDF5 support" << std::endl;
+      throw std::exception();
+    };
+#endif
+#ifndef HAVE_PSRDADA
     if (dataPSRDADA) {
       std::cerr << "Not compiled with PSRDADA support" << std::endl;
       throw std::exception();
@@ -106,6 +111,7 @@ int main(int argc, char * argv[]) {
       std::cerr << "-lofar -sigproc and -dada are mutually exclusive." << std::endl;
       throw std::exception();
     } else if ( dataLOFAR ) {
+#ifdef HAVE_HDF5
       obs.setNrBeams(1);
       headerFile = args.getSwitchArgument< std::string >("-header");
       dataFile = args.getSwitchArgument< std::string >("-data");
@@ -113,6 +119,7 @@ int main(int argc, char * argv[]) {
       if ( limit ) {
         obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
       }
+#endif
     } else if ( dataSIGPROC ) {
       obs.setNrBeams(1);
       obs.setNrSynthesizedBeams(1);
@@ -122,8 +129,8 @@ int main(int argc, char * argv[]) {
       obs.setFrequencyRange(1, args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
       obs.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
       obs.setSamplingTime(args.getSwitchArgument< float >("-sampling_time"));
-#ifdef HAVE_PSRDADA
     } else if ( dataPSRDADA ) {
+#ifdef HAVE_PSRDADA
       std::string temp = args.getSwitchArgument< std::string >("-dada_key");
       dadaKey = std::stoi("0x" + temp, 0, 16);
       obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
@@ -173,6 +180,7 @@ int main(int argc, char * argv[]) {
   std::vector< std::vector< inputDataType > * > inputDADA;
   std::set< unsigned int > integrationSteps;
   if ( dataLOFAR ) {
+#ifdef HAVE_HDF5
     input[0] = new std::vector< std::vector< inputDataType > * >(obs.getNrBatches());
     loadTime.start();
     if ( limit ) {
@@ -181,13 +189,14 @@ int main(int argc, char * argv[]) {
       AstroData::readLOFAR(headerFile, dataFile, obs, padding[deviceName], *(input[0]));
     }
     loadTime.stop();
+#endif
   } else if ( dataSIGPROC ) {
     input[0] = new std::vector< std::vector< inputDataType > * >(obs.getNrBatches());
     loadTime.start();
     AstroData::readSIGPROC(obs, padding[deviceName], inputBits, bytesToSkip, dataFile, *(input[0]));
     loadTime.stop();
-#ifdef HAVE_PSRDADA
   } else if ( dataPSRDADA ) {
+#ifdef HAVE_PSRDADA
     ringBuffer = dada_hdu_create(0);
     dada_hdu_set_key(ringBuffer, dadaKey);
     if ( dada_hdu_connect(ringBuffer) != 0 ) {
