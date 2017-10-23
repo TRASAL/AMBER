@@ -1,4 +1,5 @@
-// Copyright 2016 Alessio Sclocco <a.sclocco@vu.nl>
+// Copyright 2017 Netherlands Institute for Radio Astronomy (ASTRON)
+// Copyright 2017 Netherlands eScience Center
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,11 +22,11 @@ void generateBeamDriver(bool subbandDedispersion, AstroData::Observation & obser
   for ( unsigned int beam = 0; beam < observation.getNrSynthesizedBeams(); beam++ ) {
     if ( subbandDedispersion) {
       for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
-        beamDriver[(beam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + subband] = beam % observation.getNrBeams();
+        beamDriver[(beam * observation.getNrSubbands(padding / sizeof(uint8_t))) + subband] = beam % observation.getNrBeams();
       }
     } else {
       for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-        beamDriver[(beam * observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + channel] = beam % observation.getNrBeams();
+        beamDriver[(beam * observation.getNrChannels(padding / sizeof(uint8_t))) + channel] = beam % observation.getNrBeams();
       }
     }
   }

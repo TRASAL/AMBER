@@ -1,5 +1,5 @@
-// Copyright 2017 ASTRON - Netherlands Institute for Radio Astronomy
-// Copyright 2017 NLeSC - Netherlands eScience Center
+// Copyright 2017 Netherlands Institute for Radio Astronomy (ASTRON)
+// Copyright 2017 Netherlands eScience Center
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Contributor: Alessio Sclocco <a.sclocco@esciencecenter.nl>
-
 #include <Trigger.hpp>
 
 
@@ -22,7 +20,7 @@ void trigger(const bool subbandDedispersion, const unsigned int padding, const u
   unsigned int nrDMs = 0;
 
   if ( subbandDedispersion ) {
-    nrDMs = observation.getNrDMsSubbanding() * observation.getNrDMs();
+    nrDMs = observation.getNrDMs(true) * observation.getNrDMs();
   } else {
     nrDMs = observation.getNrDMs();
   }

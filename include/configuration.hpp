@@ -1,4 +1,5 @@
-// Copyright 2015 Alessio Sclocco <a.sclocco@vu.nl>
+// Copyright 2017 Netherlands Institute for Radio Astronomy (ASTRON)
+// Copyright 2017 Netherlands eScience Center
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,8 +28,7 @@
 #include <Integration.hpp>
 #include <SNR.hpp>
 
-#ifndef CONFIGURATION_HPP
-#define CONFIGURATION_HPP
+#pragma once
 
 // Types for the data
 typedef std::uint8_t inputDataType;
@@ -43,6 +43,4 @@ const bool DEBUG = true;
 
 // SYNC mode, OpenCL queue operations
 const bool SYNC = true;
-
-#endif // CONFIGURATION_HPP
 
