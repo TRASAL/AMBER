@@ -310,7 +310,7 @@ int main(int argc, char * argv[]) {
       if ( inputBits >= 8 ) {
         dispersedData.resize(obs.getNrBeams() * obs.getNrChannels() * obs.getNrSamplesPerDispersedBatch(true, padding[deviceName] / sizeof(inputDataType)));
       } else {
-        dispersedData.resize(obs.getNrBeams() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersed(true) / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)));
+        dispersedData.resize(obs.getNrBeams() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)));
       }
     }
     beamDriver.resize(obs.getNrSynthesizedBeams() * obs.getNrSubbands(padding[deviceName] / sizeof(uint8_t)));
