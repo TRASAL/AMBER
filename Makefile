@@ -46,4 +46,5 @@ clean:
 	-@rm bin/*
 
 install: all
+	-@mkdir -p $(INSTALL_ROOT)/bin
 	-@cp bin/amber $(INSTALL_ROOT)/bin
