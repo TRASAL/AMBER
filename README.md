@@ -1,7 +1,7 @@
 
-# TransientSearch
+# AMBER: a Fast Radio Burst real-time pipeline
 
-A many-core transient searching pipeline.
+AMBER is a many-core accelerated and fully auto-tuned pipeline for detecting Fast Radio Bursts and other single pulse transients.
 
 ## Publications
 
@@ -11,7 +11,7 @@ A many-core transient searching pipeline.
 
 * [utils](https://github.com/isazi/utils) - master branch
 * [OpenCL](https://github.com/isazi/OpenCL) - master branch
-* [AstroData](https://github.com/isazi/AstroData) - master branch
+* [AstroData](https://github.com/AA-ALERT/AstroData) - master branch
 * [Dedispersion](https://github.com/isazi/Dedispersion) - master branch
 * [Integration](https://github.com/isazi/Integration) - master branch
 * [SNR](https://github.com/isazi/SNR) - master branch
