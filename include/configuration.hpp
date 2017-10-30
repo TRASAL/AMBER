@@ -32,6 +32,7 @@
 
 // Types for the data
 typedef std::uint8_t inputDataType;
+const std::uint8_t inputBits = 8;
 const std::string inputDataName("uchar");
 typedef float intermediateDataType;
 const std::string intermediateDataName("float");

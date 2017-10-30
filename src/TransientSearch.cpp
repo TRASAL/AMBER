@@ -38,7 +38,6 @@ int main(int argc, char * argv[]) {
   bool subbandDedispersion = false;
   bool limit = false;
   bool compactResults = false;
-  uint8_t inputBits = 0;
   unsigned int clPlatformID = 0;
   unsigned int clDeviceID = 0;
   unsigned int bytesToSkip = 0;
@@ -152,7 +151,6 @@ int main(int argc, char * argv[]) {
       width = args.getSwitchArgument< unsigned int >("-width");
       DM = args.getSwitchArgument< float >("-dm");
     }
-    inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
     outputFile = args.getSwitchArgument< std::string >("-output");
     if ( subbandDedispersion ) {
       obs.setDMRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), args.getSwitchArgument< float >("-subbanding_dm_first"), args.getSwitchArgument< float >("-subbanding_dm_step"), true);
@@ -160,7 +158,7 @@ int main(int argc, char * argv[]) {
     obs.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
     threshold = args.getSwitchArgument< float >("-threshold");
   } catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ... -snr_file ... [-subband_dedispersion] [-print] [-compact_results] [-lofar] [-sigproc] [-dada] -input_bits ... -output ... -dms ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
+    std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ... -snr_file ... [-subband_dedispersion] [-print] [-compact_results] [-lofar] [-sigproc] [-dada] -output ... -dms ... -dm_first ... -dm_step ... -threshold ..."<< std::endl;
     std::cerr << "\tDedispersion: -dedispersion_file ..." << std::endl;
     std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_step_one_file ... -dedispersion_step_two_file ... -subbands ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ..." << std::endl;
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
