@@ -28,11 +28,7 @@ ifdef OPENMP
 	CFLAGS += -fopenmp
 endif
 
-all: bin/BeamDriver.o bin/Trigger.o bin/TransientSearch
-
-bin/BeamDriver.o: include/BeamDriver.hpp src/BeamDriver.cpp
-	-@mkdir -p bin
-	$(CC) -o bin/BeamDriver.o -c src/BeamDriver.cpp $(INCLUDES) $(CFLAGS)
+all: bin/Trigger.o bin/TransientSearch
 
 bin/Trigger.o: include/Trigger.hpp src/Trigger.cpp
 	-@mkdir -p bin
@@ -40,7 +36,7 @@ bin/Trigger.o: include/Trigger.hpp src/Trigger.cpp
 
 bin/TransientSearch: include/configuration.hpp src/TransientSearch.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/amber src/TransientSearch.cpp bin/BeamDriver.o bin/Trigger.o $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/amber src/TransientSearch.cpp bin/Trigger.o $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
