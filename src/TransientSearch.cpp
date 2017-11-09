@@ -26,7 +26,6 @@
 #include <iterator>
 
 #include <configuration.hpp>
-#include <BeamDriver.hpp>
 #include <Trigger.hpp>
 
 
@@ -228,7 +227,7 @@ int main(int argc, char * argv[]) {
       AstroData::generateSinglePulse(width, DM, obs, padding[deviceName], *(input[beam]), inputBits, random);
     }
   }
-  std::vector< uint8_t > zappedChannels(obs.getNrChannels(padding[deviceName] / sizeof(uint8_t)));
+  std::vector< uint8_t > zappedChannels(obs.getNrChannels(padding[deviceName] / sizeof(unsigned int)));
   try {
     AstroData::readZappedChannels(obs, channelsFile, zappedChannels);
     AstroData::readIntegrationSteps(obs, integrationFile, integrationSteps);
@@ -365,7 +364,7 @@ int main(int argc, char * argv[]) {
     snrData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs(false, padding[deviceName] / sizeof(float)));
     snrSamples.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs(false, padding[deviceName] / sizeof(unsigned int)));
   }
-  generateBeamDriver(subbandDedispersion, obs, beamMapping, padding[deviceName]);
+  AstroData::generateBeamMapping(obs, beamMapping, padding[deviceName], subbandDedispersion);
 
   if ( obs.getNrDelayBatches() > obs.getNrBatches() ) {
     std::cerr << "Not enough input batches for the search." << std::endl;
@@ -386,7 +385,7 @@ int main(int argc, char * argv[]) {
 
   try {
     shiftsStepOne_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsStepOne->size() * sizeof(float), 0, 0);
-    zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
+    zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(unsigned int), 0, 0);
     beamMapping_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, beamMapping.size() * sizeof(unsigned int), 0, 0);
     dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(inputDataType), 0, 0);
     dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData.size() * sizeof(outputDataType), 0, 0);
@@ -402,7 +401,7 @@ int main(int argc, char * argv[]) {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shiftsStepTwo_d, CL_FALSE, 0, shiftsStepTwo->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepTwo->data()));
     }
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(beamMapping_d, CL_FALSE, 0, beamMapping.size() * sizeof(unsigned int), reinterpret_cast< void * >(beamMapping.data()));
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()));
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(unsigned int), reinterpret_cast< void * >(zappedChannels.data()));
     clQueues->at(clDeviceID)[0].finish();
   } catch ( cl::Error & err ) {
     std::cerr << "Memory error: " << err.what() << " " << err.err() << std::endl;

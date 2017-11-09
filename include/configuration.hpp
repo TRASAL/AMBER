@@ -19,6 +19,7 @@
 #include <Observation.hpp>
 #include <Platform.hpp>
 #include <ReadData.hpp>
+#include <SynthesizedBeams.hpp>
 #include <Generator.hpp>
 #include <InitializeOpenCL.hpp>
 #include <Kernel.hpp>
