@@ -301,7 +301,7 @@ int main(int argc, char * argv[]) {
     obs.setNrSamplesPerDispersedBatch(obs.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepOne->at(0) * (obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()))));
     obs.setNrDelayBatches(static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerDispersedBatch()) / obs.getNrSamplesPerBatch())));
   }
-  std::vector< uint8_t > beamDriver;
+  std::vector<unsigned int> beamMapping;
   std::vector< inputDataType > dispersedData;
   std::vector< outputDataType > subbandedData;
   std::vector< outputDataType > dedispersedData;
@@ -331,7 +331,7 @@ int main(int argc, char * argv[]) {
         dispersedData.resize(obs.getNrBeams() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)));
       }
     }
-    beamDriver.resize(obs.getNrSynthesizedBeams() * obs.getNrSubbands(padding[deviceName] / sizeof(uint8_t)));
+    beamMapping.resize(obs.getNrSynthesizedBeams() * obs.getNrSubbands(padding[deviceName] / sizeof(unsigned int)));
     subbandedData.resize(obs.getNrBeams() * obs.getNrDMs(true) * obs.getNrSubbands() * obs.getNrSamplesPerBatch(true, padding[deviceName] / sizeof(outputDataType)));
     dedispersedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs(true) * obs.getNrDMs() * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(outputDataType)));
     integratedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs(true) * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
@@ -359,13 +359,13 @@ int main(int argc, char * argv[]) {
         dispersedData.resize(obs.getNrBeams() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)));
       }
     }
-    beamDriver.resize(obs.getNrSynthesizedBeams() * obs.getNrChannels(padding[deviceName] / sizeof(uint8_t)));
+    beamMapping.resize(obs.getNrSynthesizedBeams() * obs.getNrChannels(padding[deviceName] / sizeof(unsigned int)));
     dedispersedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs() * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(outputDataType)));
     integratedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
     snrData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs(false, padding[deviceName] / sizeof(float)));
     snrSamples.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs(false, padding[deviceName] / sizeof(unsigned int)));
   }
-  generateBeamDriver(subbandDedispersion, obs, beamDriver, padding[deviceName]);
+  generateBeamDriver(subbandDedispersion, obs, beamMapping, padding[deviceName]);
 
   if ( obs.getNrDelayBatches() > obs.getNrBatches() ) {
     std::cerr << "Not enough input batches for the search." << std::endl;
@@ -376,7 +376,7 @@ int main(int argc, char * argv[]) {
   cl::Buffer shiftsStepOne_d;
   cl::Buffer shiftsStepTwo_d;
   cl::Buffer zappedChannels_d;
-  cl::Buffer beamDriver_d;
+  cl::Buffer beamMapping_d;
   cl::Buffer dispersedData_d;
   cl::Buffer subbandedData_d;
   cl::Buffer dedispersedData_d;
@@ -387,7 +387,7 @@ int main(int argc, char * argv[]) {
   try {
     shiftsStepOne_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsStepOne->size() * sizeof(float), 0, 0);
     zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
-    beamDriver_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, beamDriver.size() * sizeof(uint8_t), 0, 0);
+    beamMapping_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, beamMapping.size() * sizeof(unsigned int), 0, 0);
     dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(inputDataType), 0, 0);
     dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData.size() * sizeof(outputDataType), 0, 0);
     integratedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, integratedData.size() * sizeof(outputDataType), 0, 0);
@@ -401,7 +401,7 @@ int main(int argc, char * argv[]) {
     if ( subbandDedispersion ) {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shiftsStepTwo_d, CL_FALSE, 0, shiftsStepTwo->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepTwo->data()));
     }
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(beamDriver_d, CL_FALSE, 0, beamDriver.size() * sizeof(uint8_t), reinterpret_cast< void * >(beamDriver.data()));
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(beamMapping_d, CL_FALSE, 0, beamMapping.size() * sizeof(unsigned int), reinterpret_cast< void * >(beamMapping.data()));
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()));
     clQueues->at(clDeviceID)[0].finish();
   } catch ( cl::Error & err ) {
@@ -436,7 +436,7 @@ int main(int argc, char * argv[]) {
       dedispersionStepTwoK = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
       dedispersionStepTwoK->setArg(0, subbandedData_d);
       dedispersionStepTwoK->setArg(1, dedispersedData_d);
-      dedispersionStepTwoK->setArg(2, beamDriver_d);
+      dedispersionStepTwoK->setArg(2, beamMapping_d);
       dedispersionStepTwoK->setArg(3, shiftsStepTwo_d);
     } catch ( isa::OpenCL::OpenCLError & err ) {
       std::cerr << err.what() << std::endl;
@@ -452,7 +452,7 @@ int main(int argc, char * argv[]) {
       } else {
         dedispersionK->setArg(0, dispersedData_d);
         dedispersionK->setArg(1, dedispersedData_d);
-        dedispersionK->setArg(2, beamDriver_d);
+        dedispersionK->setArg(2, beamMapping_d);
         dedispersionK->setArg(3, zappedChannels_d);
         dedispersionK->setArg(4, shiftsStepOne_d);
       }
