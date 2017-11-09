@@ -227,7 +227,7 @@ int main(int argc, char * argv[]) {
       AstroData::generateSinglePulse(width, DM, obs, padding[deviceName], *(input[beam]), inputBits, random);
     }
   }
-  std::vector< uint8_t > zappedChannels(obs.getNrChannels(padding[deviceName] / sizeof(unsigned int)));
+  std::vector<unsigned int> zappedChannels(obs.getNrChannels(padding[deviceName] / sizeof(unsigned int)));
   try {
     AstroData::readZappedChannels(obs, channelsFile, zappedChannels);
     AstroData::readIntegrationSteps(obs, integrationFile, integrationSteps);
