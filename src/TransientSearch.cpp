@@ -35,7 +35,9 @@ int main(int argc, char * argv[]) {
   bool dataSIGPROC = false;
   bool dataPSRDADA = false;
   bool subbandDedispersion = false;
+#ifdef HAVE_HDF5
   bool limit = false;
+#endif // HAVE_HDF5
   bool compactResults = false;
   unsigned int clPlatformID = 0;
   unsigned int clDeviceID = 0;
