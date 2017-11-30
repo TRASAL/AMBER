@@ -68,7 +68,7 @@ int main(int argc, char * argv[]) {
   // PSRDADA
   key_t dadaKey;
   dada_hdu_t * ringBuffer;
-#endif
+#endif // HAVE_PSRDADA
 
   try {
     clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
@@ -100,13 +100,13 @@ int main(int argc, char * argv[]) {
       std::cerr << "Not compiled with HDF5 support" << std::endl;
       throw std::exception();
     };
-#endif
+#endif // HAVE_HDF5
 #ifndef HAVE_PSRDADA
     if (dataPSRDADA) {
       std::cerr << "Not compiled with PSRDADA support" << std::endl;
       throw std::exception();
     };
-#endif
+#endif // HAVE_PSRDADA
     if ( !((((!(dataLOFAR && dataSIGPROC) && dataPSRDADA) || (!(dataLOFAR && dataPSRDADA) && dataSIGPROC)) || (!(dataSIGPROC && dataPSRDADA) && dataLOFAR)) || ((!dataLOFAR && !dataSIGPROC) && !dataPSRDADA)) ) {
       std::cerr << "-lofar -sigproc and -dada are mutually exclusive." << std::endl;
       throw std::exception();
@@ -119,7 +119,7 @@ int main(int argc, char * argv[]) {
       if ( limit ) {
         obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
       }
-#endif
+#endif // HAVE_HDF5
     } else if ( dataSIGPROC ) {
       obs.setNrBeams(1);
       obs.setNrSynthesizedBeams(1);
@@ -136,7 +136,7 @@ int main(int argc, char * argv[]) {
       obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
       obs.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthesized_beams"));
       obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
-#endif
+#endif // HAVE_PSRDADA
     } else {
       obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
       obs.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthesized_beams"));
@@ -162,21 +162,21 @@ int main(int argc, char * argv[]) {
     std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ... -snr_file ... [-subband_dedispersion] [-print] [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
 #ifdef HAVE_HDF5
     std::cerr << " [-lofar]";
-#endif
+#endif // HAVE_HDF5
 #ifdef HAVE_PSRDADA
     std::cerr << " [-dada]";
-#endif
+#endif // HAVE_PSRDADA
     std::cerr << std::endl;
     std::cerr << "\tDedispersion: -dedispersion_file ..." << std::endl;
     std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_step_one_file ... -dedispersion_step_two_file ... -subbands ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ..." << std::endl;
 #ifdef HAVE_HDF5
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -batches ..." << std::endl;
-#endif
+#endif // HAVE_HDF5
     std::cerr << "\t -sigproc -header ... -data ... -batches ... -channels ... -min_freq ... -channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
 #ifdef HAVE_PSRDADA
     std::cerr << "\t -dada -dada_key ... -beams ... -synthesized_beams ... -batches ..." << std::endl;
-#endif
+#endif // HAVE_PSRDADA
     std::cerr << "\t [-random] -width ... -dm ... -beams ... -synthesized_beams ... -batches ... -channels ... -min_freq ... -channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
     return 1;
   } catch ( std::exception & err ) {
@@ -199,7 +199,7 @@ int main(int argc, char * argv[]) {
       AstroData::readLOFAR(headerFile, dataFile, obs, padding[deviceName], *(input[0]));
     }
     loadTime.stop();
-#endif
+#endif // HAVE_HDF5
   } else if ( dataSIGPROC ) {
     input[0] = new std::vector< std::vector< inputDataType > * >(obs.getNrBatches());
     loadTime.start();
@@ -221,7 +221,7 @@ int main(int argc, char * argv[]) {
       std::cerr << "Error: " << err.what() << std::endl;
       return -1;
     }
-#endif
+#endif // HAVE_PSRDADA
   } else {
     for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
       // TODO: if there are multiple synthesized beams, the generated data should take this into account
@@ -322,7 +322,7 @@ int main(int argc, char * argv[]) {
         }
       }
     }
-#endif
+#endif // HAVE_PSRDADA
     if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getSplitBatches() ) {
       // TODO: add support for splitBatches
     } else {
@@ -350,7 +350,7 @@ int main(int argc, char * argv[]) {
         }
       }
     }
-#endif
+#endif // HAVE_PSRDADA
     if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitBatches() ) {
       // TODO: add support for splitBatches
     } else {
@@ -761,7 +761,7 @@ int main(int argc, char * argv[]) {
           }
         }
       }
-#endif
+#endif // HAVE_PSRDADA
     }
     inputHandlingTimer.stop();
     // Copy input from host to device
@@ -1138,7 +1138,7 @@ int main(int argc, char * argv[]) {
         }
         dada_hdu_disconnect(ringBuffer);
       }
-#endif
+#endif // HAVE_PSRDADA
       return 1;
     }
     // Print and compact results
@@ -1194,7 +1194,7 @@ int main(int argc, char * argv[]) {
     }
     dada_hdu_disconnect(ringBuffer);
   }
-#endif
+#endif // HAVE_PSRDADA
   output.close();
   searchTimer.stop();
 
