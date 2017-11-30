@@ -20,7 +20,7 @@
 
 #pragma once
 
-struct triggeredEvent {
+struct TriggeredEvent {
   unsigned int beam = 0;
   unsigned int sample = 0;
   unsigned int integration = 0;
@@ -28,13 +28,13 @@ struct triggeredEvent {
   float SNR = 0.0f;
 };
 
-struct compactedEvent : triggeredEvent {
+struct CompactedEvent : TriggeredEvent {
   unsigned int compactedIntegration = 1;
   unsigned int compactedDMs = 1;
 };
 
-using triggeredEvents_t = std::vector<std::map<unsigned int, std::vector<triggeredEvent>>>;
-using compactedEvents_t = std::vector<std::vector<compactedEvent>>;
+using TriggeredEvents = std::vector<std::map<unsigned int, std::vector<TriggeredEvent>>>;
+using CompactedEvents = std::vector<std::vector<CompactedEvent>>;
 
-void trigger(const bool subbandDedispersion, const unsigned int padding, const unsigned int integration, const float threshold, const AstroData::Observation & observation, const std::vector<float> & snrData, const std::vector<unsigned int> & samplesData, triggeredEvents_t & triggeredEvents);
-void compact(const AstroData::Observation & observation, const triggeredEvents_t & triggeredEvents, compactedEvents_t & compactedEvents);
+void trigger(const bool subbandDedispersion, const unsigned int padding, const unsigned int integration, const float threshold, const AstroData::Observation & observation, const std::vector<float> & snrData, const std::vector<unsigned int> & samplesData, TriggeredEvents & triggeredEvents);
+void compact(const AstroData::Observation & observation, const TriggeredEvents & triggeredEvents, CompactedEvents & compactedEvents);

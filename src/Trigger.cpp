@@ -16,7 +16,7 @@
 #include <Trigger.hpp>
 
 
-void trigger(const bool subbandDedispersion, const unsigned int padding, const unsigned int integration, const float threshold, const AstroData::Observation & observation, const std::vector<float> & snrData, const std::vector<unsigned int> & samplesData, triggeredEvents_t & triggeredEvents) {
+void trigger(const bool subbandDedispersion, const unsigned int padding, const unsigned int integration, const float threshold, const AstroData::Observation & observation, const std::vector<float> & snrData, const std::vector<unsigned int> & samplesData, TriggeredEvents & triggeredEvents) {
   unsigned int nrDMs = 0;
 
   if ( subbandDedispersion ) {
@@ -49,8 +49,8 @@ void trigger(const bool subbandDedispersion, const unsigned int padding, const u
   }
 }
 
-void compact(const AstroData::Observation & observation, const triggeredEvents_t & triggeredEvents, compactedEvents_t & compactedEvents) {
-  compactedEvents_t temporaryEvents(observation.getNrSynthesizedBeams());
+void compact(const AstroData::Observation & observation, const TriggeredEvents & triggeredEvents, CompactedEvents & compactedEvents) {
+  CompactedEvents temporaryEvents(observation.getNrSynthesizedBeams());
 
   // Compact integration
   for ( auto beamEvents = triggeredEvents.begin(); beamEvents != triggeredEvents.end(); ++beamEvents ) {
