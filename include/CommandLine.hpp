@@ -102,4 +102,4 @@ struct GeneratorOptions {
 // Function to process the command line options
 void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions, Configurations & configurations, GeneratorOptions & generatorOptions, AstroData::Observation & observation);
 // Function to print the usage message
-void usage();
+void usage(const std::string & program);
