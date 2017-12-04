@@ -58,7 +58,7 @@ struct DataOptions {
   // Limit the number of batches processed from a LOFAR file
   bool limit = false;
   // Size (in bytes) of the SIGPROC file header
-  unsigned int bytesToSkip = 0;
+  unsigned int headerSizeSIGPROC = 0;
   // Name of the input file
   std::string dataFile;
   // Name of the LOFAR header file
