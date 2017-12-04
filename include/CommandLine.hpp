@@ -79,15 +79,15 @@ struct DataOptions {
 
 struct Configurations {
   // Configuration of single step dedispersion kernel
-  Dedispersion::tunedDedispersionConf dedispersionOptions;
+  Dedispersion::tunedDedispersionConf dedispersionParameters;
   // Configuration of subband dedispersion kernel, step one
-  Dedispersion::tunedDedispersionConf dedispersionStepOneOptions;
+  Dedispersion::tunedDedispersionConf dedispersionStepOneParameters;
   // Configuration of subband dedispersion kernel, step two
-  Dedispersion::tunedDedispersionConf dedispersionStepTwoOptions;
+  Dedispersion::tunedDedispersionConf dedispersionStepTwoParameters;
   // Configuration of integration kernel
-  Integration::tunedIntegrationConf integrationOptions;
+  Integration::tunedIntegrationConf integrationParameters;
   // Configuration of SNR kernel
-  SNR::tunedSNRConf snrOptions;
+  SNR::tunedSNRConf snrParameters;
 };
 
 struct GeneratorOptions {
