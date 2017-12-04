@@ -78,10 +78,12 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
       observation.setNrSamplesPerBatch(argumentList.getSwitchArgument<unsigned int>("-samples"));
       observation.setSamplingTime(argumentList.getSwitchArgument<float>("-sampling_time"));
     } else if ( dataOptions.dataPSRDADA ) {
+#ifdef HAVE_PSRDADA
       dataOptions.dadaKey = std::stoi("0x" + argumentList.getSwitchArgument<std::string>("-dada_key"), 0, 16);
       observation.setNrBeams(argumentList.getSwitchArgument<unsigned int>("-beams"));
       observation.setNrSynthesizedBeams(argumentList.getSwitchArgument<unsigned int>("-synthesized_beams"));
       observation.setNrBatches(argumentList.getSwitchArgument<unsigned int>("-batches"));
+#endif // HAVE_PSRDADA
     } else {
       observation.setNrBeams(argumentList.getSwitchArgument<unsigned int>("-beams"));
       observation.setNrSynthesizedBeams(argumentList.getSwitchArgument<unsigned int>("-synthesized_beams"));
