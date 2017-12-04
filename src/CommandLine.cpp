@@ -23,7 +23,7 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
     options.compactResults = argumentList.getSwitch("-compact_results");
     options.threshold = argumentList.getSwitchArgument<float>("-threshold");
     deviceOptions.platformID = argumentList.getSwitchArgument<unsigned int>("-opencl_platform");
-    deviceOptions.devuceID = argumentList.getSwitchArgument<unsigned int>("-opencl_device");
+    deviceOptions.deviceID = argumentList.getSwitchArgument<unsigned int>("-opencl_device");
     deviceOptions.deviceName = argumentList.getSwitchArgument<std::string>("-device_name");
     AstroData::readPaddingConf(deviceOptions.padding, argumentList.getSwitchArgument<std::string>("-padding_file"));
     dataOptions.dataLOFAR = argumentList.getSwitch("-lofar");
