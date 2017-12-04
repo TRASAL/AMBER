@@ -34,7 +34,7 @@ int main(int argc, char * argv[]) {
   Options options;
   DeviceOptions deviceOptions;
   DataOptions dataOptions;
-  Configuration configurations;
+  Configurations configurations;
   GeneratorOptions generatorOptions;
   AstroData::Observation observation;
 
