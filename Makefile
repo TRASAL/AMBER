@@ -28,7 +28,11 @@ ifdef OPENMP
 	CFLAGS += -fopenmp
 endif
 
-all: bin/Trigger.o bin/TransientSearch
+all: bin/CommandLine.o bin/Trigger.o bin/TransientSearch
+
+bin/CommandLine.o: include/CommandLine.hpp src/CommandLine.cpp
+	-@mkdir -p bin
+	$(CC) -o bin/CommandLine.o -c src/CommandLine.cpp $(INCLUDES) $(CFLAGS)
 
 bin/Trigger.o: include/Trigger.hpp src/Trigger.cpp
 	-@mkdir -p bin
@@ -36,7 +40,7 @@ bin/Trigger.o: include/Trigger.hpp src/Trigger.cpp
 
 bin/TransientSearch: include/configuration.hpp src/TransientSearch.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/amber src/TransientSearch.cpp bin/Trigger.o $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/amber src/TransientSearch.cpp bin/CommandLine.o bin/Trigger.o $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*

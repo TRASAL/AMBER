@@ -26,236 +26,100 @@
 #include <iterator>
 
 #include <configuration.hpp>
+#include <CommandLine.hpp>
 #include <Trigger.hpp>
 
 
 int main(int argc, char * argv[]) {
-  bool print = false;
-  bool dataLOFAR = false;
-  bool dataSIGPROC = false;
-  bool dataPSRDADA = false;
-  bool subbandDedispersion = false;
-#ifdef HAVE_HDF5
-  bool limit = false;
-#endif // HAVE_HDF5
-  bool compactResults = false;
-  unsigned int clPlatformID = 0;
-  unsigned int clDeviceID = 0;
-  unsigned int bytesToSkip = 0;
-  float threshold = 0.0f;
-  std::string deviceName;
-  std::string dataFile;
-  std::string headerFile;
-  std::string outputFile;
-  std::string channelsFile;
-  std::string integrationFile;
-  std::ofstream output;
+  Options options;
+  DeviceOptions deviceOptions;
+  DataOptions dataOptions;
+  Configuration configurations;
+  GeneratorOptions generatorOptions;
+  AstroData::Observation observation;
+
+  // Command line options
   isa::utils::ArgumentList args(argc, argv);
-  // Fake single pulse
-  bool random = false;
-  unsigned int width = 0;
-  float DM = 0.0f;
-  // Observation object
-  AstroData::Observation obs;
-  // Configurations
-  AstroData::paddingConf padding;
-  Dedispersion::tunedDedispersionConf dedispersionParameters;
-  Dedispersion::tunedDedispersionConf dedispersionStepOneParameters;
-  Dedispersion::tunedDedispersionConf dedispersionStepTwoParameters;
-  Integration::tunedIntegrationConf integrationParameters;
-  SNR::tunedSNRConf snrParameters;
-#ifdef HAVE_PSRDADA
-  // PSRDADA
-  key_t dadaKey;
-  dada_hdu_t * ringBuffer;
-#endif // HAVE_PSRDADA
-
   try {
-    clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
-    clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
-    deviceName = args.getSwitchArgument< std::string >("-device_name");
-
-    subbandDedispersion = args.getSwitch("-subband_dedispersion");
-
-    AstroData::readPaddingConf(padding, args.getSwitchArgument< std::string >("-padding_file"));
-    channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
-    integrationFile = args.getSwitchArgument< std::string >("-integration_steps");
-    if ( !subbandDedispersion ) {
-      Dedispersion::readTunedDedispersionConf(dedispersionParameters, args.getSwitchArgument< std::string >("-dedispersion_file"));
-    } else {
-      Dedispersion::readTunedDedispersionConf(dedispersionStepOneParameters, args.getSwitchArgument< std::string >("-dedispersion_step_one_file"));
-      Dedispersion::readTunedDedispersionConf(dedispersionStepTwoParameters, args.getSwitchArgument< std::string >("-dedispersion_step_two_file"));
-    }
-    Integration::readTunedIntegrationConf(integrationParameters, args.getSwitchArgument< std::string >("-integration_file"));
-    SNR::readTunedSNRConf(snrParameters, args.getSwitchArgument< std::string >("-snr_file"));
-
-    compactResults = args.getSwitch("-compact_results");
-    print = args.getSwitch("-print");
-
-    dataLOFAR = args.getSwitch("-lofar");
-    dataSIGPROC = args.getSwitch("-sigproc");
-    dataPSRDADA = args.getSwitch("-dada");
-#ifndef HAVE_HDF5
-    if (dataLOFAR) {
-      std::cerr << "Not compiled with HDF5 support" << std::endl;
-      throw std::exception();
-    };
-#endif // HAVE_HDF5
-#ifndef HAVE_PSRDADA
-    if (dataPSRDADA) {
-      std::cerr << "Not compiled with PSRDADA support" << std::endl;
-      throw std::exception();
-    };
-#endif // HAVE_PSRDADA
-    if ( !((((!(dataLOFAR && dataSIGPROC) && dataPSRDADA) || (!(dataLOFAR && dataPSRDADA) && dataSIGPROC)) || (!(dataSIGPROC && dataPSRDADA) && dataLOFAR)) || ((!dataLOFAR && !dataSIGPROC) && !dataPSRDADA)) ) {
-      std::cerr << "-lofar -sigproc and -dada are mutually exclusive." << std::endl;
-      throw std::exception();
-    } else if ( dataLOFAR ) {
-#ifdef HAVE_HDF5
-      obs.setNrBeams(1);
-      headerFile = args.getSwitchArgument< std::string >("-header");
-      dataFile = args.getSwitchArgument< std::string >("-data");
-      limit = args.getSwitch("-limit");
-      if ( limit ) {
-        obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
-      }
-#endif // HAVE_HDF5
-    } else if ( dataSIGPROC ) {
-      obs.setNrBeams(1);
-      obs.setNrSynthesizedBeams(1);
-      bytesToSkip = args.getSwitchArgument< unsigned int >("-header");
-      dataFile = args.getSwitchArgument< std::string >("-data");
-      obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
-      obs.setFrequencyRange(1, args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
-      obs.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
-      obs.setSamplingTime(args.getSwitchArgument< float >("-sampling_time"));
-    } else if ( dataPSRDADA ) {
-#ifdef HAVE_PSRDADA
-      std::string temp = args.getSwitchArgument< std::string >("-dada_key");
-      dadaKey = std::stoi("0x" + temp, 0, 16);
-      obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
-      obs.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthesized_beams"));
-      obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
-#endif // HAVE_PSRDADA
-    } else {
-      obs.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
-      obs.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthesized_beams"));
-      obs.setNrBatches(args.getSwitchArgument< unsigned int >("-batches"));
-      if ( subbandDedispersion ) {
-        obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-subbands"), args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
-      } else {
-        obs.setFrequencyRange(1, args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
-      }
-      obs.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
-      obs.setSamplingTime(args.getSwitchArgument< float >("-sampling_time"));
-      random = args.getSwitch("-random");
-      width = args.getSwitchArgument< unsigned int >("-width");
-      DM = args.getSwitchArgument< float >("-dm");
-    }
-    outputFile = args.getSwitchArgument< std::string >("-output");
-    if ( subbandDedispersion ) {
-      obs.setDMRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), args.getSwitchArgument< float >("-subbanding_dm_first"), args.getSwitchArgument< float >("-subbanding_dm_step"), true);
-    }
-    obs.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
-    threshold = args.getSwitchArgument< float >("-threshold");
-  } catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr <<  args.getName() << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ... -snr_file ... [-subband_dedispersion] [-print] [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
-#ifdef HAVE_HDF5
-    std::cerr << " [-lofar]";
-#endif // HAVE_HDF5
-#ifdef HAVE_PSRDADA
-    std::cerr << " [-dada]";
-#endif // HAVE_PSRDADA
-    std::cerr << std::endl;
-    std::cerr << "\tDedispersion: -dedispersion_file ..." << std::endl;
-    std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_step_one_file ... -dedispersion_step_two_file ... -subbands ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ..." << std::endl;
-#ifdef HAVE_HDF5
-    std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
-    std::cerr << "\t\t -limit -batches ..." << std::endl;
-#endif // HAVE_HDF5
-    std::cerr << "\t -sigproc -header ... -data ... -batches ... -channels ... -min_freq ... -channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
-#ifdef HAVE_PSRDADA
-    std::cerr << "\t -dada -dada_key ... -beams ... -synthesized_beams ... -batches ..." << std::endl;
-#endif // HAVE_PSRDADA
-    std::cerr << "\t [-random] -width ... -dm ... -beams ... -synthesized_beams ... -batches ... -channels ... -min_freq ... -channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
-    return 1;
+    processCommandLineOptions(args, options, deviceOptions, dataOptions, configurations, generatorOptions, observationervation);
   } catch ( std::exception & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
+  delete args;
 
-  // Load observation data
+  // Load observationervation data
   isa::utils::Timer loadTime;
-  std::vector< std::vector< std::vector< inputDataType > * > * > input(obs.getNrBeams());
+  std::vector< std::vector< std::vector< inputDataType > * > * > input(observation.getNrBeams());
   std::vector< std::vector< inputDataType > * > inputDADA;
   std::set< unsigned int > integrationSteps;
-  if ( dataLOFAR ) {
+  if ( dataOptions.dataLOFAR ) {
 #ifdef HAVE_HDF5
-    input[0] = new std::vector< std::vector< inputDataType > * >(obs.getNrBatches());
+    input[0] = new std::vector< std::vector< inputDataType > * >(observation.getNrBatches());
     loadTime.start();
-    if ( limit ) {
-      AstroData::readLOFAR(headerFile, dataFile, obs, padding[deviceName], *(input[0]), obs.getNrBatches());
+    if ( dataOptions.limit ) {
+      AstroData::readLOFAR(dataOptions.headerFile, dataOptions.dataFile, observation, deviceOptions.padding[deviceOptions.deviceName], *(input[0]), observation.getNrBatches());
     } else {
-      AstroData::readLOFAR(headerFile, dataFile, obs, padding[deviceName], *(input[0]));
+      AstroData::readLOFAR(dataOptions.headerFile, dataOptions.dataFile, observation, deviceOptions.padding[deviceOptions.deviceName], *(input[0]));
     }
     loadTime.stop();
 #endif // HAVE_HDF5
-  } else if ( dataSIGPROC ) {
-    input[0] = new std::vector< std::vector< inputDataType > * >(obs.getNrBatches());
+  } else if ( dataOptions.dataSIGPROC ) {
+    input[0] = new std::vector< std::vector< inputDataType > * >(observation.getNrBatches());
     loadTime.start();
-    AstroData::readSIGPROC(obs, padding[deviceName], inputBits, bytesToSkip, dataFile, *(input[0]));
+    AstroData::readSIGPROC(observation, deviceOptions.padding[deviceOptions.deviceName], inputBits, dataOptions.headerSizeSIGPROC, dataOptions.dataFile, *(input[0]));
     loadTime.stop();
-  } else if ( dataPSRDADA ) {
+  } else if ( dataOptions.dataPSRDADA ) {
 #ifdef HAVE_PSRDADA
-    ringBuffer = dada_hdu_create(0);
-    dada_hdu_set_key(ringBuffer, dadaKey);
-    if ( dada_hdu_connect(ringBuffer) != 0 ) {
+    dataOptions.ringBuffer = dada_hdu_create(0);
+    dada_hdu_set_key(dataOptions.ringBuffer, dataOptions.dadaKey);
+    if ( dada_hdu_connect(dataOptions.ringBuffer) != 0 ) {
       std::cerr << "Impossible to connect to PSRDADA ringbuffer." << std::endl;
     }
-    if ( dada_hdu_lock_read(ringBuffer) != 0 ) {
+    if ( dada_hdu_lock_read(dataOptions.ringBuffer) != 0 ) {
       std::cerr << "Impossible to lock the PSRDADA ringbuffer for reading the header." << std::endl;
     }
     try {
-      AstroData::readPSRDADAHeader(obs, *ringBuffer);
+      AstroData::readPSRDADAHeader(observation, *dataOptions.ringBuffer);
     } catch ( AstroData::RingBufferError & err ) {
       std::cerr << "Error: " << err.what() << std::endl;
       return -1;
     }
 #endif // HAVE_PSRDADA
   } else {
-    for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+    for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
       // TODO: if there are multiple synthesized beams, the generated data should take this into account
-      input[beam] = new std::vector< std::vector< inputDataType > * >(obs.getNrBatches());
-      AstroData::generateSinglePulse(width, DM, obs, padding[deviceName], *(input[beam]), inputBits, random);
+      input[beam] = new std::vector< std::vector< inputDataType > * >(observation.getNrBatches());
+      AstroData::generateSinglePulse(generatorOptions.width, generatorOptions.DM, observation, deviceOptions.padding[deviceOptions.deviceName], *(input[beam]), inputBits, generatorOptions.random);
     }
   }
-  std::vector<unsigned int> zappedChannels(obs.getNrChannels(padding[deviceName] / sizeof(unsigned int)));
+  std::vector<unsigned int> zappedChannels(observation.getNrChannels(deviceOptions.padding[deviceOptions.deviceName] / sizeof(unsigned int)));
   try {
-    AstroData::readZappedChannels(obs, channelsFile, zappedChannels);
-    AstroData::readIntegrationSteps(obs, integrationFile, integrationSteps);
+    AstroData::readZappedChannels(observation, dataOptions.channelsFile, zappedChannels);
+    AstroData::readIntegrationSteps(observation, dataOptions.integrationFile, integrationSteps);
   } catch ( AstroData::FileError & err ) {
     std::cerr << err.what() << std::endl;
   }
   if ( DEBUG ) {
-    std::cout << "Device: " << deviceName << std::endl;
-    std::cout << "Padding: " << padding[deviceName] << " bytes" << std::endl;
+    std::cout << "Device: " << deviceOptions.deviceName << std::endl;
+    std::cout << "Padding: " << deviceOptions.padding[deviceOptions.deviceName] << " bytes" << std::endl;
     std::cout << std::endl;
-    std::cout << "Beams: " << obs.getNrBeams() << std::endl;
-    std::cout << "Synthesized Beams: " << obs.getNrSynthesizedBeams() << std::endl;
-    std::cout << "Batches: " << obs.getNrBatches() << std::endl;
-    std::cout << "Samples: " << obs.getNrSamplesPerBatch() << std::endl;
-    std::cout << "Sampling time: " << obs.getSamplingTime() << std::endl;
-    std::cout << "Frequency range: " << obs.getMinFreq() << " MHz, " << obs.getMaxFreq() << " MHz" << std::endl;
-    std::cout << "Subbands: " << obs.getNrSubbands() << " (" << obs.getSubbandBandwidth() << " MHz)" << std::endl;
-    std::cout << "Channels: " << obs.getNrChannels() << " (" << obs.getChannelBandwidth() << " MHz)" << std::endl;
-    std::cout << "Zapped Channels: " << obs.getNrZappedChannels() << std::endl;
+    std::cout << "Beams: " << observation.getNrBeams() << std::endl;
+    std::cout << "Synthesized Beams: " << observation.getNrSynthesizedBeams() << std::endl;
+    std::cout << "Batches: " << observation.getNrBatches() << std::endl;
+    std::cout << "Samples: " << observation.getNrSamplesPerBatch() << std::endl;
+    std::cout << "Sampling time: " << observation.getSamplingTime() << std::endl;
+    std::cout << "Frequency range: " << observation.getMinFreq() << " MHz, " << observation.getMaxFreq() << " MHz" << std::endl;
+    std::cout << "Subbands: " << observation.getNrSubbands() << " (" << observation.getSubbandBandwidth() << " MHz)" << std::endl;
+    std::cout << "Channels: " << observation.getNrChannels() << " (" << observation.getChannelBandwidth() << " MHz)" << std::endl;
+    std::cout << "Zapped Channels: " << observation.getNrZappedChannels() << std::endl;
     std::cout << "Integration steps: " << integrationSteps.size() << std::endl;
-    if ( subbandDedispersion ) {
-      std::cout << "Subbanding DMs: " << obs.getNrDMs(true) << " (" << obs.getFirstDM(true) << ", " << obs.getFirstDM(true) + ((obs.getNrDMs(true) - 1) * obs.getDMStep(true)) << ")" << std::endl;
+    if ( options.subbandDedispersion ) {
+      std::cout << "Subbanding DMs: " << observation.getNrDMs(true) << " (" << observation.getFirstDM(true) << ", " << observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)) << ")" << std::endl;
     }
-    std::cout << "DMs: " << obs.getNrDMs() << " (" << obs.getFirstDM() << ", " << obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()) << ")" << std::endl;
+    std::cout << "DMs: " << observation.getNrDMs() << " (" << observation.getFirstDM() << ", " << observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()) << ")" << std::endl;
     std::cout << std::endl;
-    if ( (dataLOFAR || dataSIGPROC) ) {
+    if ( (dataOptions.dataLOFAR || dataOptions.dataSIGPROC) ) {
       std::cout << "Time to load the input: " << std::fixed << std::setprecision(6) << loadTime.getTotalTime() << " seconds." << std::endl;
       std::cout << std::endl;
     }
@@ -268,25 +132,25 @@ int main(int argc, char * argv[]) {
   std::vector< std::vector< cl::CommandQueue > > * clQueues = new std::vector< std::vector < cl::CommandQueue > >();
 
   try {
-    isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
+    isa::OpenCL::initializeOpenCL(deviceOptions.platformID, 1, clPlatforms, clContext, clDevices, clQueues);
   } catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
 
   // Host memory allocation
-  std::vector< float > * shiftsStepOne = Dedispersion::getShifts(obs, padding[deviceName]);
-  std::vector< float > * shiftsStepTwo = Dedispersion::getShiftsStepTwo(obs, padding[deviceName]);
+  std::vector< float > * shiftsStepOne = Dedispersion::getShifts(observation, deviceOptions.padding[deviceOptions.deviceName]);
+  std::vector< float > * shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, deviceOptions.padding[deviceOptions.deviceName]);
   if ( DEBUG ) {
-    if ( print ) {
+    if ( options.print ) {
       std::cerr << "shiftsStepOne" << std::endl;
-      for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
+      for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
         std::cerr << shiftsStepOne->at(channel) << " ";
       }
       std::cerr << std::endl;
-      if ( subbandDedispersion ) {
+      if ( options.subbandDedispersion ) {
         std::cerr << "shiftsStepTwo" << std::endl;
-        for ( unsigned int subband = 0; subband < obs.getNrSubbands(); subband++ ) {
+        for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
           std::cerr << shiftsStepTwo->at(subband) << " ";
         }
         std::cerr << std::endl;
@@ -294,13 +158,13 @@ int main(int argc, char * argv[]) {
       std::cerr << std::endl;
     }
   }
-  if ( subbandDedispersion ) {
-    obs.setNrSamplesPerBatch(obs.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()))), true);
-    obs.setNrSamplesPerDispersedBatch(obs.getNrSamplesPerBatch(true) + static_cast< unsigned int >(shiftsStepOne->at(0) * (obs.getFirstDM(true) + ((obs.getNrDMs(true) - 1) * obs.getDMStep(true)))), true);
-    obs.setNrDelayBatches(static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerDispersedBatch(true)) / obs.getNrSamplesPerBatch())), true);
+  if ( options.subbandDedispersion ) {
+    observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
+    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch(true) + static_cast< unsigned int >(shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))), true);
+    observation.setNrDelayBatches(static_cast< unsigned int >(std::ceil(static_cast< double >(observation.getNrSamplesPerDispersedBatch(true)) / observation.getNrSamplesPerBatch())), true);
   } else {
-    obs.setNrSamplesPerDispersedBatch(obs.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepOne->at(0) * (obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()))));
-    obs.setNrDelayBatches(static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerDispersedBatch()) / obs.getNrSamplesPerBatch())));
+    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepOne->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
+    observation.setNrDelayBatches(static_cast< unsigned int >(std::ceil(static_cast< double >(observation.getNrSamplesPerDispersedBatch()) / observation.getNrSamplesPerBatch())));
   }
   std::vector<unsigned int> beamMapping;
   std::vector< inputDataType > dispersedData;
@@ -310,65 +174,65 @@ int main(int argc, char * argv[]) {
   std::vector< float > snrData;
   std::vector< unsigned int > snrSamples;
 
-  if ( subbandDedispersion ) {
+  if ( options.subbandDedispersion ) {
 #ifdef HAVE_PSRDADA
-    if ( dataPSRDADA ) {
-      inputDADA.resize(obs.getNrDelayBatches(true));
-      for ( unsigned int batch = 0; batch < obs.getNrDelayBatches(true); batch++ ) {
+    if ( dataOptions.dataPSRDADA ) {
+      inputDADA.resize(observation.getNrDelayBatches(true));
+      for ( unsigned int batch = 0; batch < observation.getNrDelayBatches(true); batch++ ) {
         if ( inputBits >= 8 ) {
-          inputDADA.at(batch) = new std::vector< inputDataType >(obs.getNrBeams() * obs.getNrChannels() * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType)));
+          inputDADA.at(batch) = new std::vector< inputDataType >(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
         } else {
-          inputDADA.at(batch) = new std::vector< inputDataType >(obs.getNrBeams() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)));
+          inputDADA.at(batch) = new std::vector< inputDataType >(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
         }
       }
     }
 #endif // HAVE_PSRDADA
-    if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getSplitBatches() ) {
+    if ( configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
       // TODO: add support for splitBatches
     } else {
       if ( inputBits >= 8 ) {
-        dispersedData.resize(obs.getNrBeams() * obs.getNrChannels() * obs.getNrSamplesPerDispersedBatch(true, padding[deviceName] / sizeof(inputDataType)));
+        dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
       } else {
-        dispersedData.resize(obs.getNrBeams() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)));
+        dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
       }
     }
-    beamMapping.resize(obs.getNrSynthesizedBeams() * obs.getNrSubbands(padding[deviceName] / sizeof(unsigned int)));
-    subbandedData.resize(obs.getNrBeams() * obs.getNrDMs(true) * obs.getNrSubbands() * obs.getNrSamplesPerBatch(true, padding[deviceName] / sizeof(outputDataType)));
-    dedispersedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs(true) * obs.getNrDMs() * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(outputDataType)));
-    integratedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs(true) * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
-    snrData.resize(obs.getNrSynthesizedBeams() * isa::utils::pad(obs.getNrDMs(true) * obs.getNrDMs(), padding[deviceName] / sizeof(float)));
-    snrSamples.resize(obs.getNrSynthesizedBeams() * isa::utils::pad(obs.getNrDMs(true) * obs.getNrDMs(), padding[deviceName] / sizeof(unsigned int)));
+    beamMapping.resize(observation.getNrSynthesizedBeams() * observation.getNrSubbands(deviceOptions.padding[deviceOptions.deviceName] / sizeof(unsigned int)));
+    subbandedData.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType)));
+    dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType)));
+    integratedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType)));
+    snrData.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(float)));
+    snrSamples.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(unsigned int)));
   } else {
 #ifdef HAVE_PSRDADA
-    if ( dataPSRDADA ) {
-      inputDADA.resize(obs.getNrDelayBatches());
-      for ( unsigned int batch = 0; batch < obs.getNrDelayBatches(); batch++ ) {
+    if ( dataOptions.dataPSRDADA ) {
+      inputDADA.resize(observation.getNrDelayBatches());
+      for ( unsigned int batch = 0; batch < observation.getNrDelayBatches(); batch++ ) {
         if ( inputBits >= 8 ) {
-          inputDADA.at(batch) = new std::vector< inputDataType >(obs.getNrBeams() * obs.getNrChannels() * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType)));
+          inputDADA.at(batch) = new std::vector< inputDataType >(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
         } else {
-          inputDADA.at(batch) = new std::vector< inputDataType >(obs.getNrBeams() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)));
+          inputDADA.at(batch) = new std::vector< inputDataType >(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
         }
       }
     }
 #endif // HAVE_PSRDADA
-    if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitBatches() ) {
+    if ( configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
       // TODO: add support for splitBatches
     } else {
       if ( inputBits >= 8 ) {
-        dispersedData.resize(obs.getNrBeams() * obs.getNrChannels() * obs.getNrSamplesPerDispersedBatch(false, padding[deviceName] / sizeof(inputDataType)));
+        dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
       } else {
-        dispersedData.resize(obs.getNrBeams() * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)));
+        dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
       }
     }
-    beamMapping.resize(obs.getNrSynthesizedBeams() * obs.getNrChannels(padding[deviceName] / sizeof(unsigned int)));
-    dedispersedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs() * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(outputDataType)));
-    integratedData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType)));
-    snrData.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs(false, padding[deviceName] / sizeof(float)));
-    snrSamples.resize(obs.getNrSynthesizedBeams() * obs.getNrDMs(false, padding[deviceName] / sizeof(unsigned int)));
+    beamMapping.resize(observation.getNrSynthesizedBeams() * observation.getNrChannels(deviceOptions.padding[deviceOptions.deviceName] / sizeof(unsigned int)));
+    dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType)));
+    integratedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType)));
+    snrData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(float)));
+    snrSamples.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(unsigned int)));
   }
-  AstroData::generateBeamMapping(obs, beamMapping, padding[deviceName], subbandDedispersion);
+  AstroData::generateBeamMapping(observation, beamMapping, deviceOptions.padding[deviceOptions.deviceName], options.subbandDedispersion);
 
-  if ( obs.getNrDelayBatches() > obs.getNrBatches() ) {
+  if ( observation.getNrDelayBatches() > observation.getNrBatches() ) {
     std::cerr << "Not enough input batches for the search." << std::endl;
     return 1;
   }
@@ -394,17 +258,17 @@ int main(int argc, char * argv[]) {
     integratedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, integratedData.size() * sizeof(outputDataType), 0, 0);
     snrData_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, snrData.size() * sizeof(float), 0, 0);
     snrSamples_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, snrSamples.size() * sizeof(unsigned int), 0, 0);
-    if ( subbandDedispersion ) {
+    if ( options.subbandDedispersion ) {
       shiftsStepTwo_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsStepTwo->size() * sizeof(float), 0, 0);
       subbandedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, subbandedData.size() * sizeof(outputDataType), 0, 0);
     }
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shiftsStepOne_d, CL_FALSE, 0, shiftsStepOne->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepOne->data()));
-    if ( subbandDedispersion ) {
-      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shiftsStepTwo_d, CL_FALSE, 0, shiftsStepTwo->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepTwo->data()));
+    clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(shiftsStepOne_d, CL_FALSE, 0, shiftsStepOne->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepOne->data()));
+    if ( options.subbandDedispersion ) {
+      clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(shiftsStepTwo_d, CL_FALSE, 0, shiftsStepTwo->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepTwo->data()));
     }
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(beamMapping_d, CL_FALSE, 0, beamMapping.size() * sizeof(unsigned int), reinterpret_cast< void * >(beamMapping.data()));
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(unsigned int), reinterpret_cast< void * >(zappedChannels.data()));
-    clQueues->at(clDeviceID)[0].finish();
+    clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(beamMapping_d, CL_FALSE, 0, beamMapping.size() * sizeof(unsigned int), reinterpret_cast< void * >(beamMapping.data()));
+    clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(unsigned int), reinterpret_cast< void * >(zappedChannels.data()));
+    clQueues->at(deviceOptions.deviceID)[0].finish();
   } catch ( cl::Error & err ) {
     std::cerr << "Memory error: " << err.what() << " " << err.err() << std::endl;
     return 1;
@@ -415,11 +279,11 @@ int main(int argc, char * argv[]) {
   cl::Kernel * dedispersionK, * dedispersionStepOneK, * dedispersionStepTwoK;
   std::vector< cl::Kernel * > integrationDMsSamplesK(integrationSteps.size() + 1), snrDMsSamplesK(integrationSteps.size() + 1);
 
-  if ( subbandDedispersion ) {
-    code = Dedispersion::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(*(dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))), padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shiftsStepOne);
+  if ( options.subbandDedispersion ) {
+    code = Dedispersion::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(*(configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))), deviceOptions.padding[deviceOptions.deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
     try {
-      dedispersionStepOneK = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
-      if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getSplitBatches() ) {
+      dedispersionStepOneK = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
+      if ( configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
         // TODO: add support for splitBatches
       } else {
         dedispersionStepOneK->setArg(0, dispersedData_d);
@@ -432,9 +296,9 @@ int main(int argc, char * argv[]) {
       return 1;
     }
     delete code;
-    code = Dedispersion::getSubbandDedispersionStepTwoOpenCL< outputDataType >(*(dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())), padding[deviceName], outputDataName, obs, *shiftsStepTwo);
+    code = Dedispersion::getSubbandDedispersionStepTwoOpenCL< outputDataType >(*(configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())), deviceOptions.padding[deviceOptions.deviceName], outputDataName, observation, *shiftsStepTwo);
     try {
-      dedispersionStepTwoK = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+      dedispersionStepTwoK = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
       dedispersionStepTwoK->setArg(0, subbandedData_d);
       dedispersionStepTwoK->setArg(1, dedispersedData_d);
       dedispersionStepTwoK->setArg(2, beamMapping_d);
@@ -445,10 +309,10 @@ int main(int argc, char * argv[]) {
     }
     delete code;
   } else {
-    code = Dedispersion::getDedispersionOpenCL< inputDataType, outputDataType >(*(dedispersionParameters.at(deviceName)->at(obs.getNrDMs())), padding[deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, obs, *shiftsStepOne);
+    code = Dedispersion::getDedispersionOpenCL< inputDataType, outputDataType >(*(configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())), deviceOptions.padding[deviceOptions.deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
     try {
-      dedispersionK = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
-      if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitBatches() ) {
+      dedispersionK = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
+      if ( configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
         // TODO: add support for splitBatches
       } else {
         dedispersionK->setArg(0, dispersedData_d);
@@ -463,13 +327,13 @@ int main(int argc, char * argv[]) {
     }
     delete code;
   }
-  if ( subbandDedispersion ) {
-    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())), outputDataName, obs, obs.getNrSamplesPerBatch(), padding[deviceName]);
+  if ( options.subbandDedispersion ) {
+    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), outputDataName, observation, observation.getNrSamplesPerBatch(), deviceOptions.padding[deviceOptions.deviceName]);
   } else {
-    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())), outputDataName, obs, obs.getNrSamplesPerBatch(), padding[deviceName]);
+    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), outputDataName, observation, observation.getNrSamplesPerBatch(), deviceOptions.padding[deviceOptions.deviceName]);
   }
   try {
-    snrDMsSamplesK[integrationSteps.size()] = isa::OpenCL::compile("snrDMsSamples" + std::to_string(obs.getNrSamplesPerBatch()), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+    snrDMsSamplesK[integrationSteps.size()] = isa::OpenCL::compile("snrDMsSamples" + std::to_string(observation.getNrSamplesPerBatch()), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
     snrDMsSamplesK[integrationSteps.size()]->setArg(0, dedispersedData_d);
     snrDMsSamplesK[integrationSteps.size()]->setArg(1, snrData_d);
     snrDMsSamplesK[integrationSteps.size()]->setArg(2, snrSamples_d);
@@ -482,14 +346,14 @@ int main(int argc, char * argv[]) {
     auto step = integrationSteps.begin();
 
     std::advance(step, stepNumber);
-    if ( subbandDedispersion ) {
-      code = Integration::getIntegrationDMsSamplesOpenCL< outputDataType >(*(integrationParameters[deviceName]->at(obs.getNrDMs(true) * obs.getNrDMs())->at(*step)), obs, outputDataName, *step, padding[deviceName]);
+    if ( options.subbandDedispersion ) {
+      code = Integration::getIntegrationDMsSamplesOpenCL< outputDataType >(*(configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)), observation, outputDataName, *step, deviceOptions.padding[deviceOptions.deviceName]);
     } else {
-      code = Integration::getIntegrationDMsSamplesOpenCL< outputDataType >(*(integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)), obs, outputDataName, *step, padding[deviceName]);
+      code = Integration::getIntegrationDMsSamplesOpenCL< outputDataType >(*(configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs())->at(*step)), observation, outputDataName, *step, deviceOptions.padding[deviceOptions.deviceName]);
     }
     try {
       if ( *step > 1 ) {
-        integrationDMsSamplesK[stepNumber] = isa::OpenCL::compile("integrationDMsSamples" + std::to_string(*step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+        integrationDMsSamplesK[stepNumber] = isa::OpenCL::compile("integrationDMsSamples" + std::to_string(*step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
         integrationDMsSamplesK[stepNumber]->setArg(0, dedispersedData_d);
         integrationDMsSamplesK[stepNumber]->setArg(1, integratedData_d);
       }
@@ -498,13 +362,13 @@ int main(int argc, char * argv[]) {
       return 1;
     }
     delete code;
-    if ( subbandDedispersion ) {
-      code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)), outputDataName, obs, obs.getNrSamplesPerBatch() / *step, padding[deviceName]);
+    if ( options.subbandDedispersion ) {
+      code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / *step, deviceOptions.padding[deviceOptions.deviceName]);
     } else {
-      code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)), outputDataName, obs, obs.getNrSamplesPerBatch() / *step, padding[deviceName]);
+      code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / *step, deviceOptions.padding[deviceOptions.deviceName]);
     }
     try {
-      snrDMsSamplesK[stepNumber] = isa::OpenCL::compile("snrDMsSamples" + std::to_string(obs.getNrSamplesPerBatch() / *step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+      snrDMsSamplesK[stepNumber] = isa::OpenCL::compile("snrDMsSamples" + std::to_string(observation.getNrSamplesPerBatch() / *step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
       snrDMsSamplesK[stepNumber]->setArg(0, integratedData_d);
       snrDMsSamplesK[stepNumber]->setArg(1, snrData_d);
       snrDMsSamplesK[stepNumber]->setArg(2, snrSamples_d);
@@ -519,36 +383,36 @@ int main(int argc, char * argv[]) {
   cl::NDRange dedispersionGlobal, dedispersionLocal;
   cl::NDRange dedispersionStepOneGlobal, dedispersionStepOneLocal;
   cl::NDRange dedispersionStepTwoGlobal, dedispersionStepTwoLocal;
-  if ( subbandDedispersion ) {
-    dedispersionStepOneGlobal = cl::NDRange(isa::utils::pad(obs.getNrSamplesPerBatch(true) / dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getNrItemsD0(), dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getNrThreadsD0()), obs.getNrDMs(true) / dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getNrItemsD1(), obs.getNrBeams() * obs.getNrSubbands());
-    dedispersionStepOneLocal = cl::NDRange(dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getNrThreadsD0(), dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getNrThreadsD1(), 1);
+  if ( options.subbandDedispersion ) {
+    dedispersionStepOneGlobal = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch(true) / configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrItemsD0(), configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD0()), observation.getNrDMs(true) / configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrItemsD1(), observation.getNrBeams() * observation.getNrSubbands());
+    dedispersionStepOneLocal = cl::NDRange(configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD0(), configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD1(), 1);
     if ( DEBUG ) {
       std::cout << "DedispersionStepOne" << std::endl;
-        std::cout << "Global: " << isa::utils::pad(obs.getNrSamplesPerBatch(true) / dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getNrItemsD0(), dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getNrThreadsD0()) << ", " << obs.getNrDMs(true) / dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getNrItemsD1() << ", " << obs.getNrBeams() * obs.getNrSubbands() << std::endl;
-        std::cout << "Local: " << dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getNrThreadsD0() << ", " << dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getNrThreadsD1() << ", 1" << std::endl;
+        std::cout << "Global: " << isa::utils::pad(observation.getNrSamplesPerBatch(true) / configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrItemsD0(), configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD0()) << ", " << observation.getNrDMs(true) / configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrItemsD1() << ", " << observation.getNrBeams() * observation.getNrSubbands() << std::endl;
+        std::cout << "Local: " << configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD0() << ", " << configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD1() << ", 1" << std::endl;
         std::cout << "Parameters: ";
-        std::cout << dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->print() << std::endl;
+        std::cout << configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->options.print() << std::endl;
         std::cout << std::endl;
     }
-    dedispersionStepTwoGlobal = cl::NDRange(isa::utils::pad(obs.getNrSamplesPerBatch(true) / dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD0(), dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0()), obs.getNrDMs() / dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1(), obs.getNrSynthesizedBeams() * obs.getNrDMs(true));
-    dedispersionStepTwoLocal = cl::NDRange(dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0(), dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD1(), 1);
+    dedispersionStepTwoGlobal = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch(true) / configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0()), observation.getNrDMs() / configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1(), observation.getNrSynthesizedBeams() * observation.getNrDMs(true));
+    dedispersionStepTwoLocal = cl::NDRange(configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0(), configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD1(), 1);
     if ( DEBUG ) {
       std::cout << "DedispersionStepTwo" << std::endl;
-        std::cout << "Global: " << isa::utils::pad(obs.getNrSamplesPerBatch(true) / dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD0(), dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0()) << ", " << obs.getNrDMs() / dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1() << ", " << obs.getNrSynthesizedBeams() * obs.getNrDMs(true) << std::endl;
-        std::cout << "Local: " << dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0() << ", " << dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD1() << ", 1" << std::endl;
+        std::cout << "Global: " << isa::utils::pad(observation.getNrSamplesPerBatch(true) / configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0()) << ", " << observation.getNrDMs() / configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1() << ", " << observation.getNrSynthesizedBeams() * observation.getNrDMs(true) << std::endl;
+        std::cout << "Local: " << configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0() << ", " << configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD1() << ", 1" << std::endl;
         std::cout << "Parameters: ";
-        std::cout << dedispersionStepTwoParameters.at(deviceName)->at(obs.getNrDMs())->print() << std::endl;
+        std::cout << configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->options.print() << std::endl;
         std::cout << std::endl;
     }
   } else {
-    dedispersionGlobal = cl::NDRange(isa::utils::pad(obs.getNrSamplesPerBatch() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD0(), dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0()), obs.getNrDMs() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1(), obs.getNrSynthesizedBeams());
-    dedispersionLocal = cl::NDRange(dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0(), dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD1(), 1);
+    dedispersionGlobal = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0()), observation.getNrDMs() / configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1(), observation.getNrSynthesizedBeams());
+    dedispersionLocal = cl::NDRange(configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0(), configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD1(), 1);
     if ( DEBUG ) {
       std::cout << "Dedispersion" << std::endl;
-      std::cout << "Global: " << isa::utils::pad(obs.getNrSamplesPerBatch() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD0(), dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0()) << ", " << obs.getNrDMs() / dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrItemsD1() << ", " << obs.getNrSynthesizedBeams() << std::endl;
-      std::cout << "Local: " << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD0() << ", " << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getNrThreadsD1() << ", 1" << std::endl;
+      std::cout << "Global: " << isa::utils::pad(observation.getNrSamplesPerBatch() / configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0()) << ", " << observation.getNrDMs() / configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1() << ", " << observation.getNrSynthesizedBeams() << std::endl;
+      std::cout << "Local: " << configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0() << ", " << configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD1() << ", 1" << std::endl;
       std::cout << "Parameters: ";
-      std::cout << dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->print() << std::endl;
+      std::cout << configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->options.print() << std::endl;
       std::cout << std::endl;
     }
   }
@@ -556,26 +420,26 @@ int main(int argc, char * argv[]) {
   std::vector< cl::NDRange > integrationLocal(integrationSteps.size());
   std::vector< cl::NDRange > snrDMsSamplesGlobal(integrationSteps.size() + 1);
   std::vector< cl::NDRange > snrDMsSamplesLocal(integrationSteps.size() + 1);
-  if ( subbandDedispersion ) {
-    snrDMsSamplesGlobal[integrationSteps.size()] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0(), obs.getNrDMs(true) * obs.getNrDMs(), obs.getNrSynthesizedBeams());
-    snrDMsSamplesLocal[integrationSteps.size()] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
+  if ( options.subbandDedispersion ) {
+    snrDMsSamplesGlobal[integrationSteps.size()] = cl::NDRange(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+    snrDMsSamplesLocal[integrationSteps.size()] = cl::NDRange(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
     if ( DEBUG ) {
-      std::cout << "SNRDMsSamples (" + std::to_string(obs.getNrSamplesPerBatch()) + ")" << std::endl;
-      std::cout << "Global: " << snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0() << ", " << obs.getNrDMs(true) * obs.getNrDMs() << " " << obs.getNrSynthesizedBeams() << std::endl;
-      std::cout << "Local: " << snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0() << ", 1, 1" << std::endl;
+      std::cout << "SNRDMsSamples (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+      std::cout << "Global: " << configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0() << ", " << observation.getNrDMs(true) * observation.getNrDMs() << " " << observation.getNrSynthesizedBeams() << std::endl;
+      std::cout << "Local: " << configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0() << ", 1, 1" << std::endl;
       std::cout << "Parameters: ";
-      std::cout << snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->print() << std::endl;
+      std::cout << configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->options.print() << std::endl;
       std::cout << std::endl;
     }
   } else {
-    snrDMsSamplesGlobal[integrationSteps.size()] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0(), obs.getNrDMs(), obs.getNrSynthesizedBeams());
-    snrDMsSamplesLocal[integrationSteps.size()] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
+    snrDMsSamplesGlobal[integrationSteps.size()] = cl::NDRange(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+    snrDMsSamplesLocal[integrationSteps.size()] = cl::NDRange(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
     if ( DEBUG ) {
-      std::cout << "SNRDMsSamples (" + std::to_string(obs.getNrSamplesPerBatch()) + ")" << std::endl;
-      std::cout << "Global: " << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0() << ", " << obs.getNrDMs() << ", " << obs.getNrSynthesizedBeams() << std::endl;
-      std::cout << "Local: " << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->getNrThreadsD0() << ", 1, 1" << std::endl;
+      std::cout << "SNRDMsSamples (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+      std::cout << "Global: " << configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0() << ", " << observation.getNrDMs() << ", " << observation.getNrSynthesizedBeams() << std::endl;
+      std::cout << "Local: " << configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0() << ", 1, 1" << std::endl;
       std::cout << "Parameters: ";
-      std::cout << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch())->print() << std::endl;
+      std::cout << configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->options.print() << std::endl;
       std::cout << std::endl;
     }
   }
@@ -583,113 +447,114 @@ int main(int argc, char * argv[]) {
     auto step = integrationSteps.begin();
 
     std::advance(step, stepNumber);
-    if ( subbandDedispersion ) {
-      integrationGlobal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrDMs(true) * obs.getNrDMs())->at(*step)->getNrThreadsD0() * ((obs.getNrSamplesPerBatch() / *step) / integrationParameters[deviceName]->at(obs.getNrDMs(true) * obs.getNrDMs())->at(*step)->getNrItemsD0()), obs.getNrDMs(true) * obs.getNrDMs(), obs.getNrSynthesizedBeams());
-      integrationLocal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrDMs(true) * obs.getNrDMs())->at(*step)->getNrThreadsD0(), 1, 1);
+    if ( options.subbandDedispersion ) {
+      integrationGlobal[stepNumber] = cl::NDRange(configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / *step) / configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrItemsD0()), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+      integrationLocal[stepNumber] = cl::NDRange(configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrThreadsD0(), 1, 1);
       if ( DEBUG ) {
         std::cout << "integrationDMsSamples (" + std::to_string(*step) + ")" << std::endl;
-        std::cout << "Global: " << integrationParameters[deviceName]->at(obs.getNrDMs(true) * obs.getNrDMs())->at(*step)->getNrThreadsD0() * ((obs.getNrSamplesPerBatch() / *step) / integrationParameters[deviceName]->at(obs.getNrDMs(true) * obs.getNrDMs())->at(*step)->getNrItemsD0()) << ", " << obs.getNrDMs(true) * obs.getNrDMs() << ", " << obs.getNrSynthesizedBeams() << std::endl;
-        std::cout << "Local: " << integrationParameters[deviceName]->at(obs.getNrDMs(true) * obs.getNrDMs())->at(*step)->getNrThreadsD0() << ", 1, 1" << std::endl;
+        std::cout << "Global: " << configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / *step) / configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrItemsD0()) << ", " << observation.getNrDMs(true) * observation.getNrDMs() << ", " << observation.getNrSynthesizedBeams() << std::endl;
+        std::cout << "Local: " << configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrThreadsD0() << ", 1, 1" << std::endl;
         std::cout << "Parameters: ";
-        std::cout << integrationParameters[deviceName]->at(obs.getNrDMs(true) * obs.getNrDMs())->at(*step)->print() << std::endl;
+        std::cout << configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->options.print() << std::endl;
         std::cout << std::endl;
       }
-      snrDMsSamplesGlobal[stepNumber] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), obs.getNrDMs(true) * obs.getNrDMs(), obs.getNrSynthesizedBeams());
-      snrDMsSamplesLocal[stepNumber] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+      snrDMsSamplesGlobal[stepNumber] = cl::NDRange(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+      snrDMsSamplesLocal[stepNumber] = cl::NDRange(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
       if ( DEBUG ) {
-        std::cout << "SNRDMsSamples (" + std::to_string(obs.getNrSamplesPerBatch() / *step) + ")" << std::endl;
-        std::cout << "Global: " << snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", " << obs.getNrDMs(true) * obs.getNrDMs() << " " << obs.getNrSynthesizedBeams() << std::endl;
-        std::cout << "Local: " << snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", 1, 1" << std::endl;
+        std::cout << "SNRDMsSamples (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+        std::cout << "Global: " << configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", " << observation.getNrDMs(true) * observation.getNrDMs() << " " << observation.getNrSynthesizedBeams() << std::endl;
+        std::cout << "Local: " << configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", 1, 1" << std::endl;
         std::cout << "Parameters: ";
-        std::cout << snrParameters.at(deviceName)->at(obs.getNrDMs(true) * obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->print() << std::endl;
+        std::cout << configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->options.print() << std::endl;
         std::cout << std::endl;
       }
     } else {
-      integrationGlobal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrThreadsD0() * ((obs.getNrSamplesPerBatch() / *step) / integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrItemsD0()), obs.getNrDMs(), obs.getNrSynthesizedBeams());
-      integrationLocal[stepNumber] = cl::NDRange(integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrThreadsD0(), 1, 1);
+      integrationGlobal[stepNumber] = cl::NDRange(configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs())->at(*step)->getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / *step) / configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs())->at(*step)->getNrItemsD0()), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+      integrationLocal[stepNumber] = cl::NDRange(configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs())->at(*step)->getNrThreadsD0(), 1, 1);
       if ( DEBUG ) {
         std::cout << "integrationDMsSamples (" + std::to_string(*step) + ")" << std::endl;
-        std::cout << "Global: " << integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrThreadsD0() * ((obs.getNrSamplesPerBatch() / *step) / integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrItemsD0()) << ", " << obs.getNrDMs() << ", " << obs.getNrSynthesizedBeams() << std::endl;
-        std::cout << "Local: " << integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->getNrThreadsD0() << ", 1, 1" << std::endl;
+        std::cout << "Global: " << configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs())->at(*step)->getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / *step) / configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs())->at(*step)->getNrItemsD0()) << ", " << observation.getNrDMs() << ", " << observation.getNrSynthesizedBeams() << std::endl;
+        std::cout << "Local: " << configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs())->at(*step)->getNrThreadsD0() << ", 1, 1" << std::endl;
         std::cout << "Parameters: ";
-        std::cout << integrationParameters[deviceName]->at(obs.getNrDMs())->at(*step)->print() << std::endl;
+        std::cout << configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs())->at(*step)->options.print() << std::endl;
         std::cout << std::endl;
       }
-      snrDMsSamplesGlobal[stepNumber] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), obs.getNrDMs(), obs.getNrSynthesizedBeams());
-      snrDMsSamplesLocal[stepNumber] = cl::NDRange(snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+      snrDMsSamplesGlobal[stepNumber] = cl::NDRange(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+      snrDMsSamplesLocal[stepNumber] = cl::NDRange(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
       if ( DEBUG ) {
-        std::cout << "SNRDMsSamples (" + std::to_string(obs.getNrSamplesPerBatch() / *step) + ")" << std::endl;
-        std::cout << "Global: " << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", " << obs.getNrDMs() << " " << obs.getNrSynthesizedBeams() << std::endl;
-        std::cout << "Local: " << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", 1, 1" << std::endl;
+        std::cout << "SNRDMsSamples (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+        std::cout << "Global: " << configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", " << observation.getNrDMs() << " " << observation.getNrSynthesizedBeams() << std::endl;
+        std::cout << "Local: " << configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0() << ", 1, 1" << std::endl;
         std::cout << "Parameters: ";
-        std::cout << snrParameters.at(deviceName)->at(obs.getNrDMs())->at(obs.getNrSamplesPerBatch() / *step)->print() << std::endl;
+        std::cout << configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->options.print() << std::endl;
         std::cout << std::endl;
       }
     }
   }
 
   // Search loop
+  std::ofstream output;
   bool errorDetected = false;
   cl::Event syncPoint;
   isa::utils::Timer searchTimer, inputHandlingTimer, inputCopyTimer, dedispersionTimer, dedispersionStepOneTimer, dedispersionStepTwoTimer, integrationTimer, snrDMsSamplesTimer, outputCopyTimer, triggerTimer;
 
   searchTimer.start();
-  output.open(outputFile + ".trigger");
-  if ( compactResults ) {
+  output.open(dataOptions.outputFile + ".trigger");
+  if ( options.compactResults ) {
     output << "# beam batch sample integration_step compacted_integration_steps time DM compacted_DMs SNR" << std::endl;
   } else {
     output << "# beam batch sample integration_step time DM SNR" << std::endl;
   }
-  for ( unsigned int batch = 0; batch < obs.getNrBatches(); batch++ ) {
-    triggeredEvents_t triggeredEvents(obs.getNrSynthesizedBeams());
-    compactedEvents_t compactedEvents(obs.getNrSynthesizedBeams());
+  for ( unsigned int batch = 0; batch < observation.getNrBatches(); batch++ ) {
+    TriggeredEvents triggeredEvents(observation.getNrSynthesizedBeams());
+    CompactedEvents compactedEvents(observation.getNrSynthesizedBeams());
 
     // Load the input
     inputHandlingTimer.start();
-    if ( !dataPSRDADA ) {
+    if ( !dataOptions.dataPSRDADA ) {
       // If there are not enough available batches, computation is complete
-      if ( subbandDedispersion ) {
-        if ( batch == obs.getNrBatches() - obs.getNrDelayBatches(true) ) {
+      if ( options.subbandDedispersion ) {
+        if ( batch == observation.getNrBatches() - observation.getNrDelayBatches(true) ) {
           break;
         }
       } else {
-        if ( batch == obs.getNrBatches() - obs.getNrDelayBatches() ) {
+        if ( batch == observation.getNrBatches() - observation.getNrDelayBatches() ) {
           break;
         }
       }
       // If there are enough batches, prepare them for transfer to device
-      for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-        if ( subbandDedispersion ) {
-          if ( !dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getSplitBatches() ) {
-            for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-              for ( unsigned int chunk = 0; chunk < obs.getNrDelayBatches(true) - 1; chunk++ ) {
+      for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
+        if ( options.subbandDedispersion ) {
+          if ( !configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
+            for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+              for ( unsigned int chunk = 0; chunk < observation.getNrDelayBatches(true) - 1; chunk++ ) {
                 if ( inputBits >= 8 ) {
-                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * obs.getNrSamplesPerDispersedBatch(true, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerDispersedBatch(true, padding[deviceName] / sizeof(inputDataType))) + (chunk * obs.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&((input[beam]->at(batch + chunk))->at(channel * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType))))), obs.getNrSamplesPerBatch() * sizeof(inputDataType));
+                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (chunk * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&((input[beam]->at(batch + chunk))->at(channel * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))))), observation.getNrSamplesPerBatch() * sizeof(inputDataType));
                 } else {
-                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(obs.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (chunk * (obs.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(batch + chunk))->at(channel * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))))), (obs.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
+                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (chunk * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(batch + chunk))->at(channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))))), (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
                 }
               }
               if ( inputBits >= 8 ) {
-                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * obs.getNrSamplesPerDispersedBatch(true, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerDispersedBatch(true, padding[deviceName] / sizeof(inputDataType))) + ((obs.getNrDelayBatches(true) - 1) * obs.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&((input[beam]->at(batch + (obs.getNrDelayBatches(true) - 1)))->at(channel * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType))))), (obs.getNrSamplesPerDispersedBatch(true) % obs.getNrSamplesPerBatch()) * sizeof(inputDataType));
+                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + ((observation.getNrDelayBatches(true) - 1) * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&((input[beam]->at(batch + (observation.getNrDelayBatches(true) - 1)))->at(channel * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))))), (observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch()) * sizeof(inputDataType));
               } else {
-                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(obs.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + ((obs.getNrDelayBatches(true) - 1) * (obs.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(batch + (obs.getNrDelayBatches(true) - 1)))->at(channel * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))))), ((obs.getNrSamplesPerDispersedBatch(true) % obs.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType));
+                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + ((observation.getNrDelayBatches(true) - 1) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(batch + (observation.getNrDelayBatches(true) - 1)))->at(channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))))), ((observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType));
               }
             }
           }
         } else {
-          if ( !dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitBatches() ) {
-            for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-              for ( unsigned int chunk = 0; chunk < obs.getNrDelayBatches() - 1; chunk++ ) {
+          if ( !configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
+            for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+              for ( unsigned int chunk = 0; chunk < observation.getNrDelayBatches() - 1; chunk++ ) {
                 if ( inputBits >= 8 ) {
-                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * obs.getNrSamplesPerDispersedBatch(false, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerDispersedBatch(false, padding[deviceName] / sizeof(inputDataType))) + (chunk * obs.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&((input[beam]->at(batch + chunk))->at(channel * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType))))), obs.getNrSamplesPerBatch() * sizeof(inputDataType));
+                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (chunk * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&((input[beam]->at(batch + chunk))->at(channel * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))))), observation.getNrSamplesPerBatch() * sizeof(inputDataType));
                 } else {
-                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(obs.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (chunk * (obs.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(batch + chunk))->at(channel * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))))), (obs.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
+                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (chunk * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(batch + chunk))->at(channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))))), (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
                 }
               }
               if ( inputBits >= 8 ) {
-                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * obs.getNrSamplesPerDispersedBatch(false, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerDispersedBatch(false, padding[deviceName] / sizeof(inputDataType))) + ((obs.getNrDelayBatches() - 1) * obs.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&((input[beam]->at(batch + (obs.getNrDelayBatches() - 1)))->at(channel * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType))))), (obs.getNrSamplesPerDispersedBatch() % obs.getNrSamplesPerBatch()) * sizeof(inputDataType));
+                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1) * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&((input[beam]->at(batch + (observation.getNrDelayBatches() - 1)))->at(channel * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))))), (observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch()) * sizeof(inputDataType));
               } else {
-                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(obs.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + ((obs.getNrDelayBatches() - 1) * (obs.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(batch + (obs.getNrDelayBatches() - 1)))->at(channel * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))))), ((obs.getNrSamplesPerDispersedBatch() % obs.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType));
+                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(batch + (observation.getNrDelayBatches() - 1)))->at(channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))))), ((observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType));
               }
             }
           }
@@ -698,14 +563,14 @@ int main(int argc, char * argv[]) {
     } else {
 #ifdef HAVE_PSRDADA
       try {
-        if ( ipcbuf_eod(reinterpret_cast< ipcbuf_t * >(ringBuffer->data_block)) ) {
+        if ( ipcbuf_eod(reinterpret_cast< ipcbuf_t * >(dataOptions.ringBuffer->data_block)) ) {
           errorDetected = true;
           break;
         }
-        if ( subbandDedispersion ) {
-          AstroData::readPSRDADA(*ringBuffer, inputDADA.at(batch % obs.getNrDelayBatches(true)));
+        if ( options.subbandDedispersion ) {
+          AstroData::readPSRDADA(*dataOptions.ringBuffer, inputDADA.at(batch % observation.getNrDelayBatches(true)));
         } else {
-          AstroData::readPSRDADA(*ringBuffer, inputDADA.at(batch % obs.getNrDelayBatches()));
+          AstroData::readPSRDADA(*dataOptions.ringBuffer, inputDADA.at(batch % observation.getNrDelayBatches()));
         }
       } catch ( AstroData::RingBufferError & err ) {
         std::cerr << "Error: " << err.what() << std::endl;
@@ -713,49 +578,49 @@ int main(int argc, char * argv[]) {
       }
       // If there are enough data buffered, proceed with the computation
       // Otherwise, move to the next iteration of the search loop
-      if ( subbandDedispersion ) {
-        if ( batch < obs.getNrDelayBatches(true) - 1 ) {
+      if ( options.subbandDedispersion ) {
+        if ( batch < observation.getNrDelayBatches(true) - 1 ) {
           continue;
         }
       } else {
-        if ( batch < obs.getNrDelayBatches() - 1 ) {
+        if ( batch < observation.getNrDelayBatches() - 1 ) {
           continue;
         }
       }
-      for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
-        if ( subbandDedispersion ) {
-          if ( !dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getSplitBatches() ) {
-            for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-              for ( unsigned int chunk = batch - (obs.getNrDelayBatches(true) - 1); chunk < batch; chunk++ ) {
+      for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
+        if ( options.subbandDedispersion ) {
+          if ( !configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
+            for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+              for ( unsigned int chunk = batch - (observation.getNrDelayBatches(true) - 1); chunk < batch; chunk++ ) {
                 // Full batches
                 if ( inputBits >= 8 ) {
-                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * obs.getNrSamplesPerDispersedBatch(true, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerDispersedBatch(true, padding[deviceName] / sizeof(inputDataType))) + ((chunk - (batch - (obs.getNrDelayBatches(true) - 1))) * obs.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&(inputDADA.at(chunk % obs.getNrDelayBatches(true))->at((beam * obs.getNrChannels() * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType)))))), obs.getNrSamplesPerBatch() * sizeof(inputDataType));
+                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches(true) - 1))) * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&(inputDADA.at(chunk % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)))))), observation.getNrSamplesPerBatch() * sizeof(inputDataType));
                 } else {
-                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(obs.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + ((chunk - (batch - (obs.getNrDelayBatches(true) - 1))) * (obs.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&(inputDADA.at(chunk % obs.getNrDelayBatches(true))->at((beam * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)))))), (obs.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
+                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches(true) - 1))) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&(inputDADA.at(chunk % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)))))), (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
                 }
               }
               // Remainder (part of current batch)
               if ( inputBits >= 8 ) {
-                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * obs.getNrSamplesPerDispersedBatch(true, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerDispersedBatch(true, padding[deviceName] / sizeof(inputDataType))) + ((obs.getNrDelayBatches(true) - 1) * obs.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&(inputDADA.at(batch % obs.getNrDelayBatches(true))->at((beam * obs.getNrChannels() * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType)))))), (obs.getNrSamplesPerDispersedBatch(true) % obs.getNrSamplesPerBatch()) * sizeof(inputDataType));
+                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + ((observation.getNrDelayBatches(true) - 1) * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&(inputDADA.at(batch % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)))))), (observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch()) * sizeof(inputDataType));
               } else {
-                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(obs.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + ((obs.getNrDelayBatches(true) - 1) * (obs.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&(inputDADA.at(batch % obs.getNrDelayBatches(true))->at((beam * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)))))), ((obs.getNrSamplesPerDispersedBatch(true) % obs.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType));
+                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + ((observation.getNrDelayBatches(true) - 1) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&(inputDADA.at(batch % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)))))), ((observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType));
               }
             }
           }
         } else {
-          if ( !dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitBatches() ) {
-            for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-              for ( unsigned int chunk = batch - (obs.getNrDelayBatches() - 1); chunk < batch; chunk++ ) {
+          if ( !configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
+            for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+              for ( unsigned int chunk = batch - (observation.getNrDelayBatches() - 1); chunk < batch; chunk++ ) {
                 if ( inputBits >= 8 ) {
-                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * obs.getNrSamplesPerDispersedBatch(false, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerDispersedBatch(false, padding[deviceName] / sizeof(inputDataType))) + ((chunk - (batch - (obs.getNrDelayBatches() - 1))) * obs.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&(inputDADA.at(chunk % obs.getNrDelayBatches())->at((beam * obs.getNrChannels() * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType)))))), obs.getNrSamplesPerBatch() * sizeof(inputDataType));
+                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches() - 1))) * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&(inputDADA.at(chunk % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)))))), observation.getNrSamplesPerBatch() * sizeof(inputDataType));
                 } else {
-                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(obs.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + ((chunk - (batch - (obs.getNrDelayBatches() - 1))) * (obs.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&(inputDADA.at(chunk % obs.getNrDelayBatches())->at((beam * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)))))), (obs.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
+                  memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches() - 1))) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&(inputDADA.at(chunk % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)))))), (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
                 }
               }
               if ( inputBits >= 8 ) {
-                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * obs.getNrSamplesPerDispersedBatch(false, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerDispersedBatch(false, padding[deviceName] / sizeof(inputDataType))) + ((obs.getNrDelayBatches() - 1) * obs.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&(inputDADA.at(batch % obs.getNrDelayBatches())->at((beam * obs.getNrChannels() * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(inputDataType)))))), (obs.getNrSamplesPerDispersedBatch() % obs.getNrSamplesPerBatch()) * sizeof(inputDataType));
+                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1) * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&(inputDADA.at(batch % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)))))), (observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch()) * sizeof(inputDataType));
               } else {
-                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(obs.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + ((obs.getNrDelayBatches() - 1) * (obs.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&(inputDADA.at(batch % obs.getNrDelayBatches())->at((beam * obs.getNrChannels() * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(obs.getNrSamplesPerBatch() / (8 / inputBits), padding[deviceName] / sizeof(inputDataType)))))), ((obs.getNrSamplesPerDispersedBatch() % obs.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType));
+                memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&(inputDADA.at(batch % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)))))), ((observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType));
               }
             }
           }
@@ -768,47 +633,47 @@ int main(int argc, char * argv[]) {
     try {
       if ( SYNC ) {
         inputCopyTimer.start();
-        if ( subbandDedispersion ) {
-          if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getSplitBatches() ) {
+        if ( options.subbandDedispersion ) {
+          if ( configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
             // TODO: add support for splitBatches
           } else {
-            clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, &syncPoint);
+            clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, &syncPoint);
           }
         } else {
-          if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitBatches() ) {
+          if ( configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
             // TODO: add support for splitBatches
           } else {
-            clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, &syncPoint);
+            clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, &syncPoint);
           }
         }
         syncPoint.wait();
         inputCopyTimer.stop();
       } else {
-        if ( subbandDedispersion ) {
-          if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getSplitBatches() ) {
+        if ( options.subbandDedispersion ) {
+          if ( configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
             // TODO: add support for splitBatches
           } else {
-            clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()));
+            clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()));
           }
         } else {
-          if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitBatches() ) {
+          if ( configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
             // TODO: add support for splitBatches
           } else {
-            clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()));
+            clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()));
           }
         }
       }
       if ( DEBUG ) {
-        if ( print ) {
+        if ( options.print ) {
           // TODO: add support for splitBatches
           std::cerr << "dispersedData" << std::endl;
-          if ( subbandDedispersion ) {
+          if ( options.subbandDedispersion ) {
             if ( inputBits >= 8 ) {
-              for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+              for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
                 std::cerr << "Beam: " << beam << std::endl;
-                for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-                  for ( unsigned int sample = 0; sample < obs.getNrSamplesPerDispersedBatch(true, padding[deviceName] / sizeof(inputDataType)); sample++ ) {
-                    std::cerr << static_cast< float >(dispersedData[(beam * obs.getNrChannels() * obs.getNrSamplesPerDispersedBatch(true, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerDispersedBatch(true, padding[deviceName] / sizeof(inputDataType))) + sample]) << " ";
+                for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+                  for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)); sample++ ) {
+                    std::cerr << static_cast< float >(dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + sample]) << " ";
                   }
                   std::cerr << std::endl;
                 }
@@ -819,11 +684,11 @@ int main(int argc, char * argv[]) {
             }
           } else {
             if ( inputBits >= 8 ) {
-              for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+              for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
                 std::cerr << "Beam: " << beam << std::endl;
-                for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-                  for ( unsigned int sample = 0; sample < obs.getNrSamplesPerDispersedBatch(false, padding[deviceName] / sizeof(inputDataType)); sample++ ) {
-                    std::cerr << static_cast< float >(dispersedData[(beam * obs.getNrChannels() * obs.getNrSamplesPerDispersedBatch(false, padding[deviceName] / sizeof(inputDataType))) + (channel * obs.getNrSamplesPerDispersedBatch(false, padding[deviceName] / sizeof(inputDataType))) + sample]) << " ";
+                for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+                  for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)); sample++ ) {
+                    std::cerr << static_cast< float >(dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + sample]) << " ";
                   }
                   std::cerr << std::endl;
                 }
@@ -839,28 +704,28 @@ int main(int argc, char * argv[]) {
       std::cerr << "Input copy error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
       errorDetected = true;
     }
-    if ( subbandDedispersion ) {
-      if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getSplitBatches() && (batch < obs.getNrDelayBatches()) ) {
+    if ( options.subbandDedispersion ) {
+      if ( configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() && (batch < observation.getNrDelayBatches()) ) {
         // Not enough batches in the buffer to start the search
         continue;
       }
     } else {
-      if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitBatches() && (batch < obs.getNrDelayBatches()) ) {
+      if ( configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() && (batch < observation.getNrDelayBatches()) ) {
         // Not enough batches in the buffer to start the search
         continue;
       }
     }
 
     // Dedispersion
-    if ( subbandDedispersion ) {
-      if ( dedispersionStepOneParameters.at(deviceName)->at(obs.getNrDMs(true))->getSplitBatches() ) {
+    if ( options.subbandDedispersion ) {
+      if ( configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
         // TODO: add support for splitBatches
       }
       if ( SYNC ) {
         try {
           dedispersionTimer.start();
           dedispersionStepOneTimer.start();
-          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, &syncPoint);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, &syncPoint);
           syncPoint.wait();
           dedispersionStepOneTimer.stop();
         } catch ( cl::Error & err ) {
@@ -869,7 +734,7 @@ int main(int argc, char * argv[]) {
         }
         try {
           dedispersionStepTwoTimer.start();
-          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, &syncPoint);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, &syncPoint);
           syncPoint.wait();
           dedispersionStepTwoTimer.stop();
           dedispersionTimer.stop();
@@ -879,13 +744,13 @@ int main(int argc, char * argv[]) {
         }
       } else {
         try {
-          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, 0);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, 0);
         } catch ( cl::Error & err ) {
           std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
           errorDetected = true;
         }
         try {
-          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, 0);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, 0);
         } catch ( cl::Error & err ) {
           std::cerr << "Dedispersion Step Two error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
           errorDetected = true;
@@ -893,16 +758,16 @@ int main(int argc, char * argv[]) {
       }
     } else {
       try {
-          if ( dedispersionParameters.at(deviceName)->at(obs.getNrDMs())->getSplitBatches() ) {
+          if ( configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
             // TODO: add support for splitBatches
           }
           if ( SYNC ) {
             dedispersionTimer.start();
-            clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint);
+            clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint);
             syncPoint.wait();
             dedispersionTimer.stop();
           } else {
-            clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal);
+            clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal);
           }
       } catch ( cl::Error & err ) {
         std::cerr << "Dedispersion error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
@@ -910,21 +775,21 @@ int main(int argc, char * argv[]) {
       }
     }
     if ( DEBUG ) {
-      if ( print ) {
-        if ( subbandDedispersion ) {
+      if ( options.print ) {
+        if ( options.subbandDedispersion ) {
           try {
-            clQueues->at(clDeviceID)[0].enqueueReadBuffer(subbandedData_d, CL_TRUE, 0, subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(subbandedData.data()), 0, &syncPoint);
+            clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(subbandedData_d, CL_TRUE, 0, subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(subbandedData.data()), 0, &syncPoint);
             syncPoint.wait();
-            clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()), 0, &syncPoint);
+            clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()), 0, &syncPoint);
             syncPoint.wait();
             std::cerr << "subbandedData" << std::endl;
-            for ( unsigned int beam = 0; beam < obs.getNrBeams(); beam++ ) {
+            for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
               std::cerr << "Beam: " << beam << std::endl;
-              for ( unsigned int dm = 0; dm < obs.getNrDMs(true); dm++ ) {
+              for ( unsigned int dm = 0; dm < observation.getNrDMs(true); dm++ ) {
                 std::cerr << "Subbanding DM: " << dm << std::endl;
-                for ( unsigned int subband = 0; subband < obs.getNrSubbands(); subband++ ) {
-                  for ( unsigned int sample = 0; sample < obs.getNrSamplesPerBatch(true); sample++ ) {
-                    std::cerr << subbandedData[(beam * obs.getNrDMs(true) * obs.getNrSubbands() * obs.getNrSamplesPerBatch(true, padding[deviceName] / sizeof(outputDataType))) + (dm * obs.getNrSubbands() * obs.getNrSamplesPerBatch(true, padding[deviceName] / sizeof(outputDataType))) + (subband * obs.getNrSamplesPerBatch(true, padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
+                for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
+                  for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(true); sample++ ) {
+                    std::cerr << subbandedData[(beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
                   }
                   std::cerr << std::endl;
                 }
@@ -933,13 +798,13 @@ int main(int argc, char * argv[]) {
               std::cerr << std::endl;
             }
             std::cerr << "dedispersedData" << std::endl;
-            for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
+            for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
               std::cerr << "sBeam: " << sBeam << std::endl;
-              for ( unsigned int subbandingDM = 0; subbandingDM < obs.getNrDMs(true); subbandingDM++ ) {
-                for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-                  std::cerr << "DM: " << (subbandingDM * obs.getNrDMs()) + dm << std::endl;
-                  for ( unsigned int sample = 0; sample < obs.getNrSamplesPerBatch(); sample++ ) {
-                    std::cerr << dedispersedData[(sBeam * obs.getNrDMs(true) * obs.getNrDMs() * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(outputDataType))) + (subbandingDM * obs.getNrDMs() * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(outputDataType))) + (dm * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
+              for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
+                for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+                  std::cerr << "DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
+                  for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
+                    std::cerr << dedispersedData[(sBeam * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
                   }
                   std::cerr << std::endl;
                 }
@@ -953,15 +818,15 @@ int main(int argc, char * argv[]) {
           }
         } else {
           try {
-            clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()), 0, &syncPoint);
+            clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()), 0, &syncPoint);
             syncPoint.wait();
             std::cerr << "dedispersedData" << std::endl;
-            for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
+            for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
               std::cerr << "sBeam: " << sBeam << std::endl;
-              for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+              for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
                 std::cerr << "DM: " << dm << std::endl;
-                for ( unsigned int sample = 0; sample < obs.getNrSamplesPerBatch(); sample++ ) {
-                  std::cerr << dedispersedData[(sBeam * obs.getNrDMs() * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(outputDataType))) + (dm * obs.getNrSamplesPerBatch(false, padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
+                for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
+                  std::cerr << dedispersedData[(sBeam * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
                 }
                 std::cerr << std::endl;
               }
@@ -979,47 +844,47 @@ int main(int argc, char * argv[]) {
     try {
       if ( SYNC ) {
         snrDMsSamplesTimer.start();
-        clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[integrationSteps.size()], cl::NullRange, snrDMsSamplesGlobal[integrationSteps.size()], snrDMsSamplesLocal[integrationSteps.size()], 0, &syncPoint);
+        clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[integrationSteps.size()], cl::NullRange, snrDMsSamplesGlobal[integrationSteps.size()], snrDMsSamplesLocal[integrationSteps.size()], 0, &syncPoint);
         syncPoint.wait();
         snrDMsSamplesTimer.stop();
         outputCopyTimer.start();
-        clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrData_d, CL_TRUE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()), 0, &syncPoint);
+        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrData_d, CL_TRUE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()), 0, &syncPoint);
         syncPoint.wait();
-        clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrSamples_d, CL_TRUE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()), 0, &syncPoint);
+        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrSamples_d, CL_TRUE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()), 0, &syncPoint);
         syncPoint.wait();
         outputCopyTimer.stop();
       } else {
-        clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[integrationSteps.size()], cl::NullRange, snrDMsSamplesGlobal[integrationSteps.size()], snrDMsSamplesLocal[integrationSteps.size()]);
-        clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrData_d, CL_FALSE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()));
-        clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrSamples_d, CL_FALSE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()));
-        clQueues->at(clDeviceID)[0].finish();
+        clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[integrationSteps.size()], cl::NullRange, snrDMsSamplesGlobal[integrationSteps.size()], snrDMsSamplesLocal[integrationSteps.size()]);
+        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrData_d, CL_FALSE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()));
+        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrSamples_d, CL_FALSE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()));
+        clQueues->at(deviceOptions.deviceID)[0].finish();
       }
     } catch ( cl::Error & err ) {
       std::cerr << "SNR dedispersed data error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
       errorDetected = true;
     }
     triggerTimer.start();
-    trigger(subbandDedispersion, padding[deviceName], 0, threshold, obs, snrData, snrSamples, triggeredEvents);
+    trigger(options.subbandDedispersion, deviceOptions.padding[deviceOptions.deviceName], 0, options.threshold, observation, snrData, snrSamples, triggeredEvents);
     triggerTimer.stop();
     if ( DEBUG ) {
-      if ( print ) {
-        if ( subbandDedispersion ) {
+      if ( options.print ) {
+        if ( options.subbandDedispersion ) {
           std::cerr << "snrData" << std::endl;
-          for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
+          for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
             std::cerr << "sBeam: " << sBeam << std::endl;
-            for ( unsigned int subbandingDM = 0; subbandingDM < obs.getNrDMs(true); subbandingDM++ ) {
-              for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-                std::cerr << snrData[(sBeam * isa::utils::pad(obs.getNrDMs(true) * obs.getNrDMs(), padding[deviceName] / sizeof(float))) + (subbandingDM * obs.getNrDMs()) + dm] << " ";
+            for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
+              for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+                std::cerr << snrData[(sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm] << " ";
               }
             }
             std::cerr << std::endl;
           }
         } else {
           std::cerr << "snrData" << std::endl;
-          for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
+          for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
             std::cerr << "sBeam: " << sBeam << std::endl;
-            for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-              std::cerr << snrData[(sBeam * obs.getNrDMs(false, padding[deviceName] / sizeof(float))) + dm] << " ";
+            for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+              std::cerr << snrData[(sBeam * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + dm] << " ";
             }
             std::cerr << std::endl;
           }
@@ -1036,48 +901,48 @@ int main(int argc, char * argv[]) {
       try {
         if ( SYNC ) {
           integrationTimer.start();
-          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*integrationDMsSamplesK[stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber], 0, &syncPoint);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*integrationDMsSamplesK[stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber], 0, &syncPoint);
           syncPoint.wait();
           integrationTimer.stop();
           snrDMsSamplesTimer.start();
-          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber], 0, &syncPoint);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber], 0, &syncPoint);
           syncPoint.wait();
           snrDMsSamplesTimer.stop();
           outputCopyTimer.start();
-          clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrData_d, CL_TRUE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()), 0, &syncPoint);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrData_d, CL_TRUE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()), 0, &syncPoint);
           syncPoint.wait();
-          clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrSamples_d, CL_TRUE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()), 0, &syncPoint);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrSamples_d, CL_TRUE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()), 0, &syncPoint);
           syncPoint.wait();
           outputCopyTimer.stop();
         } else {
-          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*integrationDMsSamplesK[stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber]);
-          clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber]);
-          clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrData_d, CL_FALSE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()));
-          clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrSamples_d, CL_FALSE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()));
-          clQueues->at(clDeviceID)[0].finish();
+          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*integrationDMsSamplesK[stepNumber], cl::NullRange, integrationGlobal[stepNumber], integrationLocal[stepNumber]);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*snrDMsSamplesK[stepNumber], cl::NullRange, snrDMsSamplesGlobal[stepNumber], snrDMsSamplesLocal[stepNumber]);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrData_d, CL_FALSE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()));
+          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrSamples_d, CL_FALSE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()));
+          clQueues->at(deviceOptions.deviceID)[0].finish();
         }
       } catch ( cl::Error & err ) {
         std::cerr << "SNR integration loop error -- Batch: " << std::to_string(batch) << ", Step: " << std::to_string(*step) << ", " << err.what() << " " << err.err() << std::endl;
         errorDetected = true;
       }
       if ( DEBUG ) {
-        if ( print ) {
+        if ( options.print ) {
           try {
-            clQueues->at(clDeviceID)[0].enqueueReadBuffer(integratedData_d, CL_TRUE, 0, integratedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(integratedData.data()), 0, &syncPoint);
+            clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(integratedData_d, CL_TRUE, 0, integratedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(integratedData.data()), 0, &syncPoint);
             syncPoint.wait();
           } catch ( cl::Error & err ) {
             std::cerr << "Impossible to read integratedData_d: " << err.what() << " " << err.err() << std::endl;
             errorDetected = true;
           }
           std::cerr << "integratedData" << std::endl;
-          if ( subbandDedispersion ) {
-            for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
+          if ( options.subbandDedispersion ) {
+            for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
               std::cerr << "sBeam: " << sBeam << std::endl;
-              for ( unsigned int subbandingDM = 0; subbandingDM < obs.getNrDMs(true); subbandingDM++ ) {
-                for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-                  std::cerr << "DM: " << (subbandingDM * obs.getNrDMs()) + dm << std::endl;
-                  for ( unsigned int sample = 0; sample < obs.getNrSamplesPerBatch() / *step; sample++ ) {
-                    std::cerr << integratedData[(sBeam * obs.getNrDMs(true) * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType))) + (subbandingDM * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
+              for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
+                for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+                  std::cerr << "DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
+                  for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++ ) {
+                    std::cerr << integratedData[(sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
                   }
                   std::cerr << std::endl;
                 }
@@ -1085,12 +950,12 @@ int main(int argc, char * argv[]) {
               std::cerr << std::endl;
             }
           } else {
-            for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
+            for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
               std::cerr << "sBeam: " << sBeam << std::endl;
-              for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+              for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
                 std::cerr << "DM: " << dm << std::endl;
-                for ( unsigned int sample = 0; sample < obs.getNrSamplesPerBatch() / *step; sample++ ) {
-                  std::cerr << integratedData[(sBeam * obs.getNrDMs() * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(obs.getNrSamplesPerBatch() / *(integrationSteps.begin()), padding[deviceName] / sizeof(outputDataType))) + sample] << " ";
+                for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++ ) {
+                  std::cerr << integratedData[(sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
                 }
                 std::cerr << std::endl;
               }
@@ -1100,27 +965,27 @@ int main(int argc, char * argv[]) {
         }
       }
       triggerTimer.start();
-      trigger(subbandDedispersion, padding[deviceName], *step, threshold, obs, snrData, snrSamples, triggeredEvents);
+      trigger(options.subbandDedispersion, deviceOptions.padding[deviceOptions.deviceName], *step, options.threshold, observation, snrData, snrSamples, triggeredEvents);
       triggerTimer.stop();
       if ( DEBUG ) {
-        if ( print ) {
-          if ( subbandDedispersion ) {
+        if ( options.print ) {
+          if ( options.subbandDedispersion ) {
             std::cerr << "snrData" << std::endl;
-            for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
+            for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
               std::cerr << "sBeam: " << sBeam << std::endl;
-              for ( unsigned int subbandingDM = 0; subbandingDM < obs.getNrDMs(true); subbandingDM++ ) {
-                for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-                  std::cerr << snrData[(sBeam * isa::utils::pad(obs.getNrDMs(true) * obs.getNrDMs(), padding[deviceName] / sizeof(float))) + (subbandingDM * obs.getNrDMs()) + dm] << " ";
+              for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
+                for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+                  std::cerr << snrData[(sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm] << " ";
                 }
               }
               std::cerr << std::endl;
             }
           } else {
             std::cerr << "snrData" << std::endl;
-            for ( unsigned int sBeam = 0; sBeam < obs.getNrSynthesizedBeams(); sBeam++ ) {
+            for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
               std::cerr << "sBeam: " << sBeam << std::endl;
-              for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-                std::cerr << snrData[(sBeam * obs.getNrDMs(false, padding[deviceName] / sizeof(float))) + dm] << " ";
+              for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+                std::cerr << snrData[(sBeam * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + dm] << " ";
               }
               std::cerr << std::endl;
             }
@@ -1132,19 +997,19 @@ int main(int argc, char * argv[]) {
     if ( errorDetected ) {
       output.close();
 #ifdef HAVE_PSRDADA
-      if ( dataPSRDADA ) {
-        if ( dada_hdu_unlock_read(ringBuffer) != 0 ) {
+      if ( dataOptions.dataPSRDADA ) {
+        if ( dada_hdu_unlock_read(dataOptions.ringBuffer) != 0 ) {
           std::cerr << "Impossible to unlock the PSRDADA ringbuffer for reading the header." << std::endl;
         }
-        dada_hdu_disconnect(ringBuffer);
+        dada_hdu_disconnect(dataOptions.ringBuffer);
       }
 #endif // HAVE_PSRDADA
       return 1;
     }
     // Print and compact results
     triggerTimer.start();
-    if ( compactResults ) {
-      compact(obs, triggeredEvents, compactedEvents);
+    if ( options.compactResults ) {
+      compact(observation, triggeredEvents, compactedEvents);
       for ( auto beamEvents = compactedEvents.begin(); beamEvents != compactedEvents.end(); ++beamEvents ) {
         for ( auto event = beamEvents->begin(); event != beamEvents->end(); ++event ) {
           unsigned int integration = 0;
@@ -1155,12 +1020,12 @@ int main(int argc, char * argv[]) {
           } else {
             integration = event->integration;
           }
-          if ( subbandDedispersion ) {
-            firstDM = obs.getFirstDM(true);
+          if ( options.subbandDedispersion ) {
+            firstDM = observation.getFirstDM(true);
           } else {
-            firstDM = obs.getFirstDM();
+            firstDM = observation.getFirstDM();
           }
-          output << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << event->compactedIntegration << " " << ((batch * obs.getNrSamplesPerBatch()) + (event->sample * integration)) * obs.getSamplingTime() << " " << firstDM + (event->DM * obs.getDMStep()) << " " << event->compactedDMs << " " << event->SNR << std::endl;
+          output << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << event->compactedIntegration << " " << ((batch * observation.getNrSamplesPerBatch()) + (event->sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event->DM * observation.getDMStep()) << " " << event->compactedDMs << " " << event->SNR << std::endl;
         }
       }
     } else {
@@ -1175,12 +1040,12 @@ int main(int argc, char * argv[]) {
             } else {
               integration = event->integration;
             }
-            if ( subbandDedispersion ) {
-              firstDM = obs.getFirstDM(true);
+            if ( options.subbandDedispersion ) {
+              firstDM = observation.getFirstDM(true);
             } else {
-              firstDM = obs.getFirstDM();
+              firstDM = observation.getFirstDM();
             }
-            output << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << ((batch * obs.getNrSamplesPerBatch()) + (event->sample * integration)) * obs.getSamplingTime() << " " << firstDM + (event->DM * obs.getDMStep()) << " " << event->SNR << std::endl;
+            output << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << ((batch * observation.getNrSamplesPerBatch()) + (event->sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event->DM * observation.getDMStep()) << " " << event->SNR << std::endl;
           }
         }
       }
@@ -1188,24 +1053,24 @@ int main(int argc, char * argv[]) {
     triggerTimer.stop();
   }
 #ifdef HAVE_PSRDADA
-  if ( dataPSRDADA ) {
-    if ( dada_hdu_unlock_read(ringBuffer) != 0 ) {
+  if ( dataOptions.dataPSRDADA ) {
+    if ( dada_hdu_unlock_read(dataOptions.ringBuffer) != 0 ) {
       std::cerr << "Impossible to unlock the PSRDADA ringbuffer for reading the header." << std::endl;
     }
-    dada_hdu_disconnect(ringBuffer);
+    dada_hdu_disconnect(dataOptions.ringBuffer);
   }
 #endif // HAVE_PSRDADA
   output.close();
   searchTimer.stop();
 
   // Store statistics before shutting down
-  output.open(outputFile + ".stats");
+  output.open(dataOptions.outputFile + ".stats");
   output << std::fixed << std::setprecision(6);
   output << "# nrDMs" << std::endl;
-  if ( subbandDedispersion ) {
-    output << obs.getNrDMs(true) * obs.getNrDMs() << std::endl;
+  if ( options.subbandDedispersion ) {
+    output << observation.getNrDMs(true) * observation.getNrDMs() << std::endl;
   } else {
-    output << obs.getNrDMs() << std::endl;
+    output << observation.getNrDMs() << std::endl;
   }
   output << "# searchTimer" << std::endl;
   output << searchTimer.getTotalTime() << std::endl;
