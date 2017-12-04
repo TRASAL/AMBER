@@ -46,7 +46,6 @@ int main(int argc, char * argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
-  delete args;
 
   // Load observationervation data
   isa::utils::Timer loadTime;
