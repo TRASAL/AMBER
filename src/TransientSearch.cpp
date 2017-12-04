@@ -41,7 +41,7 @@ int main(int argc, char * argv[]) {
   // Command line options
   isa::utils::ArgumentList args(argc, argv);
   try {
-    processCommandLineOptions(args, options, deviceOptions, dataOptions, configurations, generatorOptions, observationervation);
+    processCommandLineOptions(args, options, deviceOptions, dataOptions, configurations, generatorOptions, observatio);
   } catch ( std::exception & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
