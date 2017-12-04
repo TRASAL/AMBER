@@ -37,7 +37,7 @@ void trigger(const bool subbandDedispersion, const unsigned int padding, const u
         try {
           // Add event to its existing list
           triggeredEvents.at(beam).at(dm).push_back(event);
-        } catch ( std::out_of_range err ) {
+        } catch ( std::out_of_range & err ) {
           // Add event to new list
           std::vector<TriggeredEvent> events;
 
