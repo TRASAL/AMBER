@@ -16,7 +16,7 @@
 #include <Trigger.hpp>
 
 
-void trigger(const bool subbandDedispersion, const unsigned int padding, const unsigned int integration, const float threshold, const AstroData::Observation & observation, const std::vector<float> & snrData, const std::vector<unsigned int> & samplesData, TriggeredEvents & triggeredEvents) {
+void trigger(const bool subbandDedispersion, const unsigned int padding, const unsigned int integration, const float threshold, const AstroData::Observation & observation, const std::vector<float> & snrData, const std::vector<unsigned int> & samplesData, TriggeredEvents & TriggeredEvents) {
   unsigned int nrDMs = 0;
 
   if ( subbandDedispersion ) {
@@ -28,7 +28,7 @@ void trigger(const bool subbandDedispersion, const unsigned int padding, const u
   for ( unsigned int beam = 0; beam < observation.getNrSynthesizedBeams(); beam++ ) {
     for ( unsigned int dm = 0; dm < nrDMs; dm++ ) {
       if ( snrData[(beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm] >= threshold ) {
-        triggeredEvent event;
+        TriggeredEvent event;
         event.beam = beam;
         event.sample = samplesData[(beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm];
         event.integration = integration;
@@ -39,10 +39,10 @@ void trigger(const bool subbandDedispersion, const unsigned int padding, const u
           triggeredEvents.at(beam).at(dm).push_back(event);
         } catch ( std::out_of_range err ) {
           // Add event to new list
-          std::vector<triggeredEvent> events;
+          std::vector<TriggeredEvent> events;
 
           events.push_back(event);
-          triggeredEvents.at(beam).insert(std::pair<unsigned int, std::vector<triggeredEvent>>(dm, events));
+          triggeredEvents.at(beam).insert(std::pair<unsigned int, std::vector<TriggeredEvent>>(dm, events));
         }
       }
     }
@@ -55,7 +55,7 @@ void compact(const AstroData::Observation & observation, const TriggeredEvents &
   // Compact integration
   for ( auto beamEvents = triggeredEvents.begin(); beamEvents != triggeredEvents.end(); ++beamEvents ) {
     for ( auto dmEvents = beamEvents->begin(); dmEvents != beamEvents->end(); ++dmEvents ) {
-      compactedEvent event;
+      CompactedEvent event;
 
       for ( auto dmEvent = dmEvents->second.begin(); dmEvent != dmEvents->second.end(); ++dmEvent ) {
         if ( dmEvent->SNR > event.SNR ) {
@@ -73,7 +73,7 @@ void compact(const AstroData::Observation & observation, const TriggeredEvents &
   // Compact DM
   for ( auto beamEvents = temporaryEvents.begin(); beamEvents != temporaryEvents.end(); ++beamEvents ) {
     for ( auto event = beamEvents->begin(); event != beamEvents->end(); ++event ) {
-      compactedEvent finalEvent;
+      CompactedEvent finalEvent;
       unsigned int window = 0;
 
       while ( (event->DM + window) == (event + window)->DM ) {
