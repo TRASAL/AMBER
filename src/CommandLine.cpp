@@ -106,9 +106,11 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
     observation.setDMRange(argumentList.getSwitchArgument<unsigned int>("-dms"), argumentList.getSwitchArgument<float>("-dm_first"), argumentList.getSwitchArgument<float>("-dm_step"));
   } catch ( isa::utils::EmptyCommandLine & err ) {
     usage(argumentList.getName());
-    throw std::exception();
-  } catch ( std::exception & err ) {
+    throw;
+  } catch ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
+    throw;
+  } catch ( std::exception & err ) {
     throw;
   }
 }
