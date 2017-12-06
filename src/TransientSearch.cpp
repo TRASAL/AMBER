@@ -125,9 +125,9 @@ int main(int argc, char * argv[]) {
 
   // Initialize OpenCL
   cl::Context * clContext = new cl::Context();
-  std::vector< cl::Platform > * clPlatforms = new std::vector< cl::Platform >();
-  std::vector< cl::Device > * clDevices = new std::vector< cl::Device >();
-  std::vector< std::vector< cl::CommandQueue > > * clQueues = new std::vector< std::vector < cl::CommandQueue > >();
+  std::vector<cl::Platform> * clPlatforms = new std::vector<cl::Platform>();
+  std::vector<cl::Device> * clDevices = new std::vector<cl::Device>();
+  std::vector<std::vector<cl::CommandQueue>> * clQueues = new std::vector<std::vector<cl::CommandQueue>>();
 
   try {
     isa::OpenCL::initializeOpenCL(deviceOptions.platformID, 1, clPlatforms, clContext, clDevices, clQueues);
