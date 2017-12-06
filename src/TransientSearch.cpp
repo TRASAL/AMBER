@@ -48,12 +48,11 @@ int main(int argc, char * argv[]) {
 
   // Load input data
   isa::utils::Timer loadTime;
-  std::vector< std::vector< std::vector< inputDataType > * > * > input(observation.getNrBeams());
-  std::vector< std::vector< inputDataType > * > inputDADA;
-  std::set< unsigned int > integrationSteps;
+  std::vector<std::vector<std::vector<inputDataType> *> *> input(observation.getNrBeams());
+  std::vector<std::vector<inputDataType> *> inputDADA;
   if ( dataOptions.dataLOFAR ) {
 #ifdef HAVE_HDF5
-    input[0] = new std::vector< std::vector< inputDataType > * >(observation.getNrBatches());
+    input[0] = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
     loadTime.start();
     if ( dataOptions.limit ) {
       AstroData::readLOFAR(dataOptions.headerFile, dataOptions.dataFile, observation, deviceOptions.padding[deviceOptions.deviceName], *(input[0]), observation.getNrBatches());
@@ -63,7 +62,7 @@ int main(int argc, char * argv[]) {
     loadTime.stop();
 #endif // HAVE_HDF5
   } else if ( dataOptions.dataSIGPROC ) {
-    input[0] = new std::vector< std::vector< inputDataType > * >(observation.getNrBatches());
+    input[0] = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
     loadTime.start();
     AstroData::readSIGPROC(observation, deviceOptions.padding[deviceOptions.deviceName], inputBits, dataOptions.headerSizeSIGPROC, dataOptions.dataFile, *(input[0]));
     loadTime.stop();
@@ -72,26 +71,27 @@ int main(int argc, char * argv[]) {
     dataOptions.ringBuffer = dada_hdu_create(0);
     dada_hdu_set_key(dataOptions.ringBuffer, dataOptions.dadaKey);
     if ( dada_hdu_connect(dataOptions.ringBuffer) != 0 ) {
-      std::cerr << "Impossible to connect to PSRDADA ringbuffer." << std::endl;
+      std::cerr << "ERROR: impossible to connect to PSRDADA ringbuffer \"" + std::to_string(dataOptions.dadaKey) + "\"" << std::endl;
     }
     if ( dada_hdu_lock_read(dataOptions.ringBuffer) != 0 ) {
-      std::cerr << "Impossible to lock the PSRDADA ringbuffer for reading the header." << std::endl;
+      std::cerr << "ERROR: impossible to lock the PSRDADA ringbuffer for reading the header" << std::endl;
     }
     try {
       AstroData::readPSRDADAHeader(observation, *dataOptions.ringBuffer);
     } catch ( AstroData::RingBufferError & err ) {
-      std::cerr << "Error: " << err.what() << std::endl;
-      return -1;
+      std::cerr << err.what() << std::endl;
+      return 1;
     }
 #endif // HAVE_PSRDADA
   } else {
     for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
       // TODO: if there are multiple synthesized beams, the generated data should take this into account
-      input[beam] = new std::vector< std::vector< inputDataType > * >(observation.getNrBatches());
+      input[beam] = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
       AstroData::generateSinglePulse(generatorOptions.width, generatorOptions.DM, observation, deviceOptions.padding[deviceOptions.deviceName], *(input[beam]), inputBits, generatorOptions.random);
     }
   }
   std::vector<unsigned int> zappedChannels(observation.getNrChannels(deviceOptions.padding[deviceOptions.deviceName] / sizeof(unsigned int)));
+  std::set<unsigned int> integrationSteps;
   try {
     AstroData::readZappedChannels(observation, dataOptions.channelsFile, zappedChannels);
     AstroData::readIntegrationSteps(observation, dataOptions.integrationFile, integrationSteps);
@@ -99,7 +99,7 @@ int main(int argc, char * argv[]) {
     std::cerr << err.what() << std::endl;
   }
   if ( DEBUG ) {
-    std::cout << "Device: " << deviceOptions.deviceName << std::endl;
+    std::cout << "Device: " << deviceOptions.deviceName << "(" + std::to_string(deviceOptions.platformID) +  ", " + std::to_string(deviceOptions.deviceID) + ")" << std::endl;
     std::cout << "Padding: " << deviceOptions.padding[deviceOptions.deviceName] << " bytes" << std::endl;
     std::cout << std::endl;
     std::cout << "Beams: " << observation.getNrBeams() << std::endl;
@@ -572,7 +572,7 @@ int main(int argc, char * argv[]) {
         }
       } catch ( AstroData::RingBufferError & err ) {
         std::cerr << "Error: " << err.what() << std::endl;
-        return -1;
+        return 1;
       }
       // If there are enough data buffered, proceed with the computation
       // Otherwise, move to the next iteration of the search loop
