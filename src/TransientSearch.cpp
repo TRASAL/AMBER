@@ -38,7 +38,7 @@ int main(int argc, char * argv[]) {
   GeneratorOptions generatorOptions;
   AstroData::Observation observation;
 
-  // Command line options
+  // Process command line arguments
   isa::utils::ArgumentList args(argc, argv);
   try {
     processCommandLineOptions(args, options, deviceOptions, dataOptions, configurations, generatorOptions, observation);
