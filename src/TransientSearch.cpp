@@ -43,7 +43,6 @@ int main(int argc, char * argv[]) {
   try {
     processCommandLineOptions(args, options, deviceOptions, dataOptions, configurations, generatorOptions, observation);
   } catch ( std::exception & err ) {
-    std::cerr << err.what() << std::endl;
     return 1;
   }
 
