@@ -46,7 +46,7 @@ int main(int argc, char * argv[]) {
     return 1;
   }
 
-  // Load observationervation data
+  // Load input data
   isa::utils::Timer loadTime;
   std::vector< std::vector< std::vector< inputDataType > * > * > input(observation.getNrBeams());
   std::vector< std::vector< inputDataType > * > inputDADA;
