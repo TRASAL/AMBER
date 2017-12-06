@@ -137,8 +137,8 @@ int main(int argc, char * argv[]) {
   }
 
   // Host memory allocation
-  std::vector< float > * shiftsStepOne = Dedispersion::getShifts(observation, deviceOptions.padding[deviceOptions.deviceName]);
-  std::vector< float > * shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, deviceOptions.padding[deviceOptions.deviceName]);
+  std::vector<float> * shiftsStepOne = Dedispersion::getShifts(observation, deviceOptions.padding[deviceOptions.deviceName]);
+  std::vector<float> * shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, deviceOptions.padding[deviceOptions.deviceName]);
   if ( DEBUG ) {
     if ( options.print ) {
       std::cerr << "shiftsStepOne" << std::endl;
@@ -157,20 +157,20 @@ int main(int argc, char * argv[]) {
     }
   }
   if ( options.subbandDedispersion ) {
-    observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
-    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch(true) + static_cast< unsigned int >(shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))), true);
-    observation.setNrDelayBatches(static_cast< unsigned int >(std::ceil(static_cast< double >(observation.getNrSamplesPerDispersedBatch(true)) / observation.getNrSamplesPerBatch())), true);
+    observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
+    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch(true) + static_cast<unsigned int>(shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))), true);
+    observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch(true)) / observation.getNrSamplesPerBatch())), true);
   } else {
-    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepOne->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
-    observation.setNrDelayBatches(static_cast< unsigned int >(std::ceil(static_cast< double >(observation.getNrSamplesPerDispersedBatch()) / observation.getNrSamplesPerBatch())));
+    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(shiftsStepOne->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
+    observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch()) / observation.getNrSamplesPerBatch())));
   }
   std::vector<unsigned int> beamMapping;
-  std::vector< inputDataType > dispersedData;
-  std::vector< outputDataType > subbandedData;
-  std::vector< outputDataType > dedispersedData;
-  std::vector< outputDataType > integratedData;
-  std::vector< float > snrData;
-  std::vector< unsigned int > snrSamples;
+  std::vector<inputDataType> dispersedData;
+  std::vector<outputDataType> subbandedData;
+  std::vector<outputDataType> dedispersedData;
+  std::vector<outputDataType> integratedData;
+  std::vector<float> snrData;
+  std::vector<unsigned int> snrSamples;
 
   if ( options.subbandDedispersion ) {
 #ifdef HAVE_PSRDADA
@@ -178,9 +178,9 @@ int main(int argc, char * argv[]) {
       inputDADA.resize(observation.getNrDelayBatches(true));
       for ( unsigned int batch = 0; batch < observation.getNrDelayBatches(true); batch++ ) {
         if ( inputBits >= 8 ) {
-          inputDADA.at(batch) = new std::vector< inputDataType >(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
+          inputDADA.at(batch) = new std::vector<inputDataType>(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
         } else {
-          inputDADA.at(batch) = new std::vector< inputDataType >(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
+          inputDADA.at(batch) = new std::vector<inputDataType>(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
         }
       }
     }
@@ -206,9 +206,9 @@ int main(int argc, char * argv[]) {
       inputDADA.resize(observation.getNrDelayBatches());
       for ( unsigned int batch = 0; batch < observation.getNrDelayBatches(); batch++ ) {
         if ( inputBits >= 8 ) {
-          inputDADA.at(batch) = new std::vector< inputDataType >(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
+          inputDADA.at(batch) = new std::vector<inputDataType>(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
         } else {
-          inputDADA.at(batch) = new std::vector< inputDataType >(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
+          inputDADA.at(batch) = new std::vector<inputDataType>(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
         }
       }
     }
@@ -231,7 +231,7 @@ int main(int argc, char * argv[]) {
   AstroData::generateBeamMapping(observation, beamMapping, deviceOptions.padding[deviceOptions.deviceName], options.subbandDedispersion);
 
   if ( observation.getNrDelayBatches() > observation.getNrBatches() ) {
-    std::cerr << "Not enough input batches for the search." << std::endl;
+    std::cerr << "Not enough input batches for the specified search." << std::endl;
     return 1;
   }
 
