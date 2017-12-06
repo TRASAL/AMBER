@@ -111,7 +111,7 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
     std::cerr << err.what() << std::endl;
     throw;
   } catch ( std::exception & err ) {
-    std::cerr << "Unknown error: " << err.what() << std::endl;
+    std::cerr << err.what() << std::endl;
     throw;
   }
 }
