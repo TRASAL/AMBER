@@ -27,6 +27,7 @@
 
 #include <configuration.hpp>
 #include <CommandLine.hpp>
+#include <KernelGenerator.hpp>
 #include <Trigger.hpp>
 
 
@@ -273,108 +274,31 @@ int main(int argc, char * argv[]) {
   }
 
   // Generate OpenCL kernels
-  std::string * code;
-  cl::Kernel * dedispersionK, * dedispersionStepOneK, * dedispersionStepTwoK;
-  std::vector< cl::Kernel * > integrationDMsSamplesK(integrationSteps.size() + 1), snrDMsSamplesK(integrationSteps.size() + 1);
+  Kernels kernels;
 
   if ( options.subbandDedispersion ) {
-    code = Dedispersion::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(*(configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))), deviceOptions.padding[deviceOptions.deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
-    try {
-      dedispersionStepOneK = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
-      if ( configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
-        // TODO: add support for splitBatches
-      } else {
-        dedispersionStepOneK->setArg(0, dispersedData_d);
-        dedispersionStepOneK->setArg(1, subbandedData_d);
-        dedispersionStepOneK->setArg(2, zappedChannels_d);
-        dedispersionStepOneK->setArg(3, shiftsStepOne_d);
-      }
-    } catch ( isa::OpenCL::OpenCLError & err ) {
-      std::cerr << err.what() << std::endl;
-      return 1;
-    }
-    delete code;
-    code = Dedispersion::getSubbandDedispersionStepTwoOpenCL< outputDataType >(*(configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())), deviceOptions.padding[deviceOptions.deviceName], outputDataName, observation, *shiftsStepTwo);
-    try {
-      dedispersionStepTwoK = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
-      dedispersionStepTwoK->setArg(0, subbandedData_d);
-      dedispersionStepTwoK->setArg(1, dedispersedData_d);
-      dedispersionStepTwoK->setArg(2, beamMapping_d);
-      dedispersionStepTwoK->setArg(3, shiftsStepTwo_d);
-    } catch ( isa::OpenCL::OpenCLError & err ) {
-      std::cerr << err.what() << std::endl;
-      return 1;
-    }
-    delete code;
-  } else {
-    code = Dedispersion::getDedispersionOpenCL< inputDataType, outputDataType >(*(configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())), deviceOptions.padding[deviceOptions.deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
-    try {
-      dedispersionK = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
-      if ( configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
-        // TODO: add support for splitBatches
-      } else {
-        dedispersionK->setArg(0, dispersedData_d);
-        dedispersionK->setArg(1, dedispersedData_d);
-        dedispersionK->setArg(2, beamMapping_d);
-        dedispersionK->setArg(3, zappedChannels_d);
-        dedispersionK->setArg(4, shiftsStepOne_d);
-      }
-    } catch ( isa::OpenCL::OpenCLError & err ) {
-      std::cerr << err.what() << std::endl;
-      return 1;
-    }
-    delete code;
-  }
-  if ( options.subbandDedispersion ) {
-    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), outputDataName, observation, observation.getNrSamplesPerBatch(), deviceOptions.padding[deviceOptions.deviceName]);
-  } else {
-    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), outputDataName, observation, observation.getNrSamplesPerBatch(), deviceOptions.padding[deviceOptions.deviceName]);
-  }
-  try {
-    snrDMsSamplesK[integrationSteps.size()] = isa::OpenCL::compile("snrDMsSamples" + std::to_string(observation.getNrSamplesPerBatch()), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
-    snrDMsSamplesK[integrationSteps.size()]->setArg(0, dedispersedData_d);
-    snrDMsSamplesK[integrationSteps.size()]->setArg(1, snrData_d);
-    snrDMsSamplesK[integrationSteps.size()]->setArg(2, snrSamples_d);
-  } catch ( isa::OpenCL::OpenCLError & err ) {
-    std::cerr << err.what() << std::endl;
-    return 1;
-  }
-  delete code;
-  for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
-    auto step = integrationSteps.begin();
-
-    std::advance(step, stepNumber);
-    if ( options.subbandDedispersion ) {
-      code = Integration::getIntegrationDMsSamplesOpenCL< outputDataType >(*(configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)), observation, outputDataName, *step, deviceOptions.padding[deviceOptions.deviceName]);
+    if ( configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
+      // TODO: add support for splitBatches
     } else {
-      code = Integration::getIntegrationDMsSamplesOpenCL< outputDataType >(*(configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs())->at(*step)), observation, outputDataName, *step, deviceOptions.padding[deviceOptions.deviceName]);
+      kernels.dedispersionStepOne->setArg(0, dispersedData_d);
+      kernels.dedispersionStepOne->setArg(1, subbandedData_d);
+      kernels.dedispersionStepOne->setArg(2, zappedChannels_d);
+      kernels.dedispersionStepOne->setArg(3, shiftsStepOne_d);
     }
-    try {
-      if ( *step > 1 ) {
-        integrationDMsSamplesK[stepNumber] = isa::OpenCL::compile("integrationDMsSamples" + std::to_string(*step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
-        integrationDMsSamplesK[stepNumber]->setArg(0, dedispersedData_d);
-        integrationDMsSamplesK[stepNumber]->setArg(1, integratedData_d);
-      }
-    } catch ( isa::OpenCL::OpenCLError & err ) {
-      std::cerr << err.what() << std::endl;
-      return 1;
-    }
-    delete code;
-    if ( options.subbandDedispersion ) {
-      code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / *step, deviceOptions.padding[deviceOptions.deviceName]);
+    kernels.dedispersionStepTwo->setArg(0, subbandedData_d);
+    kernels.dedispersionStepTwo->setArg(1, dedispersedData_d);
+    kernels.dedispersionStepTwo->setArg(2, beamMapping_d);
+    kernels.dedispersionStepTwo->setArg(3, shiftsStepTwo_d);
+  } else {
+    if ( configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
+      // TODO: add support for splitBatches
     } else {
-      code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / *step, deviceOptions.padding[deviceOptions.deviceName]);
+      dedispersionK->setArg(0, dispersedData_d);
+      dedispersionK->setArg(1, dedispersedData_d);
+      dedispersionK->setArg(2, beamMapping_d);
+      dedispersionK->setArg(3, zappedChannels_d);
+      dedispersionK->setArg(4, shiftsStepOne_d);
     }
-    try {
-      snrDMsSamplesK[stepNumber] = isa::OpenCL::compile("snrDMsSamples" + std::to_string(observation.getNrSamplesPerBatch() / *step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
-      snrDMsSamplesK[stepNumber]->setArg(0, integratedData_d);
-      snrDMsSamplesK[stepNumber]->setArg(1, snrData_d);
-      snrDMsSamplesK[stepNumber]->setArg(2, snrSamples_d);
-    } catch ( isa::OpenCL::OpenCLError & err ) {
-      std::cerr << err.what() << std::endl;
-      return 1;
-    }
-    delete code;
   }
 
   // Set execution parameters
@@ -723,7 +647,7 @@ int main(int argc, char * argv[]) {
         try {
           dedispersionTimer.start();
           dedispersionStepOneTimer.start();
-          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, &syncPoint);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, &syncPoint);
           syncPoint.wait();
           dedispersionStepOneTimer.stop();
         } catch ( cl::Error & err ) {
@@ -732,7 +656,7 @@ int main(int argc, char * argv[]) {
         }
         try {
           dedispersionStepTwoTimer.start();
-          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, &syncPoint);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, &syncPoint);
           syncPoint.wait();
           dedispersionStepTwoTimer.stop();
           dedispersionTimer.stop();
@@ -742,13 +666,13 @@ int main(int argc, char * argv[]) {
         }
       } else {
         try {
-          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*dedispersionStepOneK, cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, 0);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, dedispersionStepOneGlobal, dedispersionStepOneLocal, 0, 0);
         } catch ( cl::Error & err ) {
           std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
           errorDetected = true;
         }
         try {
-          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*dedispersionStepTwoK, cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, 0);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, dedispersionStepTwoGlobal, dedispersionStepTwoLocal, 0, 0);
         } catch ( cl::Error & err ) {
           std::cerr << "Dedispersion Step Two error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
           errorDetected = true;

@@ -17,12 +17,7 @@
 #include <iostream>
 #include <exception>
 
-#include <ArgumentList.hpp>
-#include <Observation.hpp>
-#include <Platform.hpp>
-#include <Dedispersion.hpp>
-#include <Integration.hpp>
-#include <SNR.hpp>
+#include "configuration.hpp"
 
 #pragma once
 
