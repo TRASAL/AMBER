@@ -20,6 +20,7 @@
 #include <ArgumentList.hpp>
 #include <Observation.hpp>
 #include <Platform.hpp>
+#include <ReadData.hpp>
 #include <Dedispersion.hpp>
 #include <Integration.hpp>
 #include <SNR.hpp>
