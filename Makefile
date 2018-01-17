@@ -21,8 +21,7 @@ ifdef LOFAR
 endif
 ifdef PSRDADA
 	CFLAGS += -DHAVE_PSRDADA
-	INCLUDES += -I"$(PSRDADA)/src"
-	DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o $(PSRDADA)/src/tmutil.o
+	LDFLAGS += -lpsrdada -lcudart
 endif
 ifdef OPENMP
 	CFLAGS += -fopenmp
@@ -40,7 +39,7 @@ bin/Trigger.o: include/Trigger.hpp src/Trigger.cpp
 
 bin/TransientSearch: include/configuration.hpp src/TransientSearch.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/amber src/TransientSearch.cpp bin/CommandLine.o bin/Trigger.o $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/amber src/TransientSearch.cpp bin/CommandLine.o bin/Trigger.o $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
