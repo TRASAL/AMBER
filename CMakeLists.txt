@@ -12,6 +12,12 @@ add_executable(amber
 )
 target_include_directories(amber PRIVATE include)
 target_link_libraries(amber dedispersion integration snr isa_utils isa_opencl astrodata OpenCL)
+if($ENV{LOFAR})
+  target_link_libraries(amber hdf5 hdf5_cpp z)
+endif()
+if($ENV{PSRDADA})
+  target_link_libraries(amber psrdada cudart)
+endif()
 
 install(TARGETS amber
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
