@@ -935,6 +935,7 @@ int main(int argc, char * argv[]) {
       for ( auto beamEvents = compactedEvents.begin(); beamEvents != compactedEvents.end(); ++beamEvents ) {
         for ( auto event = beamEvents->begin(); event != beamEvents->end(); ++event ) {
           unsigned int integration = 0;
+          unsigned int delay = 0;
           float firstDM = 0.0f;
 
           if ( event->integration == 0 ) {
@@ -943,11 +944,19 @@ int main(int argc, char * argv[]) {
             integration = event->integration;
           }
           if ( options.subbandDedispersion ) {
+            delay = observation.getNrDelayBatches(true);
             firstDM = observation.getFirstDM(true);
           } else {
+            delay = observation.getNrDelayBatches();
             firstDM = observation.getFirstDM();
           }
-          output << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << event->compactedIntegration << " " << ((batch * observation.getNrSamplesPerBatch()) + (event->sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event->DM * observation.getDMStep()) << " " << event->compactedDMs << " " << event->SNR << std::endl;
+          if ( dataOptions.dataPSRDADA ) {
+#ifdef HAVE_PSRDADA
+            output << event->beam << " " << (batch - delay) << " " << event->sample  << " " << integration << " " << event->compactedIntegration << " " << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event->sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event->DM * observation.getDMStep()) << " " << event->compactedDMs << " " << event->SNR << std::endl;
+#endif // HAVE_PSRDADA
+          } else {
+            output << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << event->compactedIntegration << " " << ((batch * observation.getNrSamplesPerBatch()) + (event->sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event->DM * observation.getDMStep()) << " " << event->compactedDMs << " " << event->SNR << std::endl;
+          }
         }
       }
     } else {
@@ -955,6 +964,7 @@ int main(int argc, char * argv[]) {
         for ( auto dmEvents = beamEvents->begin(); dmEvents != beamEvents->end(); ++dmEvents) {
           for ( auto event = dmEvents->second.begin(); event != dmEvents->second.end(); ++event ) {
             unsigned int integration = 0;
+            unsigned int delay = 0;
             float firstDM = 0.0f;
 
             if ( event->integration == 0 ) {
@@ -963,11 +973,19 @@ int main(int argc, char * argv[]) {
               integration = event->integration;
             }
             if ( options.subbandDedispersion ) {
+              delay = observation.getNrDelayBatches(true);
               firstDM = observation.getFirstDM(true);
             } else {
+              delay = observation.getNrDelayBatches();
               firstDM = observation.getFirstDM();
             }
-            output << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << ((batch * observation.getNrSamplesPerBatch()) + (event->sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event->DM * observation.getDMStep()) << " " << event->SNR << std::endl;
+            if ( dataOptions.dataPSRDADA ) {
+#ifdef HAVE_PSRDADA
+              output << event->beam << " " << (batch - delay) << " " << event->sample  << " " << integration << " " << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event->sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event->DM * observation.getDMStep()) << " " << event->SNR << std::endl;
+#endif // HAVE_PSRDADA
+            } else {
+              output << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << ((batch * observation.getNrSamplesPerBatch()) + (event->sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event->DM * observation.getDMStep()) << " " << event->SNR << std::endl;
+            }
           }
         }
       }
