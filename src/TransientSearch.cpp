@@ -944,10 +944,10 @@ int main(int argc, char * argv[]) {
             integration = event->integration;
           }
           if ( options.subbandDedispersion ) {
-            delay = observation.getNrDelayBatches(true);
+            delay = observation.getNrDelayBatches(true) - 1;
             firstDM = observation.getFirstDM(true);
           } else {
-            delay = observation.getNrDelayBatches();
+            delay = observation.getNrDelayBatches() - 1;
             firstDM = observation.getFirstDM();
           }
           if ( dataOptions.dataPSRDADA ) {
@@ -973,10 +973,10 @@ int main(int argc, char * argv[]) {
               integration = event->integration;
             }
             if ( options.subbandDedispersion ) {
-              delay = observation.getNrDelayBatches(true);
+              delay = observation.getNrDelayBatches(true) - 1;
               firstDM = observation.getFirstDM(true);
             } else {
-              delay = observation.getNrDelayBatches();
+              delay = observation.getNrDelayBatches() - 1;
               firstDM = observation.getFirstDM();
             }
             if ( dataOptions.dataPSRDADA ) {
