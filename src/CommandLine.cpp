@@ -80,7 +80,9 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
     } else if ( dataOptions.dataPSRDADA ) {
 #ifdef HAVE_PSRDADA
       dataOptions.dadaKey = std::stoi("0x" + argumentList.getSwitchArgument<std::string>("-dada_key"), 0, 16);
-      observation.setFrequencyRange(argumentList.getSwitchArgument<unsigned int>("-subbands"), 1, 1.0f, 1.0f);
+      if ( options.subbandDedispersion ) {
+        observation.setFrequencyRange(argumentList.getSwitchArgument<unsigned int>("-subbands"), 1, 1.0f, 1.0f);
+      }
       observation.setNrBeams(argumentList.getSwitchArgument<unsigned int>("-beams"));
       observation.setNrSynthesizedBeams(argumentList.getSwitchArgument<unsigned int>("-synthesized_beams"));
       observation.setNrBatches(argumentList.getSwitchArgument<unsigned int>("-batches"));
