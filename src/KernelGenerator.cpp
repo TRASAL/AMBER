@@ -19,7 +19,7 @@ void generateOpenCLKernels(const AstroData::Observation & observation, const Opt
   std::string * code;
 
   if ( options.subbandDedispersion ) {
-    code = Dedispersion::getSubbandDedispersionStepOneOpenCL<inputDataType, outputDataType>(*(configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))), deviceOptions.padding[deviceOptions.deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
+    code = Dedispersion::getSubbandDedispersionStepOneOpenCL<inputDataType, outputDataType>(*(configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))), deviceOptions.padding.at(deviceOptions.deviceName), inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
     try {
       kernels.dedispersionStepOne = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
     } catch ( isa::OpenCL::OpenCLError & err ) {
