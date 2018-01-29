@@ -127,8 +127,16 @@ int main(int argc, char * argv[]) {
   }
 
   // Host memory allocation
+  std::vector<unsigned int> beamMapping;
+  std::vector<inputDataType> dispersedData;
+  std::vector<outputDataType> subbandedData;
+  std::vector<outputDataType> dedispersedData;
+  std::vector<outputDataType> integratedData;
+  std::vector<float> snrData;
+  std::vector<unsigned int> snrSamples;
   std::vector<float> * shiftsStepOne = Dedispersion::getShifts(observation, deviceOptions.padding[deviceOptions.deviceName]);
   std::vector<float> * shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, deviceOptions.padding[deviceOptions.deviceName]);
+
   if ( options.debug ) {
     std::cerr << "shiftsStepOne" << std::endl;
     for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
@@ -152,14 +160,6 @@ int main(int argc, char * argv[]) {
     observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(shiftsStepOne->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
     observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch()) / observation.getNrSamplesPerBatch())));
   }
-  std::vector<unsigned int> beamMapping;
-  std::vector<inputDataType> dispersedData;
-  std::vector<outputDataType> subbandedData;
-  std::vector<outputDataType> dedispersedData;
-  std::vector<outputDataType> integratedData;
-  std::vector<float> snrData;
-  std::vector<unsigned int> snrSamples;
-
   if ( options.subbandDedispersion ) {
 #ifdef HAVE_PSRDADA
     if ( dataOptions.dataPSRDADA ) {
@@ -263,6 +263,7 @@ int main(int argc, char * argv[]) {
   // Generate OpenCL kernels
   Kernels kernels;
 
+  generateOpenCLKernels(observation, options, deviceOptions, configurations, kernels);
   if ( options.subbandDedispersion ) {
     if ( configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
       // TODO: add support for splitBatches
