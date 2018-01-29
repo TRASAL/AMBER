@@ -19,22 +19,22 @@
 
 struct Options {
   // Debug mode
-  bool debug = false;
+  bool debug;
   // Print messages to standard output
-  bool print = false;
+  bool print;
   // Use subband dedispersion
-  bool subbandDedispersion = false;
+  bool subbandDedispersion;
   // Compact the triggered events in time and DM dimensions
-  bool compactResults = false;
+  bool compactResults;
   // Threshold for triggering
-  float threshold = 0.0f;
+  float threshold;
 };
 
 struct DeviceOptions {
   // OpenCL platform ID
-  unsigned int platformID = 0;
+  unsigned int platformID;
   // OpenCL device ID
-  unsigned int deviceID = 0;
+  unsigned int deviceID;
   // OpenCL device name
   std::string deviceName;
   // Padding of OpenCL devices
@@ -43,15 +43,15 @@ struct DeviceOptions {
 
 struct DataOptions {
   // Use LOFAR file as input
-  bool dataLOFAR = false;
+  bool dataLOFAR;
   // Use SIGPROC file as input
-  bool dataSIGPROC = false;
+  bool dataSIGPROC;
   // Use PSRDADA buffer as input
-  bool dataPSRDADA = false;
+  bool dataPSRDADA;
   // Limit the number of batches processed from a LOFAR file
-  bool limit = false;
+  bool limit;
   // Size (in bytes) of the SIGPROC file header
-  unsigned int headerSizeSIGPROC = 0;
+  unsigned int headerSizeSIGPROC;
   // Name of the input file
   std::string dataFile;
   // Name of the LOFAR header file
@@ -85,11 +85,11 @@ struct Configurations {
 
 struct GeneratorOptions {
   // Use random numbers in generated data
-  bool random = false;
+  bool random;
   // Width of random generated pulse
-  unsigned int width = 0;
+  unsigned int width;
   // DM of random generated pulse
-  float DM = 0.0f;
+  float DM;
 };
 
 // Function to process the command line options
