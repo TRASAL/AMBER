@@ -18,7 +18,7 @@ AMBER is a many-core accelerated and fully auto-tuned pipeline for detecting Fas
 
 
 
-./bin/TransientSearch
+./bin/amber
 -opencl_platform ...
 -opencl_device ...
 

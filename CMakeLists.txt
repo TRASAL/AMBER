@@ -20,7 +20,7 @@ endif()
 # amber
 add_executable(amber
   src/CommandLine.cpp
-  src/TransientSearch.cpp
+  src/AMBER.cpp
   src/Trigger.cpp
 )
 target_include_directories(amber PRIVATE include)
