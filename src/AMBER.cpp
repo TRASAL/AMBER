@@ -87,7 +87,7 @@ int main(int argc, char * argv[]) {
   } catch ( AstroData::FileError & err ) {
     std::cerr << err.what() << std::endl;
   }
-  if ( options.debug ) {
+  if ( options.print) {
     std::cout << "Device: " << deviceOptions.deviceName << "(" + std::to_string(deviceOptions.platformID) +  ", " + std::to_string(deviceOptions.deviceID) + ")" << std::endl;
     std::cout << "Padding: " << deviceOptions.padding[deviceOptions.deviceName] << " bytes" << std::endl;
     std::cout << std::endl;
@@ -106,7 +106,7 @@ int main(int argc, char * argv[]) {
     }
     std::cout << "DMs: " << observation.getNrDMs() << " (" << observation.getFirstDM() << ", " << observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()) << ")" << std::endl;
     std::cout << std::endl;
-    if ( (dataOptions.dataLOFAR || dataOptions.dataSIGPROC) ) {
+    if ( options.debug && (dataOptions.dataLOFAR || dataOptions.dataSIGPROC) ) {
       std::cout << "Time to load the input: " << std::fixed << std::setprecision(6) << loadTime.getTotalTime() << " seconds." << std::endl;
       std::cout << std::endl;
     }
@@ -129,21 +129,19 @@ int main(int argc, char * argv[]) {
   std::vector<float> * shiftsStepOne = Dedispersion::getShifts(observation, deviceOptions.padding[deviceOptions.deviceName]);
   std::vector<float> * shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, deviceOptions.padding[deviceOptions.deviceName]);
   if ( options.debug ) {
-    if ( options.print ) {
-      std::cerr << "shiftsStepOne" << std::endl;
-      for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-        std::cerr << shiftsStepOne->at(channel) << " ";
-      }
-      std::cerr << std::endl;
-      if ( options.subbandDedispersion ) {
-        std::cerr << "shiftsStepTwo" << std::endl;
-        for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
-          std::cerr << shiftsStepTwo->at(subband) << " ";
-        }
-        std::cerr << std::endl;
+    std::cerr << "shiftsStepOne" << std::endl;
+    for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+      std::cerr << shiftsStepOne->at(channel) << " ";
+    }
+    std::cerr << std::endl;
+    if ( options.subbandDedispersion ) {
+      std::cerr << "shiftsStepTwo" << std::endl;
+      for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
+        std::cerr << shiftsStepTwo->at(subband) << " ";
       }
       std::cerr << std::endl;
     }
+    std::cerr << std::endl;
   }
   if ( options.subbandDedispersion ) {
     observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
@@ -574,39 +572,37 @@ int main(int argc, char * argv[]) {
         }
       }
       if ( options.debug ) {
-        if ( options.print ) {
-          // TODO: add support for splitBatches
-          std::cerr << "dispersedData" << std::endl;
-          if ( options.subbandDedispersion ) {
-            if ( inputBits >= 8 ) {
-              for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
-                std::cerr << "Beam: " << beam << std::endl;
-                for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-                  for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)); sample++ ) {
-                    std::cerr << static_cast< float >(dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + sample]) << " ";
-                  }
-                  std::cerr << std::endl;
+        // TODO: add support for splitBatches
+        std::cerr << "dispersedData" << std::endl;
+        if ( options.subbandDedispersion ) {
+          if ( inputBits >= 8 ) {
+            for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
+              std::cerr << "Beam: " << beam << std::endl;
+              for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+                for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)); sample++ ) {
+                  std::cerr << static_cast< float >(dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + sample]) << " ";
                 }
                 std::cerr << std::endl;
               }
-            } else {
-              // TODO: add support for input data less than 8 bit
+              std::cerr << std::endl;
             }
           } else {
-            if ( inputBits >= 8 ) {
-              for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
-                std::cerr << "Beam: " << beam << std::endl;
-                for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-                  for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)); sample++ ) {
-                    std::cerr << static_cast< float >(dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + sample]) << " ";
-                  }
-                  std::cerr << std::endl;
+            // TODO: add support for input data less than 8 bit
+          }
+        } else {
+          if ( inputBits >= 8 ) {
+            for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
+              std::cerr << "Beam: " << beam << std::endl;
+              for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+                for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)); sample++ ) {
+                  std::cerr << static_cast< float >(dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType))) + sample]) << " ";
                 }
                 std::cerr << std::endl;
               }
-            } else {
-              // TODO: add support for input data less than 8 bit
+              std::cerr << std::endl;
             }
+          } else {
+            // TODO: add support for input data less than 8 bit
           }
         }
       }
@@ -685,67 +681,65 @@ int main(int argc, char * argv[]) {
       }
     }
     if ( options.debug ) {
-      if ( options.print ) {
-        if ( options.subbandDedispersion ) {
-          try {
-            clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(subbandedData_d, CL_TRUE, 0, subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(subbandedData.data()), 0, &syncPoint);
-            syncPoint.wait();
-            clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()), 0, &syncPoint);
-            syncPoint.wait();
-            std::cerr << "subbandedData" << std::endl;
-            for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
-              std::cerr << "Beam: " << beam << std::endl;
-              for ( unsigned int dm = 0; dm < observation.getNrDMs(true); dm++ ) {
-                std::cerr << "Subbanding DM: " << dm << std::endl;
-                for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
-                  for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(true); sample++ ) {
-                    std::cerr << subbandedData[(beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
-                  }
-                  std::cerr << std::endl;
+      if ( options.subbandDedispersion ) {
+        try {
+          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(subbandedData_d, CL_TRUE, 0, subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(subbandedData.data()), 0, &syncPoint);
+          syncPoint.wait();
+          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()), 0, &syncPoint);
+          syncPoint.wait();
+          std::cerr << "subbandedData" << std::endl;
+          for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
+            std::cerr << "Beam: " << beam << std::endl;
+            for ( unsigned int dm = 0; dm < observation.getNrDMs(true); dm++ ) {
+              std::cerr << "Subbanding DM: " << dm << std::endl;
+              for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
+                for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(true); sample++ ) {
+                  std::cerr << subbandedData[(beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
                 }
                 std::cerr << std::endl;
               }
               std::cerr << std::endl;
             }
-            std::cerr << "dedispersedData" << std::endl;
-            for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
-              std::cerr << "sBeam: " << sBeam << std::endl;
-              for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
-                for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-                  std::cerr << "DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
-                  for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
-                    std::cerr << dedispersedData[(sBeam * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
-                  }
-                  std::cerr << std::endl;
-                }
-                std::cerr << std::endl;
-              }
-              std::cerr << std::endl;
-            }
-          } catch ( cl::Error & err) {
-            std::cerr << "Impossible to read subbandedData_d and dedispersedData_d: " << err.what() << " " << err.err() << std::endl;
-            errorDetected = true;
+            std::cerr << std::endl;
           }
-        } else {
-          try {
-            clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()), 0, &syncPoint);
-            syncPoint.wait();
-            std::cerr << "dedispersedData" << std::endl;
-            for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
-              std::cerr << "sBeam: " << sBeam << std::endl;
+          std::cerr << "dedispersedData" << std::endl;
+          for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
+            std::cerr << "sBeam: " << sBeam << std::endl;
+            for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
               for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-                std::cerr << "DM: " << dm << std::endl;
+                std::cerr << "DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
                 for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
-                  std::cerr << dedispersedData[(sBeam * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
+                  std::cerr << dedispersedData[(sBeam * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
                 }
                 std::cerr << std::endl;
               }
               std::cerr << std::endl;
             }
-          } catch ( cl::Error & err ) {
-            std::cerr << "Impossible to read dedispersedData_d: " << err.what() << " " << err.err() << std::endl;
-            errorDetected = true;
+            std::cerr << std::endl;
           }
+        } catch ( cl::Error & err) {
+          std::cerr << "Impossible to read subbandedData_d and dedispersedData_d: " << err.what() << " " << err.err() << std::endl;
+          errorDetected = true;
+        }
+      } else {
+        try {
+          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()), 0, &syncPoint);
+          syncPoint.wait();
+          std::cerr << "dedispersedData" << std::endl;
+          for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
+            std::cerr << "sBeam: " << sBeam << std::endl;
+            for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+              std::cerr << "DM: " << dm << std::endl;
+              for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
+                std::cerr << dedispersedData[(sBeam * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
+              }
+              std::cerr << std::endl;
+            }
+            std::cerr << std::endl;
+          }
+        } catch ( cl::Error & err ) {
+          std::cerr << "Impossible to read dedispersedData_d: " << err.what() << " " << err.err() << std::endl;
+          errorDetected = true;
         }
       }
     }
@@ -777,30 +771,28 @@ int main(int argc, char * argv[]) {
     trigger(options.subbandDedispersion, deviceOptions.padding[deviceOptions.deviceName], 0, options.threshold, observation, snrData, snrSamples, triggeredEvents);
     triggerTimer.stop();
     if ( options.debug ) {
-      if ( options.print ) {
-        if ( options.subbandDedispersion ) {
-          std::cerr << "snrData" << std::endl;
-          for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
-            std::cerr << "sBeam: " << sBeam << std::endl;
-            for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
-              for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-                std::cerr << snrData[(sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm] << " ";
-              }
-            }
-            std::cerr << std::endl;
-          }
-        } else {
-          std::cerr << "snrData" << std::endl;
-          for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
-            std::cerr << "sBeam: " << sBeam << std::endl;
+      if ( options.subbandDedispersion ) {
+        std::cerr << "snrData" << std::endl;
+        for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
+          std::cerr << "sBeam: " << sBeam << std::endl;
+          for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
             for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-              std::cerr << snrData[(sBeam * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + dm] << " ";
+              std::cerr << snrData[(sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm] << " ";
             }
-            std::cerr << std::endl;
           }
+          std::cerr << std::endl;
         }
-        std::cerr << std::endl;
+      } else {
+        std::cerr << "snrData" << std::endl;
+        for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
+          std::cerr << "sBeam: " << sBeam << std::endl;
+          for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+            std::cerr << snrData[(sBeam * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + dm] << " ";
+          }
+          std::cerr << std::endl;
+        }
       }
+      std::cerr << std::endl;
     }
 
     // Integration and SNR loop
@@ -836,41 +828,39 @@ int main(int argc, char * argv[]) {
         errorDetected = true;
       }
       if ( options.debug ) {
-        if ( options.print ) {
-          try {
-            clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(integratedData_d, CL_TRUE, 0, integratedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(integratedData.data()), 0, &syncPoint);
-            syncPoint.wait();
-          } catch ( cl::Error & err ) {
-            std::cerr << "Impossible to read integratedData_d: " << err.what() << " " << err.err() << std::endl;
-            errorDetected = true;
-          }
-          std::cerr << "integratedData" << std::endl;
-          if ( options.subbandDedispersion ) {
-            for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
-              std::cerr << "sBeam: " << sBeam << std::endl;
-              for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
-                for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-                  std::cerr << "DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
-                  for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++ ) {
-                    std::cerr << integratedData[(sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
-                  }
-                  std::cerr << std::endl;
-                }
-              }
-              std::cerr << std::endl;
-            }
-          } else {
-            for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
-              std::cerr << "sBeam: " << sBeam << std::endl;
+        try {
+          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(integratedData_d, CL_TRUE, 0, integratedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(integratedData.data()), 0, &syncPoint);
+          syncPoint.wait();
+        } catch ( cl::Error & err ) {
+          std::cerr << "Impossible to read integratedData_d: " << err.what() << " " << err.err() << std::endl;
+          errorDetected = true;
+        }
+        std::cerr << "integratedData" << std::endl;
+        if ( options.subbandDedispersion ) {
+          for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
+            std::cerr << "sBeam: " << sBeam << std::endl;
+            for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
               for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-                std::cerr << "DM: " << dm << std::endl;
+                std::cerr << "DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
                 for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++ ) {
-                  std::cerr << integratedData[(sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
+                  std::cerr << integratedData[(sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
                 }
                 std::cerr << std::endl;
               }
+            }
+            std::cerr << std::endl;
+          }
+        } else {
+          for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
+            std::cerr << "sBeam: " << sBeam << std::endl;
+            for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+              std::cerr << "DM: " << dm << std::endl;
+              for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++ ) {
+                std::cerr << integratedData[(sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
+              }
               std::cerr << std::endl;
             }
+            std::cerr << std::endl;
           }
         }
       }
@@ -878,30 +868,28 @@ int main(int argc, char * argv[]) {
       trigger(options.subbandDedispersion, deviceOptions.padding[deviceOptions.deviceName], *step, options.threshold, observation, snrData, snrSamples, triggeredEvents);
       triggerTimer.stop();
       if ( options.debug ) {
-        if ( options.print ) {
-          if ( options.subbandDedispersion ) {
-            std::cerr << "snrData" << std::endl;
-            for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
-              std::cerr << "sBeam: " << sBeam << std::endl;
-              for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
-                for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-                  std::cerr << snrData[(sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm] << " ";
-                }
-              }
-              std::cerr << std::endl;
-            }
-          } else {
-            std::cerr << "snrData" << std::endl;
-            for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
-              std::cerr << "sBeam: " << sBeam << std::endl;
+        if ( options.subbandDedispersion ) {
+          std::cerr << "snrData" << std::endl;
+          for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
+            std::cerr << "sBeam: " << sBeam << std::endl;
+            for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
               for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-                std::cerr << snrData[(sBeam * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + dm] << " ";
+                std::cerr << snrData[(sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm] << " ";
               }
-              std::cerr << std::endl;
             }
+            std::cerr << std::endl;
           }
-          std::cerr << std::endl;
+        } else {
+          std::cerr << "snrData" << std::endl;
+          for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
+            std::cerr << "sBeam: " << sBeam << std::endl;
+            for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+              std::cerr << snrData[(sBeam * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + dm] << " ";
+            }
+            std::cerr << std::endl;
+          }
         }
+        std::cerr << std::endl;
       }
     }
     if ( errorDetected ) {
