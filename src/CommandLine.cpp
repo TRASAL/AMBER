@@ -18,7 +18,7 @@
 
 void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions, Configurations & configurations, GeneratorOptions & generatorOptions, AstroData::Observation & observation) {
   try {
-    option.debug = argumentList.getSwitch("-debug");
+    options.debug = argumentList.getSwitch("-debug");
     options.print = argumentList.getSwitch("-print");
     options.subbandDedispersion = argumentList.getSwitch("-subband_dedispersion");
     options.compactResults = argumentList.getSwitch("-compact_results");
