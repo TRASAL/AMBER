@@ -22,6 +22,8 @@
 #pragma once
 
 struct Options {
+  // Debug mode
+  bool debug = false;
   // Print messages to standard output
   bool print = false;
   // Use subband dedispersion

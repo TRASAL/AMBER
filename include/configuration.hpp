@@ -52,9 +52,6 @@ const std::string intermediateDataName("float");
 typedef float outputDataType;
 const std::string outputDataName("float");
 
-// DEBUG mode, prints to screen some useful information
-const bool DEBUG = true;
-
 // SYNC mode, OpenCL queue operations
 const bool SYNC = true;
 

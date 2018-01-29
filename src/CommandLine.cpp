@@ -18,6 +18,7 @@
 
 void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions, Configurations & configurations, GeneratorOptions & generatorOptions, AstroData::Observation & observation) {
   try {
+    option.debug = argumentList.getSwitch("-debug");
     options.print = argumentList.getSwitch("-print");
     options.subbandDedispersion = argumentList.getSwitch("-subband_dedispersion");
     options.compactResults = argumentList.getSwitch("-compact_results");
@@ -122,7 +123,7 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
 }
 
 void usage(const std::string & program) {
-    std::cerr << program << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ... -snr_file ... [-subband_dedispersion] [-print] [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
+    std::cerr << program << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ... -snr_file ... [-subband_dedispersion] [-debug] [-print] [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
 #ifdef HAVE_HDF5
     std::cerr << " [-lofar]";
 #endif // HAVE_HDF5
