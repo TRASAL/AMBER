@@ -20,10 +20,15 @@
 #pragma once
 
 struct Kernels {
+  // Single step dedispersion kernel
   cl::Kernel * dedispersion;
+  // Step one subbanding dedispersion kernel
   cl::Kernel * dedispersionStepOne;
+  // Step two subbanding dedispersion kernel
   cl::Kernel * dedispersionStepTwo;
+  // Integration kernels, one for each integration step
   std::vector<cl::Kernel *> integration;
+  // SNR kernels, one for the original data and one for each integration step
   std::vector<cl::Kernel *> snr;
 };
 
