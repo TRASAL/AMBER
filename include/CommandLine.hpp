@@ -65,8 +65,6 @@ struct DataOptions {
 #ifdef HAVE_PSRDADA
   // PSRDADA buffer key
   key_t dadaKey;
-  // PSRDADA ring buffer
-  dada_hdu_t * ringBuffer;
 #endif // HAVE_PSRDADA
 };
 
