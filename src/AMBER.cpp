@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include <configuration.hpp>
+
 #include <CommandLine.hpp>
 #include <KernelGenerator.hpp>
 #include <Trigger.hpp>
