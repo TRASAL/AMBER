@@ -15,7 +15,6 @@
 
 #include <Trigger.hpp>
 
-
 void trigger(const bool subbandDedispersion, const unsigned int padding, const unsigned int integration, const float threshold, const AstroData::Observation & observation, const std::vector<float> & snrData, const std::vector<unsigned int> & samplesData, TriggeredEvents & triggeredEvents) {
   unsigned int nrDMs = 0;
 

@@ -41,9 +41,10 @@
 #include <Integration.hpp>
 #include <SNR.hpp>
 
-#include "DataTypes.hpp"
-
 #pragma once
+
+// SYNC mode, OpenCL queue operations
+const bool SYNC = true;
 
 // Input data type
 typedef std::uint8_t inputDataType;
@@ -59,7 +60,6 @@ const std::string intermediateDataName("float");
 typedef float outputDataType;
 // OpenCL data type for output data
 const std::string outputDataName("float");
-
-// SYNC mode, OpenCL queue operations
-const bool SYNC = true;
+// Other data types
+#include "DataTypes.hpp"
 

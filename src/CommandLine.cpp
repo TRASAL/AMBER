@@ -15,7 +15,6 @@
 
 #include <CommandLine.hpp>
 
-
 void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions, KernelConfigurations & kernelConfigurations, GeneratorOptions & generatorOptions, AstroData::Observation & observation) {
   try {
     options.debug = argumentList.getSwitch("-debug");
