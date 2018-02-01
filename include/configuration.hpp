@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma once
+
 #include <iostream>
 #include <string>
 #include <exception>
@@ -40,8 +42,6 @@
 #include <Dedispersion.hpp>
 #include <Integration.hpp>
 #include <SNR.hpp>
-
-#pragma once
 
 // Types for the data
 typedef std::uint8_t inputDataType;

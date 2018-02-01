@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "configuration.hpp"
-
 #pragma once
+
+#include "configuration.hpp"
 
 struct Timers {
   isa::utils::Timer inputLoad;

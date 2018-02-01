@@ -13,11 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma once
+
 #include "configuration.hpp"
 
 #include "CommandLine.hpp"
-
-#pragma once
 
 struct KernelConfigurations {
   // Configuration of single step dedispersion kernel

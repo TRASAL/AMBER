@@ -13,11 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma once
+
 #include "configuration.hpp"
 
 #include "Kernels.hpp"
-
-#pragma once
 
 struct Options {
   // Debug mode
