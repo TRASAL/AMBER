@@ -15,6 +15,8 @@
 
 #include "configuration.hpp"
 
+#include "Kernels.hpp"
+
 #pragma once
 
 struct Options {
@@ -68,19 +70,6 @@ struct DataOptions {
 #endif // HAVE_PSRDADA
 };
 
-struct Configurations {
-  // Configuration of single step dedispersion kernel
-  Dedispersion::tunedDedispersionConf dedispersionParameters;
-  // Configuration of subband dedispersion kernel, step one
-  Dedispersion::tunedDedispersionConf dedispersionStepOneParameters;
-  // Configuration of subband dedispersion kernel, step two
-  Dedispersion::tunedDedispersionConf dedispersionStepTwoParameters;
-  // Configuration of integration kernel
-  Integration::tunedIntegrationConf integrationParameters;
-  // Configuration of SNR kernel
-  SNR::tunedSNRConf snrParameters;
-};
-
 struct GeneratorOptions {
   // Use random numbers in generated data
   bool random;
@@ -91,6 +80,6 @@ struct GeneratorOptions {
 };
 
 // Function to process the command line options
-void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions, Configurations & configurations, GeneratorOptions & generatorOptions, AstroData::Observation & observation);
+void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions, KernelConfigurations & kernelConfigurations, GeneratorOptions & generatorOptions, AstroData::Observation & observation);
 // Function to print the usage message
 void usage(const std::string & program);

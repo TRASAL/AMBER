@@ -19,6 +19,19 @@
 
 #pragma once
 
+struct KernelConfigurations {
+  // Configuration of single step dedispersion kernel
+  Dedispersion::tunedDedispersionConf dedispersionParameters;
+  // Configuration of subband dedispersion kernel, step one
+  Dedispersion::tunedDedispersionConf dedispersionStepOneParameters;
+  // Configuration of subband dedispersion kernel, step two
+  Dedispersion::tunedDedispersionConf dedispersionStepTwoParameters;
+  // Configuration of integration kernel
+  Integration::tunedIntegrationConf integrationParameters;
+  // Configuration of SNR kernel
+  SNR::tunedSNRConf snrParameters;
+};
+
 struct Kernels {
   // Single step dedispersion kernel
   cl::Kernel * dedispersion;
@@ -33,4 +46,4 @@ struct Kernels {
 };
 
 // Function to generate all necessary OpenCL kernels
-void generateOpenCLKernels(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const Configurations & configurations, Kernels & kernels);
+void generateOpenCLKernels(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, Kernels & kernels);

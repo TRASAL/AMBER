@@ -13,13 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <KernelGenerator.hpp>
+#include <Kernels.hpp>
 
-void generateOpenCLKernels(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const Configurations & configurations, Kernels & kernels) {
+void generateOpenCLKernels(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, Kernels & kernels) {
   std::string * code;
 
   if ( options.subbandDedispersion ) {
-    code = Dedispersion::getSubbandDedispersionStepOneOpenCL<inputDataType, outputDataType>(*(configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))), deviceOptions.padding.at(deviceOptions.deviceName), inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
+    code = Dedispersion::getSubbandDedispersionStepOneOpenCL<inputDataType, outputDataType>(*(kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))), deviceOptions.padding.at(deviceOptions.deviceName), inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
     try {
       kernels.dedispersionStepOne = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
     } catch ( isa::OpenCL::OpenCLError & err ) {
@@ -27,7 +27,7 @@ void generateOpenCLKernels(const AstroData::Observation & observation, const Opt
       throw;
     }
     delete code;
-    code = Dedispersion::getSubbandDedispersionStepTwoOpenCL<outputDataType>(*(configurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())), deviceOptions.padding[deviceOptions.deviceName], outputDataName, observation, *shiftsStepTwo);
+    code = Dedispersion::getSubbandDedispersionStepTwoOpenCL<outputDataType>(*(kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())), deviceOptions.padding[deviceOptions.deviceName], outputDataName, observation, *shiftsStepTwo);
     try {
       kernels.dedispersionStepTwo = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
     } catch ( isa::OpenCL::OpenCLError & err ) {
@@ -36,7 +36,7 @@ void generateOpenCLKernels(const AstroData::Observation & observation, const Opt
     }
     delete code;
   } else {
-    code = Dedispersion::getDedispersionOpenCL<inputDataType, outputDataType>(*(configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())), deviceOptions.padding[deviceOptions.deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
+    code = Dedispersion::getDedispersionOpenCL<inputDataType, outputDataType>(*(kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())), deviceOptions.padding[deviceOptions.deviceName], inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
     try {
       kernels.dedispersion = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
     } catch ( isa::OpenCL::OpenCLError & err ) {
@@ -46,9 +46,9 @@ void generateOpenCLKernels(const AstroData::Observation & observation, const Opt
     delete code;
   }
   if ( options.subbandDedispersion ) {
-    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), outputDataName, observation, observation.getNrSamplesPerBatch(), deviceOptions.padding[deviceOptions.deviceName]);
+    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), outputDataName, observation, observation.getNrSamplesPerBatch(), deviceOptions.padding[deviceOptions.deviceName]);
   } else {
-    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), outputDataName, observation, observation.getNrSamplesPerBatch(), deviceOptions.padding[deviceOptions.deviceName]);
+    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), outputDataName, observation, observation.getNrSamplesPerBatch(), deviceOptions.padding[deviceOptions.deviceName]);
   }
   try {
     snrDMsSamplesK[integrationSteps.size()] = isa::OpenCL::compile("snrDMsSamples" + std::to_string(observation.getNrSamplesPerBatch()), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
@@ -65,9 +65,9 @@ void generateOpenCLKernels(const AstroData::Observation & observation, const Opt
 
     std::advance(step, stepNumber);
     if ( options.subbandDedispersion ) {
-      code = Integration::getIntegrationDMsSamplesOpenCL< outputDataType >(*(configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)), observation, outputDataName, *step, deviceOptions.padding[deviceOptions.deviceName]);
+      code = Integration::getIntegrationDMsSamplesOpenCL< outputDataType >(*(kernelConfigurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)), observation, outputDataName, *step, deviceOptions.padding[deviceOptions.deviceName]);
     } else {
-      code = Integration::getIntegrationDMsSamplesOpenCL< outputDataType >(*(configurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs())->at(*step)), observation, outputDataName, *step, deviceOptions.padding[deviceOptions.deviceName]);
+      code = Integration::getIntegrationDMsSamplesOpenCL< outputDataType >(*(kernelConfigurations.integrationParameters[deviceOptions.deviceName]->at(observation.getNrDMs())->at(*step)), observation, outputDataName, *step, deviceOptions.padding[deviceOptions.deviceName]);
     }
     try {
       if ( *step > 1 ) {
@@ -81,9 +81,9 @@ void generateOpenCLKernels(const AstroData::Observation & observation, const Opt
     }
     delete code;
     if ( options.subbandDedispersion ) {
-      code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / *step, deviceOptions.padding[deviceOptions.deviceName]);
+      code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / *step, deviceOptions.padding[deviceOptions.deviceName]);
     } else {
-      code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(configurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / *step, deviceOptions.padding[deviceOptions.deviceName]);
+      code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / *step, deviceOptions.padding[deviceOptions.deviceName]);
     }
     try {
       snrDMsSamplesK[stepNumber] = isa::OpenCL::compile("snrDMsSamples" + std::to_string(observation.getNrSamplesPerBatch() / *step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));

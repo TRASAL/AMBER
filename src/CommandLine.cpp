@@ -16,7 +16,7 @@
 #include <CommandLine.hpp>
 
 
-void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions, Configurations & configurations, GeneratorOptions & generatorOptions, AstroData::Observation & observation) {
+void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions, KernelConfigurations & kernelConfigurations, GeneratorOptions & generatorOptions, AstroData::Observation & observation) {
   try {
     options.debug = argumentList.getSwitch("-debug");
     options.print = argumentList.getSwitch("-print");
@@ -49,13 +49,13 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
     dataOptions.channelsFile = argumentList.getSwitchArgument<std::string>("-zapped_channels");
     dataOptions.integrationFile = argumentList.getSwitchArgument<std::string>("-integration_steps");
     if ( !options.subbandDedispersion ) {
-      Dedispersion::readTunedDedispersionConf(configurations.dedispersionParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_file"));
+      Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_file"));
     } else {
-      Dedispersion::readTunedDedispersionConf(configurations.dedispersionStepOneParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_step_one_file"));
-      Dedispersion::readTunedDedispersionConf(configurations.dedispersionStepTwoParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_step_two_file"));
+      Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionStepOneParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_step_one_file"));
+      Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionStepTwoParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_step_two_file"));
     }
-    Integration::readTunedIntegrationConf(configurations.integrationParameters, argumentList.getSwitchArgument<std::string>("-integration_file"));
-    SNR::readTunedSNRConf(configurations.snrParameters, argumentList.getSwitchArgument<std::string>("-snr_file"));
+    Integration::readTunedIntegrationConf(kernelConfigurations.integrationParameters, argumentList.getSwitchArgument<std::string>("-integration_file"));
+    SNR::readTunedSNRConf(kernelConfigurations.snrParameters, argumentList.getSwitchArgument<std::string>("-snr_file"));
     if ( dataOptions.dataLOFAR ) {
       observation.setNrBeams(1);
       observation.setNrSynthesizedBeams(1);

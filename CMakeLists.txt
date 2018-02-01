@@ -21,7 +21,7 @@ endif()
 add_executable(amber
   src/AMBER.cpp
   src/CommandLine.cpp
-  src/KernelGenerator.cpp
+  src/Kernels.cpp
   src/Trigger.cpp
 )
 target_include_directories(amber PRIVATE include)
