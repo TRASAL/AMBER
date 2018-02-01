@@ -22,6 +22,7 @@ add_executable(amber
   src/AMBER.cpp
   src/CommandLine.cpp
   src/Kernels.cpp
+  src/Memory.cpp
   src/Trigger.cpp
 )
 target_include_directories(amber PRIVATE include)
