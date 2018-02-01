@@ -559,10 +559,10 @@ int main(int argc, char * argv[]) {
       }
       if ( options.debug ) {
         try {
-          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(integratedData_d, CL_TRUE, 0, integratedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(integratedData.data()), 0, &syncPoint);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.integratedData, CL_TRUE, 0, hostMemory.integratedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(hostMemory.integratedData.data()), 0, &syncPoint);
           syncPoint.wait();
         } catch ( cl::Error & err ) {
-          std::cerr << "Impossible to read integratedData_d: " << err.what() << " " << err.err() << std::endl;
+          std::cerr << "Impossible to read deviceMemory.integratedData: " << err.what() << " " << err.err() << std::endl;
           errorDetected = true;
         }
         std::cerr << "integratedData" << std::endl;
@@ -573,7 +573,7 @@ int main(int argc, char * argv[]) {
               for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
                 std::cerr << "DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
                 for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++ ) {
-                  std::cerr << integratedData[(sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
+                  std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample) << " ";
                 }
                 std::cerr << std::endl;
               }
@@ -586,7 +586,7 @@ int main(int argc, char * argv[]) {
             for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
               std::cerr << "DM: " << dm << std::endl;
               for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++ ) {
-                std::cerr << integratedData[(sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
+                std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample) << " ";
               }
               std::cerr << std::endl;
             }
