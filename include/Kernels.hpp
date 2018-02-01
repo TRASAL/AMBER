@@ -45,5 +45,20 @@ struct Kernels {
   std::vector<cl::Kernel *> snr;
 };
 
+struct KernelRunTimeConfigurations {
+  cl::NDRange dedispersionSingleStepGlobal;
+  cl::NDRange dedispersionSingleStepLocal;
+  cl::NDRange dedispersionStepOneGlobal;
+  cl::NDRange dedispersionStepOneLocal;
+  cl::NDRange dedispersionStepTwoGlobal;
+  cl::NDRamge dedispersionStepTwoLocal;
+  std::vector<cl::NDRange> integrationGlobal;
+  std::vector<cl::NDRange> integrationLocal;
+  std::vector<cl::NDRange> snrGlobal;
+  std::vector<cl::NDRange> snrLocal;
+};
+
 // Function to generate all necessary OpenCL kernels
 void generateOpenCLKernels(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, Kernels & kernels);
+// Function to generate the run time configurations for the OpenCL kernels
+void generateOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const KernelConfigurations & kernelConfigurations, KernelRunTimeConfigurations & kernelRunTimeConfigurations);
