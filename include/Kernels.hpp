@@ -51,7 +51,7 @@ struct KernelRunTimeConfigurations {
   cl::NDRange dedispersionStepOneGlobal;
   cl::NDRange dedispersionStepOneLocal;
   cl::NDRange dedispersionStepTwoGlobal;
-  cl::NDRamge dedispersionStepTwoLocal;
+  cl::NDRange dedispersionStepTwoLocal;
   std::vector<cl::NDRange> integrationGlobal;
   std::vector<cl::NDRange> integrationLocal;
   std::vector<cl::NDRange> snrGlobal;
