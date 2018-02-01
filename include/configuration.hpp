@@ -13,8 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
-
 #include <iostream>
 #include <string>
 #include <exception>
@@ -43,13 +41,23 @@
 #include <Integration.hpp>
 #include <SNR.hpp>
 
-// Types for the data
+#include "DataTypes.hpp"
+
+#pragma once
+
+// Input data type
 typedef std::uint8_t inputDataType;
+// Bits of the input data type
 const std::uint8_t inputBits = 8;
+// OpenCL data type for input data
 const std::string inputDataName("uchar");
+// Intermediate data type used in dedispersion
 typedef float intermediateDataType;
+// OpenCL data type for intermediate data
 const std::string intermediateDataName("float");
+// Output data type
 typedef float outputDataType;
+// OpenCL data type for output data
 const std::string outputDataName("float");
 
 // SYNC mode, OpenCL queue operations

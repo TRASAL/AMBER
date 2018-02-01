@@ -15,49 +15,6 @@
 
 #pragma once
 
-#include "configuration.hpp"
-
-#include "CommandLine.hpp"
-
-struct KernelConfigurations {
-  // Configuration of single step dedispersion kernel
-  Dedispersion::tunedDedispersionConf dedispersionParameters;
-  // Configuration of subband dedispersion kernel, step one
-  Dedispersion::tunedDedispersionConf dedispersionStepOneParameters;
-  // Configuration of subband dedispersion kernel, step two
-  Dedispersion::tunedDedispersionConf dedispersionStepTwoParameters;
-  // Configuration of integration kernel
-  Integration::tunedIntegrationConf integrationParameters;
-  // Configuration of SNR kernel
-  SNR::tunedSNRConf snrParameters;
-};
-
-struct Kernels {
-  // Single step dedispersion kernel
-  cl::Kernel * dedispersion;
-  // Step one subbanding dedispersion kernel
-  cl::Kernel * dedispersionStepOne;
-  // Step two subbanding dedispersion kernel
-  cl::Kernel * dedispersionStepTwo;
-  // Integration kernels, one for each integration step
-  std::vector<cl::Kernel *> integration;
-  // SNR kernels, one for the original data and one for each integration step
-  std::vector<cl::Kernel *> snr;
-};
-
-struct KernelRunTimeConfigurations {
-  cl::NDRange dedispersionSingleStepGlobal;
-  cl::NDRange dedispersionSingleStepLocal;
-  cl::NDRange dedispersionStepOneGlobal;
-  cl::NDRange dedispersionStepOneLocal;
-  cl::NDRange dedispersionStepTwoGlobal;
-  cl::NDRange dedispersionStepTwoLocal;
-  std::vector<cl::NDRange> integrationGlobal;
-  std::vector<cl::NDRange> integrationLocal;
-  std::vector<cl::NDRange> snrGlobal;
-  std::vector<cl::NDRange> snrLocal;
-};
-
 // Function to generate all necessary OpenCL kernels
 void generateOpenCLKernels(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, Kernels & kernels);
 // Function to generate the run time configurations for the OpenCL kernels

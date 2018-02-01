@@ -14,13 +14,10 @@
 // limitations under the License.
 
 #include <configuration.hpp>
-
 #include <CommandLine.hpp>
 #include <Kernels.hpp>
 #include <Memory.hpp>
-#include <Timing.hpp>
 #include <Trigger.hpp>
-
 
 int main(int argc, char * argv[]) {
   // Command line options
