@@ -165,7 +165,7 @@ void allocateDeviceMemory(const cl::Context * clContext, const std::vector<std::
   clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.zappedChannels, CL_FALSE, 0, hostMemory.zappedChannels.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.zappedChannels.data()));
   deviceMemory.beamMapping = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.beamMapping.size() * sizeof(unsigned int), 0, 0);
   clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.beamMapping, CL_FALSE, 0, hostMemory.beamMapping.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.beamMapping.data()));
-  deviceMemory.dispersedData = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostmemory.dispersedData.size() * sizeof(inputDataType), 0, 0);
+  deviceMemory.dispersedData = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.dispersedData.size() * sizeof(inputDataType), 0, 0);
   deviceMemory.dedispersedData = cl::Buffer(*clContext, CL_MEM_READ_WRITE, hostMemory.dedispersedData.size() * sizeof(outputDataType), 0, 0);
   deviceMemory.integratedData = cl::Buffer(*clContext, CL_MEM_READ_WRITE, hostMemory.integratedData.size() * sizeof(outputDataType), 0, 0);
   deviceMemory.snrData = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, hostMemory.snrData.size() * sizeof(float), 0, 0);
