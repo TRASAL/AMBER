@@ -52,9 +52,9 @@ void generateOpenCLKernels(const AstroData::Observation & observation, const Opt
   }
   try {
     kernels.snr.at(hostMemory.integrationSteps.size()) = isa::OpenCL::compile("snrDMsSamples" + std::to_string(observation.getNrSamplesPerBatch()), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
-    kernels.snr.at(hostMemory.integrationSteps.size())->setArg(0, dedispersedData_d);
-    kernels.snr.at(hostMemory.integrationSteps.size())->setArg(1, snrData_d);
-    kernels.snr.at(hostMemory.integrationSteps.size())->setArg(2, snrSamples_d);
+    kernels.snr.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.dedispersedData);
+    kernels.snr.at(hostMemory.integrationSteps.size())->setArg(1, deviceMemory.snrData);
+    kernels.snr.at(hostMemory.integrationSteps.size())->setArg(2, deviceMemory.snrSamples);
   } catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
@@ -72,8 +72,8 @@ void generateOpenCLKernels(const AstroData::Observation & observation, const Opt
     try {
       if ( *step > 1 ) {
         kernels.integration.at(stepNumber) = isa::OpenCL::compile("integrationDMsSamples" + std::to_string(*step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
-        kernels.integration.at(stepNumber)->setArg(0, dedispersedData_d);
-        kernels.integration.at(stepNumber)->setArg(1, integratedData_d);
+        kernels.integration.at(stepNumber)->setArg(0, deviceMemory.dedispersedData);
+        kernels.integration.at(stepNumber)->setArg(1, deviceMemory.integratedData);
       }
     } catch ( isa::OpenCL::OpenCLError & err ) {
       std::cerr << err.what() << std::endl;
@@ -87,9 +87,9 @@ void generateOpenCLKernels(const AstroData::Observation & observation, const Opt
     }
     try {
       kernels.snr.at(stepNumber) = isa::OpenCL::compile("snrDMsSamples" + std::to_string(observation.getNrSamplesPerBatch() / *step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
-      kernels.snr.at(stepNumber)->setArg(0, integratedData_d);
-      kernels.snr.at(stepNumber)->setArg(1, snrData_d);
-      kernels.snr.at(stepNumber)->setArg(2, snrSamples_d);
+      kernels.snr.at(stepNumber)->setArg(0, deviceMemory.integratedData);
+      kernels.snr.at(stepNumber)->setArg(1, deviceMemory.snrData);
+      kernels.snr.at(stepNumber)->setArg(2, deviceMemory.snrSamples);
     } catch ( isa::OpenCL::OpenCLError & err ) {
       std::cerr << err.what() << std::endl;
       return 1;
