@@ -150,7 +150,7 @@ void allocateHostMemory(AstroData::Observation & observation, const Options & op
   AstroData::generateBeamMapping(observation, hostMemory.beamMapping, deviceOptions.padding[deviceOptions.deviceName], options.subbandDedispersion);
 }
 
-void allocateDeviceMemory(const cl::Context * clContext, const std::vector<std::vector<cl::CommandQueue>> * clQueues, const Options & options, const HostMemory & hostMemory, DeviceMemory & deviceMemory) {
+void allocateDeviceMemory(const cl::Context * clContext, const std::vector<std::vector<cl::CommandQueue>> * clQueues, const Options & options, const DeviceOptions & deviceOptions, const HostMemory & hostMemory, DeviceMemory & deviceMemory) {
   if ( !options.subbandDedispersion ) {
     deviceMemory.shiftsSingleStep = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.shiftsSingleStep->size() * sizeof(float), 0, 0);
     clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.shiftsSingleStep, CL_FALSE, 0, hostMemory.shiftsSingleStep->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsSingleStep->data()));
