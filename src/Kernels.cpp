@@ -15,7 +15,7 @@
 
 #include <Kernels.hpp>
 
-void generateOpenCLKernels(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, Kernels & kernels) {
+void generateOpenCLKernels(const std::vector<cl::Device> * clDevice, sconst AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, Kernels & kernels) {
   std::string * code;
 
   if ( ! options.subbandDedispersion ) {
