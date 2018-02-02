@@ -16,7 +16,7 @@
 #include <Memory.hpp>
 
 void loadInput(AstroData::Observation & observation, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, HostMemory & hostMemory, Timers & timers) {
-  hostMemory.zappedChannels.resize(observation.getNrChannels(deviceOptions.padding[deviceOptions.deviceName] / sizeof(unsigned int)));
+  hostMemory.zappedChannels.resize(observation.getNrChannels(deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
   try {
     AstroData::readZappedChannels(observation, dataOptions.channelsFile, hostMemory.zappedChannels);
     AstroData::readIntegrationSteps(observation, dataOptions.integrationFile, hostMemory.integrationSteps);
@@ -30,16 +30,16 @@ void loadInput(AstroData::Observation & observation, const DeviceOptions & devic
     hostMemory.input.at(0) = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
     timers.inputLoad.start();
     if ( dataOptions.limit ) {
-      AstroData::readLOFAR(dataOptions.headerFile, dataOptions.dataFile, observation, deviceOptions.padding[deviceOptions.deviceName], *(hostMemory.input.at(0)), observation.getNrBatches());
+      AstroData::readLOFAR(dataOptions.headerFile, dataOptions.dataFile, observation, deviceOptions.padding.at(deviceOptions.deviceName), *(hostMemory.input.at(0)), observation.getNrBatches());
     } else {
-      AstroData::readLOFAR(dataOptions.headerFile, dataOptions.dataFile, observation, deviceOptions.padding[deviceOptions.deviceName], *(hostMemory.input.at(0)));
+      AstroData::readLOFAR(dataOptions.headerFile, dataOptions.dataFile, observation, deviceOptions.padding.at(deviceOptions.deviceName), *(hostMemory.input.at(0)));
     }
     timers.inputLoad.stop();
 #endif // HAVE_HDF5
   } else if ( dataOptions.dataSIGPROC ) {
     hostMemory.input.at(0) = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
     timers.inputLoad.start();
-    AstroData::readSIGPROC(observation, deviceOptions.padding[deviceOptions.deviceName], inputBits, dataOptions.headerSizeSIGPROC, dataOptions.dataFile, *(hostMemory.input.at(0)));
+    AstroData::readSIGPROC(observation, deviceOptions.padding.at(deviceOptions.deviceName), inputBits, dataOptions.headerSizeSIGPROC, dataOptions.dataFile, *(hostMemory.input.at(0)));
     timers.inputLoad.stop();
   } else if ( dataOptions.dataPSRDADA ) {
 #ifdef HAVE_PSRDADA
@@ -59,14 +59,14 @@ void loadInput(AstroData::Observation & observation, const DeviceOptions & devic
     for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
       // TODO: if there are multiple synthesized beams, the generated data should take this into account
       hostMemory.input.at(beam) = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
-      AstroData::generateSinglePulse(generatorOptions.width, generatorOptions.DM, observation, deviceOptions.padding[deviceOptions.deviceName], *(hostMemory.input.at(beam)), inputBits, generatorOptions.random);
+      AstroData::generateSinglePulse(generatorOptions.width, generatorOptions.DM, observation, deviceOptions.padding.at(deviceOptions.deviceName), *(hostMemory.input.at(beam)), inputBits, generatorOptions.random);
     }
   }
 }
 
 void allocateHostMemory(AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, HostMemory & hostMemory) {
   if ( !options.subbandDedispersion ) {
-    hostMemory.shiftsSingleStep = Dedispersion::getShifts(observation, deviceOptions.padding[deviceOptions.deviceName]);
+    hostMemory.shiftsSingleStep = Dedispersion::getShifts(observation, deviceOptions.padding.at(deviceOptions.deviceName));
     if ( options.debug ) {
       std::cerr << "shiftsSingleStep" << std::endl;
       for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
@@ -92,19 +92,19 @@ void allocateHostMemory(AstroData::Observation & observation, const Options & op
       // TODO: add support for splitBatches
     } else {
       if ( inputBits >= 8 ) {
-        hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
+        hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)));
       } else {
-        hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
+        hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)));
       }
     }
-    hostMemory.beamMapping.resize(observation.getNrSynthesizedBeams() * observation.getNrChannels(deviceOptions.padding[deviceOptions.deviceName] / sizeof(unsigned int)));
-    hostMemory.dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType)));
-    hostMemory.integratedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType)));
-    hostMemory.snrData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(float)));
-    hostMemory.snrSamples.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(unsigned int)));
+    hostMemory.beamMapping.resize(observation.getNrSynthesizedBeams() * observation.getNrChannels(deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
+    hostMemory.dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
+    hostMemory.integratedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
+    hostMemory.snrData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float)));
+    hostMemory.snrSamples.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
   } else {
-    hostMemory.shiftsStepOne = Dedispersion::getShifts(observation, deviceOptions.padding[deviceOptions.deviceName]);
-    hostMemory.shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, deviceOptions.padding[deviceOptions.deviceName]);
+    hostMemory.shiftsStepOne = Dedispersion::getShifts(observation, deviceOptions.padding.at(deviceOptions.deviceName));
+    hostMemory.shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, deviceOptions.padding.at(deviceOptions.deviceName));
     if ( options.debug ) {
       std::cerr << "shiftsStepOne" << std::endl;
       for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
@@ -135,40 +135,40 @@ void allocateHostMemory(AstroData::Observation & observation, const Options & op
       // TODO: add support for splitBatches
     } else {
       if ( inputBits >= 8 ) {
-        hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
+        hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)));
       } else {
-        hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding[deviceOptions.deviceName] / sizeof(inputDataType)));
+        hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)));
       }
     }
-    hostMemory.beamMapping.resize(observation.getNrSynthesizedBeams() * observation.getNrSubbands(deviceOptions.padding[deviceOptions.deviceName] / sizeof(unsigned int)));
-    hostMemory.subbandedData.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType)));
-    hostMemory.dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType)));
-    hostMemory.integratedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType)));
-   hostMemory.snrData.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(float)));
-    hostMemory.snrSamples.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(unsigned int)));
+    hostMemory.beamMapping.resize(observation.getNrSynthesizedBeams() * observation.getNrSubbands(deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
+    hostMemory.subbandedData.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
+    hostMemory.dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
+    hostMemory.integratedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
+   hostMemory.snrData.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float)));
+    hostMemory.snrSamples.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
   }
-  AstroData::generateBeamMapping(observation, hostMemory.beamMapping, deviceOptions.padding[deviceOptions.deviceName], options.subbandDedispersion);
+  AstroData::generateBeamMapping(observation, hostMemory.beamMapping, deviceOptions.padding.at(deviceOptions.deviceName), options.subbandDedispersion);
 }
 
 void allocateDeviceMemory(const cl::Context * clContext, const std::vector<std::vector<cl::CommandQueue>> * clQueues, const Options & options, const DeviceOptions & deviceOptions, const HostMemory & hostMemory, DeviceMemory & deviceMemory) {
   if ( !options.subbandDedispersion ) {
     deviceMemory.shiftsSingleStep = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.shiftsSingleStep->size() * sizeof(float), 0, 0);
-    clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.shiftsSingleStep, CL_FALSE, 0, hostMemory.shiftsSingleStep->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsSingleStep->data()));
+    clQueues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.shiftsSingleStep, CL_FALSE, 0, hostMemory.shiftsSingleStep->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsSingleStep->data()));
   } else {
     deviceMemory.shiftsStepOne = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.shiftsStepOne->size() * sizeof(float), 0, 0);
-    clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.shiftsStepOne, CL_FALSE, 0, hostMemory.shiftsStepOne->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsStepOne->data()));
+    clQueues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.shiftsStepOne, CL_FALSE, 0, hostMemory.shiftsStepOne->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsStepOne->data()));
     deviceMemory.shiftsStepTwo = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.shiftsStepTwo->size() * sizeof(float), 0, 0);
-    clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.shiftsStepTwo, CL_FALSE, 0, hostMemory.shiftsStepTwo->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsStepTwo->data()));
+    clQueues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.shiftsStepTwo, CL_FALSE, 0, hostMemory.shiftsStepTwo->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsStepTwo->data()));
     deviceMemory.subbandedData = cl::Buffer(*clContext, CL_MEM_READ_WRITE, hostMemory.subbandedData.size() * sizeof(outputDataType), 0, 0);
   }
   deviceMemory.zappedChannels = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.zappedChannels.size() * sizeof(unsigned int), 0, 0);
-  clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.zappedChannels, CL_FALSE, 0, hostMemory.zappedChannels.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.zappedChannels.data()));
+  clQueues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.zappedChannels, CL_FALSE, 0, hostMemory.zappedChannels.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.zappedChannels.data()));
   deviceMemory.beamMapping = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.beamMapping.size() * sizeof(unsigned int), 0, 0);
-  clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.beamMapping, CL_FALSE, 0, hostMemory.beamMapping.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.beamMapping.data()));
+  clQueues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.beamMapping, CL_FALSE, 0, hostMemory.beamMapping.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.beamMapping.data()));
   deviceMemory.dispersedData = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.dispersedData.size() * sizeof(inputDataType), 0, 0);
   deviceMemory.dedispersedData = cl::Buffer(*clContext, CL_MEM_READ_WRITE, hostMemory.dedispersedData.size() * sizeof(outputDataType), 0, 0);
   deviceMemory.integratedData = cl::Buffer(*clContext, CL_MEM_READ_WRITE, hostMemory.integratedData.size() * sizeof(outputDataType), 0, 0);
   deviceMemory.snrData = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, hostMemory.snrData.size() * sizeof(float), 0, 0);
   deviceMemory.snrSamples = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, hostMemory.snrSamples.size() * sizeof(unsigned int), 0, 0);
-  clQueues->at(deviceOptions.deviceID)[0].finish();
+  clQueues->at(deviceOptions.deviceID).at(0).finish();
 }
