@@ -46,9 +46,17 @@ int main(int argc, char * argv[]) {
     return 1;
   }
 
-  // Load input data
+  // Load or generate input data
   try {
-    loadInput(observation, deviceOptions, dataOptions, hostMemory, timers);
+    if ( dataOptions.dataLOFAR || dataOptions.dataSIGPROC || dataOptions.dataPSRDADA ) {
+      loadInput(observation, deviceOptions, dataOptions, hostMemory, timers);
+    } else {
+      for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
+        // TODO: if there are multiple synthesized beams, the generated data should take this into account
+        hostMemory.input.at(beam) = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
+        AstroData::generateSinglePulse(generatorOptions.width, generatorOptions.DM, observation, deviceOptions.padding.at(deviceOptions.deviceName), *(hostMemory.input.at(beam)), inputBits, generatorOptions.random);
+      }
+    }
   } catch ( std::exception & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
