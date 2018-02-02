@@ -103,7 +103,7 @@ int main(int argc, char * argv[]) {
   // Generate OpenCL kernels
   generateOpenCLKernels(observation, options, deviceOptions, kernelConfigurations, kernels);
   if ( ! options.subbandDedispersion ) {
-    if ( kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
+    if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
       // TODO: add support for splitBatches
     } else {
       kernels.dedispersionSingleStep->setArg(0, deviceMemory.dispersedData);
@@ -179,7 +179,7 @@ int main(int argc, char * argv[]) {
             }
           }
         } else {
-          if ( !kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
+          if ( !kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
             for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
               for ( unsigned int chunk = 0; chunk < observation.getNrDelayBatches() - 1; chunk++ ) {
                 if ( inputBits >= 8 ) {
@@ -245,7 +245,7 @@ int main(int argc, char * argv[]) {
             }
           }
         } else {
-          if ( !kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
+          if ( !kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
             for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
               for ( unsigned int chunk = batch - (observation.getNrDelayBatches() - 1); chunk < batch; chunk++ ) {
                 if ( inputBits >= 8 ) {
@@ -277,7 +277,7 @@ int main(int argc, char * argv[]) {
             clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_TRUE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()), 0, &syncPoint);
           }
         } else {
-          if ( kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
+          if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
             // TODO: add support for splitBatches
           } else {
             clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_TRUE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()), 0, &syncPoint);
@@ -293,7 +293,7 @@ int main(int argc, char * argv[]) {
             clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_FALSE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()));
           }
         } else {
-          if ( kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
+          if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
             // TODO: add support for splitBatches
           } else {
             clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_FALSE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()));
@@ -345,7 +345,7 @@ int main(int argc, char * argv[]) {
         continue;
       }
     } else {
-      if ( kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() && (batch < observation.getNrDelayBatches()) ) {
+      if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() && (batch < observation.getNrDelayBatches()) ) {
         // Not enough batches in the buffer to start the search
         continue;
       }
@@ -391,7 +391,7 @@ int main(int argc, char * argv[]) {
       }
     } else {
       try {
-          if ( kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
+          if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
             // TODO: add support for splitBatches
           }
           if ( SYNC ) {
