@@ -138,7 +138,7 @@ struct DeviceMemory {
 
 struct KernelConfigurations {
   // Configuration of single step dedispersion kernel
-  Dedispersion::tunedDedispersionConf dedispersionParameters;
+  Dedispersion::tunedDedispersionConf dedispersionSingleStepParameters;
   // Configuration of subband dedispersion kernel, step one
   Dedispersion::tunedDedispersionConf dedispersionStepOneParameters;
   // Configuration of subband dedispersion kernel, step two
