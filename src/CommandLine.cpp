@@ -48,7 +48,7 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
     dataOptions.channelsFile = argumentList.getSwitchArgument<std::string>("-zapped_channels");
     dataOptions.integrationFile = argumentList.getSwitchArgument<std::string>("-integration_steps");
     if ( !options.subbandDedispersion ) {
-      Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_file"));
+      Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionSingleStepParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_file"));
     } else {
       Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionStepOneParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_step_one_file"));
       Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionStepTwoParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_step_two_file"));
