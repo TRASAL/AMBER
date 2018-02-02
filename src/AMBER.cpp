@@ -435,7 +435,7 @@ int main(int argc, char * argv[]) {
               std::cerr << "Subbanding DM: " << dm << std::endl;
               for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
                 for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(true); sample++ ) {
-                  std::cerr << subbandedData[(beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample] << " ";
+                  std::cerr << hostMemory.subbandedData.at((beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << " ";
                 }
                 std::cerr << std::endl;
               }
