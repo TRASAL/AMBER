@@ -58,7 +58,7 @@ void loadInput(AstroData::Observation & observation, const DeviceOptions & devic
   }
 }
 
-void allocateHostMemory(AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, HostMemory & hostMemory) {
+void allocateHostMemory(AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, HostMemory & hostMemory) {
   if ( !options.subbandDedispersion ) {
     hostMemory.shiftsSingleStep = Dedispersion::getShifts(observation, deviceOptions.padding.at(deviceOptions.deviceName));
     if ( options.debug ) {
@@ -82,7 +82,7 @@ void allocateHostMemory(AstroData::Observation & observation, const Options & op
       }
     }
 #endif // HAVE_PSRDADA
-    if ( configurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
+    if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
       // TODO: add support for splitBatches
     } else {
       if ( inputBits >= 8 ) {
@@ -125,7 +125,7 @@ void allocateHostMemory(AstroData::Observation & observation, const Options & op
       }
     }
 #endif // HAVE_PSRDADA
-    if ( configurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
+    if ( kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
       // TODO: add support for splitBatches
     } else {
       if ( inputBits >= 8 ) {
