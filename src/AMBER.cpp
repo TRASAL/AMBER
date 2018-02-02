@@ -106,11 +106,11 @@ int main(int argc, char * argv[]) {
     if ( kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
       // TODO: add support for splitBatches
     } else {
-      kernels.dedispersion->setArg(0, deviceMemory.dispersedData);
-      kernels.dedispersion->setArg(1, deviceMemory.dedispersedData);
-      kernels.dedispersion->setArg(2, deviceMemory.beamMapping);
-      kernels.dedispersion->setArg(3, deviceMemory.zappedChannels);
-      kernels.dedispersion->setArg(4, deviceMemory.shiftsSingleStep);
+      kernels.dedispersionSingleStep->setArg(0, deviceMemory.dispersedData);
+      kernels.dedispersionSingleStep->setArg(1, deviceMemory.dedispersedData);
+      kernels.dedispersionSingleStep->setArg(2, deviceMemory.beamMapping);
+      kernels.dedispersionSingleStep->setArg(3, deviceMemory.zappedChannels);
+      kernels.dedispersionSingleStep->setArg(4, deviceMemory.shiftsSingleStep);
     }
   } else {
     if ( kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
@@ -396,11 +396,11 @@ int main(int argc, char * argv[]) {
           }
           if ( SYNC ) {
             timers.dedispersionSingleStep.start();
-            clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersion), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal, 0, &syncPoint);
+            clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal, 0, &syncPoint);
             syncPoint.wait();
             timers.dedispersionSingleStep.stop();
           } else {
-            clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersion), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal);
+            clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal);
           }
       } catch ( cl::Error & err ) {
         std::cerr << "Dedispersion error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
@@ -724,7 +724,7 @@ int main(int argc, char * argv[]) {
   output << "# inputCopyTotal inputCopyAvg err" << std::endl;
   output << timers.inputCopy.getTotalTime() << " " << timers.inputCopy.getAverageTime() << " " << timers.inputCopy.getStandardDeviation() << std::endl;
   if ( ! options.subbandDedispersion ) {
-    output << "# dedispersionTotal dedispersionAvg err" << std::endl;
+    output << "# dedispersionSingleStepTotal dedispersionSingleStepAvg err" << std::endl;
     output << timers.dedispersionSingleStep.getTotalTime() << " " << timers.dedispersionSingleStep.getAverageTime() << " " << timers.dedispersionSingleStep.getStandardDeviation() << std::endl;
   } else {
     output << "# dedispersionStepOneTotal dedispersionStepOneAvg err" << std::endl;
