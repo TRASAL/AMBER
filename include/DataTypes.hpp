@@ -215,9 +215,9 @@ using TriggeredEvents = std::vector<std::map<unsigned int, std::vector<Triggered
 using CompactedEvents = std::vector<std::vector<CompactedEvent>>;
 
 struct OpenCLRunTime {
-  cl::Context * clContext;
-  std::vector<cl::Platform> * clPlatforms;
-  std::vector<cl::Device> * clDevices;
-  std::vector<std::vector<cl::CommandQueue>> * clQueues;
+  cl::Context * context;
+  std::vector<cl::Platform> * platforms;
+  std::vector<cl::Device> * devices;
+  std::vector<std::vector<cl::CommandQueue>> * queues;
 };
 
