@@ -97,13 +97,13 @@ int main(int argc, char * argv[]) {
   }
 
   // Memory allocation
-  allocateHostMemory(observation, options, deviceOptions, hostMemory);
+  allocateHostMemory(observation, options, deviceOptions, kernelConfigurations, hostMemory);
   if ( observation.getNrDelayBatches() > observation.getNrBatches() ) {
     std::cerr << "Not enough input batches for the specified search." << std::endl;
     return 1;
   }
   try {
-    allocateDeviceMemory(openclRunTime.context, openclRunTime.queues, options, hostMemory, deviceMemory);
+    allocateDeviceMemory(openclRunTime, options, deviceOptions, hostMemory, deviceMemory);
   } catch ( cl::Error & err ) {
     std::cerr << "Memory error: " << err.what() << " " << err.err() << std::endl;
     return 1;
@@ -111,7 +111,7 @@ int main(int argc, char * argv[]) {
 
   // Generate OpenCL kernels
   try {
-    generateOpenCLKernels(observation, options, deviceOptions, kernelConfigurations, kernels);
+    generateOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
   } catch ( std::exception & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
@@ -142,7 +142,7 @@ int main(int argc, char * argv[]) {
   }
 
   // Generate run time configurations for the OpenCL kernels
-  generateOpenCLRunTimeConfigurations(observation, options, kernelConfigurations, kernelRunTimeConfigurations);
+  generateOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
 
   // Search loop
   std::ofstream output;
