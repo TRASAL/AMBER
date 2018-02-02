@@ -479,15 +479,15 @@ int main(int argc, char * argv[]) {
         syncPoint.wait();
         timers.snr.stop();
         timers.outputCopy.start();
-        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrData_d, CL_TRUE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()), 0, &syncPoint);
+        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_TRUE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()), 0, &syncPoint);
         syncPoint.wait();
-        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrSamples_d, CL_TRUE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()), 0, &syncPoint);
+        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_TRUE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()), 0, &syncPoint);
         syncPoint.wait();
         timers.outputCopy.stop();
       } else {
         clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[integrationSteps.size()], kernelRunTimeConfigurations.snrLocal[integrationSteps.size()]);
-        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrData_d, CL_FALSE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()));
-        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrSamples_d, CL_FALSE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()));
+        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()));
+        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()));
         clQueues->at(deviceOptions.deviceID)[0].finish();
       }
     } catch ( cl::Error & err ) {
@@ -495,26 +495,26 @@ int main(int argc, char * argv[]) {
       errorDetected = true;
     }
     timers.trigger.start();
-    trigger(options.subbandDedispersion, deviceOptions.padding[deviceOptions.deviceName], 0, options.threshold, observation, snrData, snrSamples, triggeredEvents);
+    trigger(options.subbandDedispersion, deviceOptions.padding[deviceOptions.deviceName], 0, options.threshold, observation, hostMemory.snrData, hostMemory.snrSamples, triggeredEvents);
     timers.trigger.stop();
     if ( options.debug ) {
       if ( options.subbandDedispersion ) {
-        std::cerr << "snrData" << std::endl;
+        std::cerr << "hostMemory.snrData" << std::endl;
         for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
           std::cerr << "sBeam: " << sBeam << std::endl;
           for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
             for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-              std::cerr << snrData[(sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm] << " ";
+              std::cerr << hostMemory.snrData.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm) << " ";
             }
           }
           std::cerr << std::endl;
         }
       } else {
-        std::cerr << "snrData" << std::endl;
+        std::cerr << "hostMemory.snrData" << std::endl;
         for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
           std::cerr << "sBeam: " << sBeam << std::endl;
           for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-            std::cerr << snrData[(sBeam * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + dm] << " ";
+            std::cerr << hostMemory.snrData.at((sBeam * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + dm) << " ";
           }
           std::cerr << std::endl;
         }
@@ -538,16 +538,16 @@ int main(int argc, char * argv[]) {
           syncPoint.wait();
           timers.snr.stop();
           timers.outputCopy.start();
-          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrData_d, CL_TRUE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()), 0, &syncPoint);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_TRUE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()), 0, &syncPoint);
           syncPoint.wait();
-          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrSamples_d, CL_TRUE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()), 0, &syncPoint);
+          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_TRUE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()), 0, &syncPoint);
           syncPoint.wait();
           timers.outputCopy.stop();
         } else {
           clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber]);
           clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[stepNumber], kernelRunTimeConfigurations.snrLocal[stepNumber]);
-          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrData_d, CL_FALSE, 0, snrData.size() * sizeof(float), reinterpret_cast< void * >(snrData.data()));
-          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(snrSamples_d, CL_FALSE, 0, snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(snrSamples.data()));
+          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()));
+          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()));
           clQueues->at(deviceOptions.deviceID)[0].finish();
         }
       } catch ( cl::Error & err ) {
@@ -592,26 +592,26 @@ int main(int argc, char * argv[]) {
         }
       }
       timers.trigger.start();
-      trigger(options.subbandDedispersion, deviceOptions.padding[deviceOptions.deviceName], *step, options.threshold, observation, snrData, snrSamples, triggeredEvents);
+      trigger(options.subbandDedispersion, deviceOptions.padding[deviceOptions.deviceName], *step, options.threshold, observation, hostMemory.snrData, hostMemory.snrSamples, triggeredEvents);
       timers.trigger.stop();
       if ( options.debug ) {
         if ( options.subbandDedispersion ) {
-          std::cerr << "snrData" << std::endl;
+          std::cerr << "hostMemory.snrData" << std::endl;
           for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
             std::cerr << "sBeam: " << sBeam << std::endl;
             for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
               for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-                std::cerr << snrData[(sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm] << " ";
+                std::cerr << hostMemory.snrData.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm) << " ";
               }
             }
             std::cerr << std::endl;
           }
         } else {
-          std::cerr << "snrData" << std::endl;
+          std::cerr << "hostMemory.snrData" << std::endl;
           for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
             std::cerr << "sBeam: " << sBeam << std::endl;
             for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-              std::cerr << snrData[(sBeam * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + dm] << " ";
+              std::cerr << hostMemory.snrData.at((sBeam * observation.getNrDMs(false, deviceOptions.padding[deviceOptions.deviceName] / sizeof(float))) + dm) << " ";
             }
             std::cerr << std::endl;
           }
