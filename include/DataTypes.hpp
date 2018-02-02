@@ -211,7 +211,13 @@ struct CompactedEvent : TriggeredEvent {
   unsigned int compactedIntegration = 1;
   unsigned int compactedDMs = 1;
 };
-
 using TriggeredEvents = std::vector<std::map<unsigned int, std::vector<TriggeredEvent>>>;
 using CompactedEvents = std::vector<std::vector<CompactedEvent>>;
+
+struct OpenCLRunTime {
+  cl::Context * clContext;
+  std::vector<cl::Platform> * clPlatforms;
+  std::vector<cl::Device> * clDevices;
+  std::vector<std::vector<cl::CommandQueue>> * clQueues;
+};
 
