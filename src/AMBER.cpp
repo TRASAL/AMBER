@@ -29,6 +29,7 @@ int main(int argc, char * argv[]) {
   HostMemory hostMemory;
   DeviceMemory deviceMemory;
   // OpenCL kernels
+  OpenCLRunTime openclRunTime;
   KernelConfigurations kernelConfigurations;
   Kernels kernels;
   KernelRunTimeConfigurations kernelRunTimeConfigurations;
@@ -76,12 +77,12 @@ int main(int argc, char * argv[]) {
   }
 
   // Initialize OpenCL
-  cl::Context * clContext = new cl::Context();
-  std::vector<cl::Platform> * clPlatforms = new std::vector<cl::Platform>();
-  std::vector<cl::Device> * clDevices = new std::vector<cl::Device>();
-  std::vector<std::vector<cl::CommandQueue>> * clQueues = new std::vector<std::vector<cl::CommandQueue>>();
+  openclRunTime.context = new cl::Context();
+  openclRunTime.platforms = new std::vector<cl::Platform>();
+  openclRunTime.devices = new std::vector<cl::Device>();
+  openclRunTime.queues = new std::vector<std::vector<cl::CommandQueue>>();
   try {
-    isa::OpenCL::initializeOpenCL(deviceOptions.platformID, 1, clPlatforms, clContext, clDevices, clQueues);
+    isa::OpenCL::initializeOpenCL(deviceOptions.platformID, 1, openclRunTime.platforms, openclRunTime.context, openclRunTime.devices, openclRunTime.queues);
   } catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
@@ -94,7 +95,7 @@ int main(int argc, char * argv[]) {
     return 1;
   }
   try {
-    allocateDeviceMemory(clContext, clQueues, options, hostMemory, deviceMemory);
+    allocateDeviceMemory(openclRunTime.context, openclRunTime.queues, options, hostMemory, deviceMemory);
   } catch ( cl::Error & err ) {
     std::cerr << "Memory error: " << err.what() << " " << err.err() << std::endl;
     return 1;
@@ -274,13 +275,13 @@ int main(int argc, char * argv[]) {
           if ( kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
             // TODO: add support for splitBatches
           } else {
-            clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_TRUE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()), 0, &syncPoint);
+            openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_TRUE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()), 0, &syncPoint);
           }
         } else {
           if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
             // TODO: add support for splitBatches
           } else {
-            clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_TRUE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()), 0, &syncPoint);
+            openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_TRUE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()), 0, &syncPoint);
           }
         }
         syncPoint.wait();
@@ -290,13 +291,13 @@ int main(int argc, char * argv[]) {
           if ( kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
             // TODO: add support for splitBatches
           } else {
-            clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_FALSE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()));
+            openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_FALSE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()));
           }
         } else {
           if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
             // TODO: add support for splitBatches
           } else {
-            clQueues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_FALSE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()));
+            openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_FALSE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()));
           }
         }
       }
@@ -359,7 +360,7 @@ int main(int argc, char * argv[]) {
       if ( SYNC ) {
         try {
           timers.dedispersionStepOne.start();
-          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, 0, &syncPoint);
           syncPoint.wait();
           timers.dedispersionStepOne.stop();
         } catch ( cl::Error & err ) {
@@ -368,7 +369,7 @@ int main(int argc, char * argv[]) {
         }
         try {
           timers.dedispersionStepTwo.start();
-          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, 0, &syncPoint);
           syncPoint.wait();
           timers.dedispersionStepTwo.stop();
         } catch ( cl::Error & err ) {
@@ -377,13 +378,13 @@ int main(int argc, char * argv[]) {
         }
       } else {
         try {
-          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, 0, 0);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, 0, 0);
         } catch ( cl::Error & err ) {
           std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
           errorDetected = true;
         }
         try {
-          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, 0, 0);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, 0, 0);
         } catch ( cl::Error & err ) {
           std::cerr << "Dedispersion Step Two error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
           errorDetected = true;
@@ -396,11 +397,11 @@ int main(int argc, char * argv[]) {
           }
           if ( SYNC ) {
             timers.dedispersionSingleStep.start();
-            clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal, 0, &syncPoint);
+            openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal, 0, &syncPoint);
             syncPoint.wait();
             timers.dedispersionSingleStep.stop();
           } else {
-            clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal);
+            openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal);
           }
       } catch ( cl::Error & err ) {
         std::cerr << "Dedispersion error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
@@ -410,9 +411,9 @@ int main(int argc, char * argv[]) {
     if ( options.debug ) {
       if ( options.subbandDedispersion ) {
         try {
-          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.subbandedData, CL_TRUE, 0, subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(subbandedData.data()), 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.subbandedData, CL_TRUE, 0, subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(subbandedData.data()), 0, &syncPoint);
           syncPoint.wait();
-          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0, hostMemory.dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(hostMemory.dedispersedData.data()), 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0, hostMemory.dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(hostMemory.dedispersedData.data()), 0, &syncPoint);
           syncPoint.wait();
           std::cerr << "subbandedData" << std::endl;
           for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
@@ -450,7 +451,7 @@ int main(int argc, char * argv[]) {
         }
       } else {
         try {
-          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0, hostMemory.dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(hostMemory.dedispersedData.data()), 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0, hostMemory.dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(hostMemory.dedispersedData.data()), 0, &syncPoint);
           syncPoint.wait();
           std::cerr << "dedispersedData" << std::endl;
           for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
@@ -475,20 +476,20 @@ int main(int argc, char * argv[]) {
     try {
       if ( SYNC ) {
         timers.snr.start();
-        clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.snrLocal[hostMemory.integrationSteps.size()], 0, &syncPoint);
+        openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.snrLocal[hostMemory.integrationSteps.size()], 0, &syncPoint);
         syncPoint.wait();
         timers.snr.stop();
         timers.outputCopy.start();
-        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_TRUE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()), 0, &syncPoint);
+        openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_TRUE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()), 0, &syncPoint);
         syncPoint.wait();
-        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_TRUE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()), 0, &syncPoint);
+        openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_TRUE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()), 0, &syncPoint);
         syncPoint.wait();
         timers.outputCopy.stop();
       } else {
-        clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.snrLocal[hostMemory.integrationSteps.size()]);
-        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()));
-        clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()));
-        clQueues->at(deviceOptions.deviceID)[0].finish();
+        openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.snrLocal[hostMemory.integrationSteps.size()]);
+        openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()));
+        openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()));
+        openclRunTime.queues->at(deviceOptions.deviceID)[0].finish();
       }
     } catch ( cl::Error & err ) {
       std::cerr << "SNR dedispersed data error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
@@ -530,25 +531,25 @@ int main(int argc, char * argv[]) {
       try {
         if ( SYNC ) {
           timers.integration.start();
-          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber], 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber], 0, &syncPoint);
           syncPoint.wait();
           timers.integration.stop();
           timers.snr.start();
-          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[stepNumber], kernelRunTimeConfigurations.snrLocal[stepNumber], 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[stepNumber], kernelRunTimeConfigurations.snrLocal[stepNumber], 0, &syncPoint);
           syncPoint.wait();
           timers.snr.stop();
           timers.outputCopy.start();
-          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_TRUE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()), 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_TRUE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()), 0, &syncPoint);
           syncPoint.wait();
-          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_TRUE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()), 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_TRUE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()), 0, &syncPoint);
           syncPoint.wait();
           timers.outputCopy.stop();
         } else {
-          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber]);
-          clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[stepNumber], kernelRunTimeConfigurations.snrLocal[stepNumber]);
-          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()));
-          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()));
-          clQueues->at(deviceOptions.deviceID)[0].finish();
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber]);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[stepNumber], kernelRunTimeConfigurations.snrLocal[stepNumber]);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()));
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()));
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].finish();
         }
       } catch ( cl::Error & err ) {
         std::cerr << "SNR integration loop error -- Batch: " << std::to_string(batch) << ", Step: " << std::to_string(*step) << ", " << err.what() << " " << err.err() << std::endl;
@@ -556,7 +557,7 @@ int main(int argc, char * argv[]) {
       }
       if ( options.debug ) {
         try {
-          clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.integratedData, CL_TRUE, 0, hostMemory.integratedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(hostMemory.integratedData.data()), 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.integratedData, CL_TRUE, 0, hostMemory.integratedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(hostMemory.integratedData.data()), 0, &syncPoint);
           syncPoint.wait();
         } catch ( cl::Error & err ) {
           std::cerr << "Impossible to read deviceMemory.integratedData: " << err.what() << " " << err.err() << std::endl;
