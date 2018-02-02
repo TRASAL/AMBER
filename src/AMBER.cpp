@@ -475,7 +475,7 @@ int main(int argc, char * argv[]) {
     try {
       if ( SYNC ) {
         timers.snr.start();
-        clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[integrationSteps.size()], kernelRunTimeConfigurations.snrLocal[integrationSteps.size()], 0, &syncPoint);
+        clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.snrLocal[hostMemory.integrationSteps.size()], 0, &syncPoint);
         syncPoint.wait();
         timers.snr.stop();
         timers.outputCopy.start();
@@ -485,7 +485,7 @@ int main(int argc, char * argv[]) {
         syncPoint.wait();
         timers.outputCopy.stop();
       } else {
-        clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[integrationSteps.size()], kernelRunTimeConfigurations.snrLocal[integrationSteps.size()]);
+        clQueues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.snrLocal[hostMemory.integrationSteps.size()]);
         clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()));
         clQueues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()));
         clQueues->at(deviceOptions.deviceID)[0].finish();
@@ -523,8 +523,8 @@ int main(int argc, char * argv[]) {
     }
 
     // Integration and SNR loop
-    for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
-      auto step = integrationSteps.begin();
+    for ( unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++ ) {
+      auto step = hostMemory.integrationSteps.begin();
 
       std::advance(step, stepNumber);
       try {
@@ -570,7 +570,7 @@ int main(int argc, char * argv[]) {
               for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
                 std::cerr << "DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
                 for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++ ) {
-                  std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample) << " ";
+                  std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample) << " ";
                 }
                 std::cerr << std::endl;
               }
@@ -583,7 +583,7 @@ int main(int argc, char * argv[]) {
             for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
               std::cerr << "DM: " << dm << std::endl;
               for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++ ) {
-                std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample) << " ";
+                std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding[deviceOptions.deviceName] / sizeof(outputDataType))) + sample) << " ";
               }
               std::cerr << std::endl;
             }
