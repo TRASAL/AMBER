@@ -22,4 +22,4 @@ void loadInput(AstroData::Observation & observation, const DeviceOptions & devic
 // Allocate host memory
 void allocateHostMemory(AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, HostMemory & hostMemory);
 // Allocate device memory
-void allocateDeviceMemory(const cl::Context * clContext, const std::vector<std::vector<cl::CommandQueue>> * clQueues, const Options & options, const DeviceOptions & deviceOptions, const HostMemory & hostMemory, DeviceMemory & deviceMemory);
+void allocateDeviceMemory(const OpenCLRunTime & openclRunTime, const Options & options, const DeviceOptions & deviceOptions, const HostMemory & hostMemory, DeviceMemory & deviceMemory);

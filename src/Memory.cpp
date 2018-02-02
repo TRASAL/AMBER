@@ -150,25 +150,25 @@ void allocateHostMemory(AstroData::Observation & observation, const Options & op
   AstroData::generateBeamMapping(observation, hostMemory.beamMapping, deviceOptions.padding.at(deviceOptions.deviceName), options.subbandDedispersion);
 }
 
-void allocateDeviceMemory(const cl::Context * clContext, const std::vector<std::vector<cl::CommandQueue>> * clQueues, const Options & options, const DeviceOptions & deviceOptions, const HostMemory & hostMemory, DeviceMemory & deviceMemory) {
+void allocateDeviceMemory(const OpenCLRunTime & openclRunTime, const Options & options, const DeviceOptions & deviceOptions, const HostMemory & hostMemory, DeviceMemory & deviceMemory) {
   if ( !options.subbandDedispersion ) {
-    deviceMemory.shiftsSingleStep = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.shiftsSingleStep->size() * sizeof(float), 0, 0);
-    clQueues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.shiftsSingleStep, CL_FALSE, 0, hostMemory.shiftsSingleStep->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsSingleStep->data()));
+    deviceMemory.shiftsSingleStep = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.shiftsSingleStep->size() * sizeof(float), 0, 0);
+    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.shiftsSingleStep, CL_FALSE, 0, hostMemory.shiftsSingleStep->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsSingleStep->data()));
   } else {
-    deviceMemory.shiftsStepOne = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.shiftsStepOne->size() * sizeof(float), 0, 0);
-    clQueues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.shiftsStepOne, CL_FALSE, 0, hostMemory.shiftsStepOne->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsStepOne->data()));
-    deviceMemory.shiftsStepTwo = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.shiftsStepTwo->size() * sizeof(float), 0, 0);
-    clQueues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.shiftsStepTwo, CL_FALSE, 0, hostMemory.shiftsStepTwo->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsStepTwo->data()));
-    deviceMemory.subbandedData = cl::Buffer(*clContext, CL_MEM_READ_WRITE, hostMemory.subbandedData.size() * sizeof(outputDataType), 0, 0);
+    deviceMemory.shiftsStepOne = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.shiftsStepOne->size() * sizeof(float), 0, 0);
+    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.shiftsStepOne, CL_FALSE, 0, hostMemory.shiftsStepOne->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsStepOne->data()));
+    deviceMemory.shiftsStepTwo = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.shiftsStepTwo->size() * sizeof(float), 0, 0);
+    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.shiftsStepTwo, CL_FALSE, 0, hostMemory.shiftsStepTwo->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsStepTwo->data()));
+    deviceMemory.subbandedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.subbandedData.size() * sizeof(outputDataType), 0, 0);
   }
-  deviceMemory.zappedChannels = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.zappedChannels.size() * sizeof(unsigned int), 0, 0);
-  clQueues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.zappedChannels, CL_FALSE, 0, hostMemory.zappedChannels.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.zappedChannels.data()));
-  deviceMemory.beamMapping = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.beamMapping.size() * sizeof(unsigned int), 0, 0);
-  clQueues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.beamMapping, CL_FALSE, 0, hostMemory.beamMapping.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.beamMapping.data()));
-  deviceMemory.dispersedData = cl::Buffer(*clContext, CL_MEM_READ_ONLY, hostMemory.dispersedData.size() * sizeof(inputDataType), 0, 0);
-  deviceMemory.dedispersedData = cl::Buffer(*clContext, CL_MEM_READ_WRITE, hostMemory.dedispersedData.size() * sizeof(outputDataType), 0, 0);
-  deviceMemory.integratedData = cl::Buffer(*clContext, CL_MEM_READ_WRITE, hostMemory.integratedData.size() * sizeof(outputDataType), 0, 0);
-  deviceMemory.snrData = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, hostMemory.snrData.size() * sizeof(float), 0, 0);
-  deviceMemory.snrSamples = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, hostMemory.snrSamples.size() * sizeof(unsigned int), 0, 0);
-  clQueues->at(deviceOptions.deviceID).at(0).finish();
+  deviceMemory.zappedChannels = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.zappedChannels.size() * sizeof(unsigned int), 0, 0);
+  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.zappedChannels, CL_FALSE, 0, hostMemory.zappedChannels.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.zappedChannels.data()));
+  deviceMemory.beamMapping = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.beamMapping.size() * sizeof(unsigned int), 0, 0);
+  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.beamMapping, CL_FALSE, 0, hostMemory.beamMapping.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.beamMapping.data()));
+  deviceMemory.dispersedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.dispersedData.size() * sizeof(inputDataType), 0, 0);
+  deviceMemory.dedispersedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.dedispersedData.size() * sizeof(outputDataType), 0, 0);
+  deviceMemory.integratedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.integratedData.size() * sizeof(outputDataType), 0, 0);
+  deviceMemory.snrData = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.snrData.size() * sizeof(float), 0, 0);
+  deviceMemory.snrSamples = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.snrSamples.size() * sizeof(unsigned int), 0, 0);
+  openclRunTime.queues->at(deviceOptions.deviceID).at(0).finish();
 }
