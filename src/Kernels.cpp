@@ -98,7 +98,7 @@ void generateOpenCLKernels(const AstroData::Observation & observation, const Opt
   }
 }
 
-void generateOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const KernelConfigurations & kernelConfigurations, KernelRunTimeConfigurations & kernelRunTimeConfigurations) {
+void generateOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, KernelRunTimeConfigurations & kernelRunTimeConfigurations) {
   if ( ! options.subbandDedispersion ) {
     kernelRunTimeConfigurations.dedispersionSingleStepGlobal = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0()), observation.getNrDMs() / kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1(), observation.getNrSynthesizedBeams());
     kernelRunTimeConfigurations.dedispersionSingleStepLocal = cl::NDRange(kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0(), kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD1(), 1);
@@ -132,13 +132,13 @@ void generateOpenCLRunTimeConfigurations(const AstroData::Observation & observat
         std::cout << std::endl;
     }
   }
-  kernelRunTimeConfigurations.integrationGlobal.resize(integrationSteps.size());
-  kernelRunTimeConfigurations.integrationLocal.resize(integrationSteps.size());
-  kernelRunTimeConfigurations.snrGlobal.resize(integrationSteps.size() + 1);
-  kernelRunTimeConfigurations.snrLocal.resize(integrationSteps.size() + 1);
+  kernelRunTimeConfigurations.integrationGlobal.resize(hostMemory.integrationSteps.size());
+  kernelRunTimeConfigurations.integrationLocal.resize(hostMemory.integrationSteps.size());
+  kernelRunTimeConfigurations.snrGlobal.resize(hostMemory.integrationSteps.size() + 1);
+  kernelRunTimeConfigurations.snrLocal.resize(hostMemory.integrationSteps.size() + 1);
   if ( ! options.subbandDedispersion ) {
-    kernelRunTimeConfigurations.snrGlobal[integrationSteps.size()] = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), observation.getNrDMs(), observation.getNrSynthesizedBeams());
-    kernelRunTimeConfigurations.snrLocal[integrationSteps.size()] = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
+    kernelRunTimeConfigurations.snrGlobal[hostMemory.integrationSteps.size()] = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+    kernelRunTimeConfigurations.snrLocal[hostMemory.integrationSteps.size()] = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
     if ( options.debug ) {
       std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
       std::cout << "Global: " << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0() << ", " << observation.getNrDMs() << ", " << observation.getNrSynthesizedBeams() << std::endl;
@@ -148,8 +148,8 @@ void generateOpenCLRunTimeConfigurations(const AstroData::Observation & observat
       std::cout << std::endl;
     }
   } else {
-    kernelRunTimeConfigurations.snrGlobal[integrationSteps.size()] = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
-    kernelRunTimeConfigurations.snrLocal[integrationSteps.size()] = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
+    kernelRunTimeConfigurations.snrGlobal[hostMemory.integrationSteps.size()] = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+    kernelRunTimeConfigurations.snrLocal[hostMemory.integrationSteps.size()] = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
     if ( options.debug ) {
       std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
       std::cout << "Global: " << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0() << ", " << observation.getNrDMs(true) * observation.getNrDMs() << " " << observation.getNrSynthesizedBeams() << std::endl;
@@ -159,8 +159,8 @@ void generateOpenCLRunTimeConfigurations(const AstroData::Observation & observat
       std::cout << std::endl;
     }
   }
-  for ( unsigned int stepNumber = 0; stepNumber < integrationSteps.size(); stepNumber++ ) {
-    auto step = integrationSteps.begin();
+  for ( unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++ ) {
+    auto step = hostMemory.integrationSteps.begin();
 
     std::advance(step, stepNumber);
     if ( ! options.subbandDedispersion ) {

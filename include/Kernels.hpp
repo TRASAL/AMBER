@@ -20,4 +20,4 @@
 // Function to generate all necessary OpenCL kernels
 void generateOpenCLKernels(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, Kernels & kernels);
 // Function to generate the run time configurations for the OpenCL kernels
-void generateOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const KernelConfigurations & kernelConfigurations, KernelRunTimeConfigurations & kernelRunTimeConfigurations);
+void generateOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, KernelRunTimeConfigurations & kernelRunTimeConfigurations);
