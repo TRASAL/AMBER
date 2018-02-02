@@ -110,7 +110,12 @@ int main(int argc, char * argv[]) {
   }
 
   // Generate OpenCL kernels
-  generateOpenCLKernels(observation, options, deviceOptions, kernelConfigurations, kernels);
+  try {
+    generateOpenCLKernels(observation, options, deviceOptions, kernelConfigurations, kernels);
+  } catch ( std::exception & err ) {
+    std::cerr << err.what() << std::endl;
+    return 1;
+  }
   if ( ! options.subbandDedispersion ) {
     if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
       // TODO: add support for splitBatches
