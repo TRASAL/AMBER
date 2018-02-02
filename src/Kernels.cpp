@@ -18,7 +18,16 @@
 void generateOpenCLKernels(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, Kernels & kernels) {
   std::string * code;
 
-  if ( options.subbandDedispersion ) {
+  if ( ! options.subbandDedispersion ) {
+    code = Dedispersion::getDedispersionOpenCL<inputDataType, outputDataType>(*(kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())), deviceOptions.padding.at(deviceOptions.deviceName), inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
+    try {
+      kernels.dedispersionSingleStep = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
+    } catch ( isa::OpenCL::OpenCLError & err ) {
+      std::cerr << err.what() << std::endl;
+      throw;
+    }
+    delete code;
+  } else {
     code = Dedispersion::getSubbandDedispersionStepOneOpenCL<inputDataType, outputDataType>(*(kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))), deviceOptions.padding.at(deviceOptions.deviceName), inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
     try {
       kernels.dedispersionStepOne = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
@@ -35,26 +44,17 @@ void generateOpenCLKernels(const AstroData::Observation & observation, const Opt
       throw;
     }
     delete code;
-  } else {
-    code = Dedispersion::getDedispersionOpenCL<inputDataType, outputDataType>(*(kernelConfigurations.dedispersionParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())), deviceOptions.padding.at(deviceOptions.deviceName), inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
-    try {
-      kernels.dedispersion = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
-    } catch ( isa::OpenCL::OpenCLError & err ) {
-      std::cerr << err.what() << std::endl;
-      throw;
-    }
-    delete code;
   }
-  if ( options.subbandDedispersion ) {
-    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), outputDataName, observation, observation.getNrSamplesPerBatch(), deviceOptions.padding.at(deviceOptions.deviceName));
-  } else {
+  if ( ! options.subbandDedispersion ) {
     code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), outputDataName, observation, observation.getNrSamplesPerBatch(), deviceOptions.padding.at(deviceOptions.deviceName));
+  } else {
+    code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), outputDataName, observation, observation.getNrSamplesPerBatch(), deviceOptions.padding.at(deviceOptions.deviceName));
   }
   try {
-    snrDMsSamplesK.at(integrationSteps.size()) = isa::OpenCL::compile("snrDMsSamples" + std::to_string(observation.getNrSamplesPerBatch()), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
-    snrDMsSamplesK.at(integrationSteps.size())->setArg(0, dedispersedData_d);
-    snrDMsSamplesK.at(integrationSteps.size())->setArg(1, snrData_d);
-    snrDMsSamplesK.at(integrationSteps.size())->setArg(2, snrSamples_d);
+    kernels.snr.at(integrationSteps.size()) = isa::OpenCL::compile("snrDMsSamples" + std::to_string(observation.getNrSamplesPerBatch()), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
+    kernels.snr.at(integrationSteps.size())->setArg(0, dedispersedData_d);
+    kernels.snr.at(integrationSteps.size())->setArg(1, snrData_d);
+    kernels.snr.at(integrationSteps.size())->setArg(2, snrSamples_d);
   } catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
@@ -71,9 +71,9 @@ void generateOpenCLKernels(const AstroData::Observation & observation, const Opt
     }
     try {
       if ( *step > 1 ) {
-        integrationDMsSamplesK.at(stepNumber) = isa::OpenCL::compile("integrationDMsSamples" + std::to_string(*step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
-        integrationDMsSamplesK.at(stepNumber)->setArg(0, dedispersedData_d);
-        integrationDMsSamplesK.at(stepNumber)->setArg(1, integratedData_d);
+        kernels.integration.at(stepNumber) = isa::OpenCL::compile("integrationDMsSamples" + std::to_string(*step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
+        kernels.integration.at(stepNumber)->setArg(0, dedispersedData_d);
+        kernels.integration.at(stepNumber)->setArg(1, integratedData_d);
       }
     } catch ( isa::OpenCL::OpenCLError & err ) {
       std::cerr << err.what() << std::endl;
@@ -86,10 +86,10 @@ void generateOpenCLKernels(const AstroData::Observation & observation, const Opt
       code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / *step, deviceOptions.padding.at(deviceOptions.deviceName));
     }
     try {
-      snrDMsSamplesK.at(stepNumber) = isa::OpenCL::compile("snrDMsSamples" + std::to_string(observation.getNrSamplesPerBatch() / *step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
-      snrDMsSamplesK.at(stepNumber)->setArg(0, integratedData_d);
-      snrDMsSamplesK.at(stepNumber)->setArg(1, snrData_d);
-      snrDMsSamplesK.at(stepNumber)->setArg(2, snrSamples_d);
+      kernels.snr.at(stepNumber) = isa::OpenCL::compile("snrDMsSamples" + std::to_string(observation.getNrSamplesPerBatch() / *step), *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(deviceOptions.deviceID));
+      kernels.snr.at(stepNumber)->setArg(0, integratedData_d);
+      kernels.snr.at(stepNumber)->setArg(1, snrData_d);
+      kernels.snr.at(stepNumber)->setArg(2, snrSamples_d);
     } catch ( isa::OpenCL::OpenCLError & err ) {
       std::cerr << err.what() << std::endl;
       return 1;
