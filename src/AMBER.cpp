@@ -424,7 +424,7 @@ int main(int argc, char * argv[]) {
     if ( options.debug ) {
       if ( options.subbandDedispersion ) {
         try {
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.subbandedData, CL_TRUE, 0, subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(subbandedData.data()), 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.subbandedData, CL_TRUE, 0, hostMemory.subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(hostMemory.subbandedData.data()), 0, &syncPoint);
           syncPoint.wait();
           openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0, hostMemory.dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(hostMemory.dedispersedData.data()), 0, &syncPoint);
           syncPoint.wait();
