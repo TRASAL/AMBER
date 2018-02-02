@@ -151,7 +151,7 @@ struct KernelConfigurations {
 
 struct Kernels {
   // Single step dedispersion kernel
-  cl::Kernel * dedispersion;
+  cl::Kernel * dedispersionSingleStep;
   // Step one subbanding dedispersion kernel
   cl::Kernel * dedispersionStepOne;
   // Step two subbanding dedispersion kernel
