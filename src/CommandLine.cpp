@@ -25,6 +25,7 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
     deviceOptions.platformID = argumentList.getSwitchArgument<unsigned int>("-opencl_platform");
     deviceOptions.deviceID = argumentList.getSwitchArgument<unsigned int>("-opencl_device");
     deviceOptions.deviceName = argumentList.getSwitchArgument<std::string>("-device_name");
+    deviceOptions.synchronized = argumentList.getSwitch("-sync");
     AstroData::readPaddingConf(deviceOptions.padding, argumentList.getSwitchArgument<std::string>("-padding_file"));
     dataOptions.dataLOFAR = argumentList.getSwitch("-lofar");
 #ifndef HAVE_HDF5
@@ -122,7 +123,7 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
 }
 
 void usage(const std::string & program) {
-    std::cerr << program << " -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ... -snr_file ... [-subband_dedispersion] [-debug] [-print] [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
+    std::cerr << program << " -opencl_platform ... -opencl_device ... -device_name ... [-sync] -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ... -snr_file ... [-subband_dedispersion] [-debug] [-print] [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
 #ifdef HAVE_HDF5
     std::cerr << " [-lofar]";
 #endif // HAVE_HDF5
