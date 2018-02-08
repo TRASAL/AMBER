@@ -22,6 +22,7 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
   try {
     options.debug = argumentList.getSwitch("-debug");
     options.print = argumentList.getSwitch("-print");
+    options.splitBatchesDedispersion = argumentList.getSwitch("-splitbatches_dedispersion");
     options.subbandDedispersion = argumentList.getSwitch("-subband_dedispersion");
     options.compactResults = argumentList.getSwitch("-compact_results");
     options.threshold = argumentList.getSwitchArgument<float>("-threshold");
@@ -45,19 +46,26 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
     };
 #endif // HAVE_PSRDADA
     dataOptions.dataSIGPROC = argumentList.getSwitch("-sigproc");
-    if ( !((((!(dataOptions.dataLOFAR && dataOptions.dataSIGPROC) && dataOptions.dataPSRDADA) || (!(dataOptions.dataLOFAR && dataOptions.dataPSRDADA) && dataOptions.dataSIGPROC)) || (!(dataOptions.dataSIGPROC && dataOptions.dataPSRDADA) && dataOptions.dataLOFAR)) || ((!dataOptions.dataLOFAR && !dataOptions.dataSIGPROC) && !dataOptions.dataPSRDADA)) ) {
+    if ( !((((!(dataOptions.dataLOFAR && dataOptions.dataSIGPROC) && dataOptions.dataPSRDADA)
+        || (!(dataOptions.dataLOFAR && dataOptions.dataPSRDADA) && dataOptions.dataSIGPROC))
+        || (!(dataOptions.dataSIGPROC && dataOptions.dataPSRDADA) && dataOptions.dataLOFAR))
+        || ((!dataOptions.dataLOFAR && !dataOptions.dataSIGPROC) && !dataOptions.dataPSRDADA)) ) {
       std::cerr << "-lofar -sigproc and -dada are mutually exclusive." << std::endl;
       throw std::exception();
     }
     dataOptions.channelsFile = argumentList.getSwitchArgument<std::string>("-zapped_channels");
     dataOptions.integrationFile = argumentList.getSwitchArgument<std::string>("-integration_steps");
     if ( !options.subbandDedispersion ) {
-      Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionSingleStepParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_file"));
+      Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionSingleStepParameters,
+                                              argumentList.getSwitchArgument<std::string>("-dedispersion_file"));
     } else {
-      Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionStepOneParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_step_one_file"));
-      Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionStepTwoParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_step_two_file"));
+      Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionStepOneParameters,
+                                              argumentList.getSwitchArgument<std::string>("-dedispersion_stepone_file"));
+      Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionStepTwoParameters,
+                                              argumentList.getSwitchArgument<std::string>("-dedispersion_steptwo_file"));
     }
-    Integration::readTunedIntegrationConf(kernelConfigurations.integrationParameters, argumentList.getSwitchArgument<std::string>("-integration_file"));
+    Integration::readTunedIntegrationConf(kernelConfigurations.integrationParameters,
+                                          argumentList.getSwitchArgument<std::string>("-integration_file"));
     SNR::readTunedSNRConf(kernelConfigurations.snrParameters, argumentList.getSwitchArgument<std::string>("-snr_file"));
     if ( dataOptions.dataLOFAR ) {
       observation.setNrBeams(1);
@@ -75,9 +83,14 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
       dataOptions.dataFile = argumentList.getSwitchArgument<std::string>("-data");
       observation.setNrBatches(argumentList.getSwitchArgument<unsigned int>("-batches"));
       if ( options.subbandDedispersion ) {
-        observation.setFrequencyRange(argumentList.getSwitchArgument<unsigned int>("-subbands"), argumentList.getSwitchArgument<unsigned int>("-channels"), argumentList.getSwitchArgument<float>("-min_freq"), argumentList.getSwitchArgument<float>("-channel_bandwidth"));
+        observation.setFrequencyRange(argumentList.getSwitchArgument<unsigned int>("-subbands"),
+                                      argumentList.getSwitchArgument<unsigned int>("-channels"),
+                                      argumentList.getSwitchArgument<float>("-min_freq"),
+                                      argumentList.getSwitchArgument<float>("-channel_bandwidth"));
       } else {
-        observation.setFrequencyRange(1, argumentList.getSwitchArgument<unsigned int>("-channels"), argumentList.getSwitchArgument<float>("-min_freq"), argumentList.getSwitchArgument<float>("-channel_bandwidth"));
+        observation.setFrequencyRange(1, argumentList.getSwitchArgument<unsigned int>("-channels"),
+                                      argumentList.getSwitchArgument<float>("-min_freq"),
+                                      argumentList.getSwitchArgument<float>("-channel_bandwidth"));
       }
       observation.setNrSamplesPerBatch(argumentList.getSwitchArgument<unsigned int>("-samples"));
       observation.setSamplingTime(argumentList.getSwitchArgument<float>("-sampling_time"));
@@ -98,9 +111,14 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
       observation.setNrSynthesizedBeams(argumentList.getSwitchArgument<unsigned int>("-synthesized_beams"));
       observation.setNrBatches(argumentList.getSwitchArgument<unsigned int>("-batches"));
       if ( options.subbandDedispersion ) {
-        observation.setFrequencyRange(argumentList.getSwitchArgument<unsigned int>("-subbands"), argumentList.getSwitchArgument<unsigned int>("-channels"), argumentList.getSwitchArgument<float>("-min_freq"), argumentList.getSwitchArgument<float>("-channel_bandwidth"));
+        observation.setFrequencyRange(argumentList.getSwitchArgument<unsigned int>("-subbands"),
+                                      argumentList.getSwitchArgument<unsigned int>("-channels"),
+                                      argumentList.getSwitchArgument<float>("-min_freq"),
+                                      argumentList.getSwitchArgument<float>("-channel_bandwidth"));
       } else {
-        observation.setFrequencyRange(1, argumentList.getSwitchArgument<unsigned int>("-channels"), argumentList.getSwitchArgument<float>("-min_freq"), argumentList.getSwitchArgument<float>("-channel_bandwidth"));
+        observation.setFrequencyRange(1, argumentList.getSwitchArgument<unsigned int>("-channels"),
+                                      argumentList.getSwitchArgument<float>("-min_freq"),
+                                      argumentList.getSwitchArgument<float>("-channel_bandwidth"));
       }
       observation.setNrSamplesPerBatch(argumentList.getSwitchArgument<unsigned int>("-samples"));
       observation.setSamplingTime(argumentList.getSwitchArgument<float>("-sampling_time"));
@@ -110,9 +128,13 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
     }
     dataOptions.outputFile = argumentList.getSwitchArgument<std::string>("-output");
     if ( options.subbandDedispersion ) {
-      observation.setDMRange(argumentList.getSwitchArgument<unsigned int>("-subbanding_dms"), argumentList.getSwitchArgument<float>("-subbanding_dm_first"), argumentList.getSwitchArgument<float>("-subbanding_dm_step"), true);
+      observation.setDMRange(argumentList.getSwitchArgument<unsigned int>("-subbanding_dms"),
+                             argumentList.getSwitchArgument<float>("-subbanding_dm_first"),
+                             argumentList.getSwitchArgument<float>("-subbanding_dm_step"), true);
     }
-    observation.setDMRange(argumentList.getSwitchArgument<unsigned int>("-dms"), argumentList.getSwitchArgument<float>("-dm_first"), argumentList.getSwitchArgument<float>("-dm_step"));
+    observation.setDMRange(argumentList.getSwitchArgument<unsigned int>("-dms"),
+                           argumentList.getSwitchArgument<float>("-dm_first"),
+                           argumentList.getSwitchArgument<float>("-dm_step"));
   } catch ( isa::utils::EmptyCommandLine & err ) {
     usage(argumentList.getName());
     throw;
@@ -138,8 +160,8 @@ void usage(const std::string & program) {
 #endif // HAVE_PSRDADA
   std::cerr << std::endl;
   std::cerr << "\tDedispersion: -dedispersion_file ..." << std::endl;
-  std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_step_one_file ...";
-  std::cerr << "-dedispersion_step_two_file ... -subbands ... -subbanding_dms ... -subbanding_dm_first ...";
+  std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_stepone_file ...";
+  std::cerr << "-dedispersion_steptwo_file ... -subbands ... -subbanding_dms ... -subbanding_dm_first ...";
   std::cerr << "-subbanding_dm_step ..." << std::endl;
 #ifdef HAVE_HDF5
   std::cerr << "\tLOFAR: -lofar -header ... -data ... [-limit]" << std::endl;
