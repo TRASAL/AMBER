@@ -15,7 +15,10 @@
 
 #include <CommandLine.hpp>
 
-void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions, KernelConfigurations & kernelConfigurations, GeneratorOptions & generatorOptions, AstroData::Observation & observation) {
+void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options,
+                               DeviceOptions & deviceOptions, DataOptions & dataOptions,
+                               KernelConfigurations & kernelConfigurations, GeneratorOptions & generatorOptions,
+                               AstroData::Observation & observation) {
   try {
     options.debug = argumentList.getSwitch("-debug");
     options.print = argumentList.getSwitch("-print");
@@ -123,23 +126,30 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
 }
 
 void usage(const std::string & program) {
-    std::cerr << program << " -opencl_platform ... -opencl_device ... -device_name ... [-sync] -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ... -snr_file ... [-subband_dedispersion] [-debug] [-print] [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
+  std::cerr << program << " -opencl_platform ... -opencl_device ... -device_name ... [-sync] -padding_file ...";
+  std::cerr << "-zapped_channels ... -integration_steps ... -integration_file ... -snr_file ...";
+  std::cerr << "[-splitbatches_dedispersion] [-subband_dedispersion] [-debug] [-print] [-compact_results] -output ...";
+  std::cerr << "-dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
 #ifdef HAVE_HDF5
-    std::cerr << " [-lofar]";
+  std::cerr << " [-lofar]";
 #endif // HAVE_HDF5
 #ifdef HAVE_PSRDADA
-    std::cerr << " [-dada]";
+  std::cerr << " [-dada]";
 #endif // HAVE_PSRDADA
-    std::cerr << std::endl;
-    std::cerr << "\tDedispersion: -dedispersion_file ..." << std::endl;
-    std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_step_one_file ... -dedispersion_step_two_file ... -subbands ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ..." << std::endl;
+  std::cerr << std::endl;
+  std::cerr << "\tDedispersion: -dedispersion_file ..." << std::endl;
+  std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_step_one_file ...";
+  std::cerr << "-dedispersion_step_two_file ... -subbands ... -subbanding_dms ... -subbanding_dm_first ...";
+  std::cerr << "-subbanding_dm_step ..." << std::endl;
 #ifdef HAVE_HDF5
-    std::cerr << "\tLOFAR: -lofar -header ... -data ... [-limit]" << std::endl;
-    std::cerr << "\t\t -limit -batches ..." << std::endl;
+  std::cerr << "\tLOFAR: -lofar -header ... -data ... [-limit]" << std::endl;
+  std::cerr << "\t\t -limit -batches ..." << std::endl;
 #endif // HAVE_HDF5
-    std::cerr << "\tSIGPROC: -sigproc -header ... -data ... -batches ... -channels ... -min_freq ... -channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
+  std::cerr << "\tSIGPROC: -sigproc -header ... -data ... -batches ... -channels ... -min_freq ...";
+  std::cerr << "-channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
 #ifdef HAVE_PSRDADA
-    std::cerr << "\tPSRDADA: -dada -dada_key ... -beams ... -synthesized_beams ... -batches ..." << std::endl;
+  std::cerr << "\tPSRDADA: -dada -dada_key ... -beams ... -synthesized_beams ... -batches ..." << std::endl;
 #endif // HAVE_PSRDADA
-    std::cerr << "\t [-random] -width ... -dm ... -beams ... -synthesized_beams ... -batches ... -channels ... -min_freq ... -channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
+  std::cerr << "\t [-random] -width ... -dm ... -beams ... -synthesized_beams ... -batches ... -channels ...";
+  std::cerr << "-min_freq ... -channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
 }
