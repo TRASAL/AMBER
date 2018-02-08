@@ -16,7 +16,11 @@
 #include <Pipeline.hpp>
 #include <Trigger.hpp>
 
-void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, Timers & timers, const Kernels & kernels, const KernelConfigurations & kernelConfigurations, const KernelRunTimeConfigurations & kernelRunTimeConfigurations, HostMemory & hostMemory, DeviceMemory & deviceMemory) {
+void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options,
+              const DeviceOptions & deviceOptions, const DataOptions & dataOptions, Timers & timers,
+              const Kernels & kernels, const KernelConfigurations & kernelConfigurations,
+              const KernelRunTimeConfigurations & kernelRunTimeConfigurations, HostMemory & hostMemory,
+              DeviceMemory & deviceMemory) {
   std::ofstream outputTrigger;
   bool errorDetected = false;
   cl::Event syncPoint;
@@ -24,7 +28,8 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
   timers.search.start();
   outputTrigger.open(dataOptions.outputFile + ".trigger");
   if ( options.compactResults ) {
-    outputTrigger << "# beam batch sample integration_step compacted_integration_steps time DM compacted_DMs SNR" << std::endl;
+    outputTrigger << "# beam batch sample integration_step compacted_integration_steps time DM compacted_DMs SNR";
+    outputTrigger << std::endl;
   } else {
     outputTrigger << "# beam batch sample integration_step time DM SNR" << std::endl;
   }
@@ -32,10 +37,10 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
     TriggeredEvents triggeredEvents(observation.getNrSynthesizedBeams());
     CompactedEvents compactedEvents(observation.getNrSynthesizedBeams());
 
-// Load the input
+    // Load the input
     timers.inputHandling.start();
     if ( !dataOptions.dataPSRDADA ) {
-// If there are not enough available batches, computation is complete
+      // If there are not enough available batches, computation is complete
       if ( options.subbandDedispersion ) {
         if ( batch == observation.getNrBatches() - observation.getNrDelayBatches(true) ) {
           break;
@@ -45,10 +50,12 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
           break;
         }
       }
-// If there are enough batches, prepare them for transfer to device
+      // If there are enough batches, prepare them for transfer to device
       for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
         if ( options.subbandDedispersion ) {
-          if ( !kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
+          if ( options.splitBatchesDedispersion ) {
+            // TODO: implement or remove splitBatches mode
+          } else {
             for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
               for ( unsigned int chunk = 0; chunk < observation.getNrDelayBatches(true) - 1; chunk++ ) {
                 if ( inputBits >= 8 ) {
@@ -65,7 +72,9 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
             }
           }
         } else {
-          if ( !kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
+          if ( options.splitBatchesDedispersion ) {
+            // TODO: implement or remove splitBatches mode
+          } else {
             for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
               for ( unsigned int chunk = 0; chunk < observation.getNrDelayBatches() - 1; chunk++ ) {
                 if ( inputBits >= 8 ) {
@@ -112,7 +121,9 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
       }
       for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
         if ( options.subbandDedispersion ) {
-          if ( !kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
+        if ( options.splitBatchesDedispersion ) {
+          // TODO: implement or remove splitBatches mode
+        } else {
             for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
               for ( unsigned int chunk = batch - (observation.getNrDelayBatches(true) - 1); chunk < batch; chunk++ ) {
                 // Full batches
@@ -131,7 +142,9 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
             }
           }
         } else {
-          if ( !kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
+        if ( options.splitBatchesDedispersion ) {
+          // TODO: implement or remove splitBatches mode
+        } else {
             for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
               for ( unsigned int chunk = batch - (observation.getNrDelayBatches() - 1); chunk < batch; chunk++ ) {
                 if ( inputBits >= 8 ) {
@@ -152,19 +165,19 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
 #endif // HAVE_PSRDADA
     }
     timers.inputHandling.stop();
-// Copy input from host to device
+    // Copy input from host to device
     try {
       if ( deviceOptions.synchronized ) {
         timers.inputCopy.start();
         if ( options.subbandDedispersion ) {
-          if ( kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
-// TODO: add support for splitBatches
+          if ( options.splitBatchesDedispersion ) {
+            // TODO: implement or remove splitBatches mode
           } else {
             openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_TRUE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()), 0, &syncPoint);
           }
         } else {
-          if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
-// TODO: add support for splitBatches
+          if ( options.splitBatchesDedispersion ) {
+            // TODO: implement or remove splitBatches mode
           } else {
             openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_TRUE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()), 0, &syncPoint);
           }
@@ -173,21 +186,21 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
         timers.inputCopy.stop();
       } else {
         if ( options.subbandDedispersion ) {
-          if ( kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
-// TODO: add support for splitBatches
+          if ( options.splitBatchesDedispersion ) {
+            // TODO: implement or remove splitBatches mode
           } else {
             openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_FALSE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()));
           }
         } else {
-          if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
-// TODO: add support for splitBatches
+          if ( options.splitBatchesDedispersion ) {
+            // TODO: implement or remove splitBatches mode
           } else {
             openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_FALSE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()));
           }
         }
       }
       if ( options.debug ) {
-// TODO: add support for splitBatches
+        // TODO: implement or remove splitBatches mode
         std::cerr << "dispersedData" << std::endl;
         if ( options.subbandDedispersion ) {
           if ( inputBits >= 8 ) {
@@ -202,7 +215,7 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
               std::cerr << std::endl;
             }
           } else {
-// TODO: add support for input data less than 8 bit
+            // TODO: add support for input data less than 8 bit
           }
         } else {
           if ( inputBits >= 8 ) {
@@ -217,7 +230,7 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
               std::cerr << std::endl;
             }
           } else {
-// TODO: add support for input data less than 8 bit
+            // TODO: add support for input data less than 8 bit
           }
         }
       }
@@ -226,21 +239,21 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
       errorDetected = true;
     }
     if ( options.subbandDedispersion ) {
-      if ( kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() && (batch < observation.getNrDelayBatches()) ) {
-// Not enough batches in the buffer to start the search
+      if ( options.splitBatchesDedispersion && (batch < observation.getNrDelayBatches()) ) {
+        // Not enough batches in the buffer to start the search
         continue;
       }
     } else {
-      if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() && (batch < observation.getNrDelayBatches()) ) {
-// Not enough batches in the buffer to start the search
+      if ( options.splitBatchesDedispersion && (batch < observation.getNrDelayBatches()) ) {
+        // Not enough batches in the buffer to start the search
         continue;
       }
     }
 
-// Dedispersion
+    // Dedispersion
     if ( options.subbandDedispersion ) {
-      if ( kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
-// TODO: add support for splitBatches
+      if ( options.splitBatchesDedispersion ) {
+        // TODO: implement or remove splitBatches mode
       }
       if ( deviceOptions.synchronized ) {
         try {
@@ -277,8 +290,8 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
       }
     } else {
       try {
-        if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
-// TODO: add support for splitBatches
+        if ( options.splitBatchesDedispersion ) {
+          // TODO: implement or remove splitBatches mode
         }
         if ( deviceOptions.synchronized ) {
           timers.dedispersionSingleStep.start();
