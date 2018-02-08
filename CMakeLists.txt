@@ -18,12 +18,24 @@ if($ENV{PSRDADA})
 endif()
 
 # amber
-add_executable(amber
+set(AMBER_HEADER
+  include/CommandLine.hpp
+  include/configuration.hpp
+  include/DataTypes.hpp
+  include/Kernels.hpp
+  include/Memory.hpp
+  include/Trigger.hpp
+)
+set(AMBER_SOURCE
   src/AMBER.cpp
   src/CommandLine.cpp
   src/Kernels.cpp
   src/Memory.cpp
   src/Trigger.cpp
+)
+add_executable(amber
+  ${AMBER_HEADER}
+  ${AMBER_SOURCE}
 )
 target_include_directories(amber PRIVATE include)
 target_link_libraries(amber PRIVATE ${TARGET_LINK_LIBRARIES})
