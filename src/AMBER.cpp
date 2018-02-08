@@ -259,7 +259,7 @@ int main(int argc, char * argv[]) {
     timers.inputHandling.stop();
     // Copy input from host to device
     try {
-      if ( SYNC ) {
+      if ( deviceOptions.synchronized ) {
         timers.inputCopy.start();
         if ( options.subbandDedispersion ) {
           if ( kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
@@ -347,7 +347,7 @@ int main(int argc, char * argv[]) {
       if ( kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
         // TODO: add support for splitBatches
       }
-      if ( SYNC ) {
+      if ( deviceOptions.synchronized ) {
         try {
           timers.dedispersionStepOne.start();
           openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, 0, &syncPoint);
@@ -385,7 +385,7 @@ int main(int argc, char * argv[]) {
           if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
             // TODO: add support for splitBatches
           }
-          if ( SYNC ) {
+          if ( deviceOptions.synchronized ) {
             timers.dedispersionSingleStep.start();
             openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal, 0, &syncPoint);
             syncPoint.wait();
@@ -464,7 +464,7 @@ int main(int argc, char * argv[]) {
 
     // SNR of dedispersed data
     try {
-      if ( SYNC ) {
+      if ( deviceOptions.synchronized ) {
         timers.snr.start();
         openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.snrLocal[hostMemory.integrationSteps.size()], 0, &syncPoint);
         syncPoint.wait();
@@ -519,7 +519,7 @@ int main(int argc, char * argv[]) {
 
       std::advance(step, stepNumber);
       try {
-        if ( SYNC ) {
+        if ( deviceOptions.synchronized ) {
           timers.integration.start();
           openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber], 0, &syncPoint);
           syncPoint.wait();
