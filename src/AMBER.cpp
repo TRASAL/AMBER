@@ -697,7 +697,7 @@ int main(int argc, char * argv[]) {
   output.close();
   timers.search.stop();
 
-  // Store statistics before shutting down
+  // Store performance statistics before shutting down
   output.open(dataOptions.outputFile + ".stats");
   output << std::fixed << std::setprecision(6);
   output << "# nrDMs" << std::endl;
