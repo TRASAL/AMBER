@@ -37,9 +37,9 @@ struct DeviceOptions {
   // OpenCL device ID
   unsigned int deviceID = 0;
   // OpenCL device name
-  std::string deviceName;
+  std::string deviceName{};
   // Padding of OpenCL devices
-  AstroData::paddingConf padding;
+  AstroData::paddingConf padding{};
 };
 
 struct DataOptions {
@@ -54,15 +54,15 @@ struct DataOptions {
   // Size (in bytes) of the SIGPROC file header
   unsigned int headerSizeSIGPROC = 0;
   // Name of the input file
-  std::string dataFile;
+  std::string dataFile{};
   // Name of the LOFAR header file
-  std::string headerFile;
+  std::string headerFile{};
   // Basename for the output files
-  std::string outputFile;
+  std::string outputFile{};
   // Name of the file containing the zapped channels
-  std::string channelsFile;
+  std::string channelsFile{};
   // Name of the file containing the integration steps
-  std::string integrationFile;
+  std::string integrationFile{};
 #ifdef HAVE_PSRDADA
   // PSRDADA buffer key
   key_t dadaKey = 0;
