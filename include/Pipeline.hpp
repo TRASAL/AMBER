@@ -18,4 +18,8 @@
 #pragma once
 
 // Main pipeline component
-void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, Timers & timers, const Kernels & kernels, const KernelConfigurations & kernelConfigurations, const KernelRunTimeConfigurations & kernelRunTimeConfigurations, HostMemory & hostMemory, DeviceMemory & deviceMemory);
+void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation,
+              const Options & options, const DeviceOptions & deviceOptions, const DataOptions & dataOptions,
+              Timers & timers, const Kernels & kernels, const KernelConfigurations & kernelConfigurations,
+              const KernelRunTimeConfigurations & kernelRunTimeConfigurations, HostMemory & hostMemory,
+              DeviceMemory & deviceMemory);
