@@ -33,14 +33,14 @@ set(AMBER_HEADER
   include/Kernels.hpp
   include/Memory.hpp
   include/Trigger.hpp
-)
+  include/Pipeline.hpp)
 set(AMBER_SOURCE
   src/AMBER.cpp
   src/CommandLine.cpp
   src/Kernels.cpp
   src/Memory.cpp
   src/Trigger.cpp
-)
+  src/Pipeline.cpp)
 add_executable(amber
   ${AMBER_HEADER}
   ${AMBER_SOURCE}
