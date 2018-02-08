@@ -22,6 +22,15 @@ void generateOpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroData:
     code = Dedispersion::getDedispersionOpenCL<inputDataType, outputDataType>(*(kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())), deviceOptions.padding.at(deviceOptions.deviceName), inputBits, inputDataName, intermediateDataName, outputDataName, observation, *hostMemory.shiftsSingleStep);
     kernels.dedispersionSingleStep = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID));
     delete code;
+    if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
+      // TODO: add support for splitBatches
+    } else {
+      kernels.dedispersionSingleStep->setArg(0, deviceMemory.dispersedData);
+      kernels.dedispersionSingleStep->setArg(1, deviceMemory.dedispersedData);
+      kernels.dedispersionSingleStep->setArg(2, deviceMemory.beamMapping);
+      kernels.dedispersionSingleStep->setArg(3, deviceMemory.zappedChannels);
+      kernels.dedispersionSingleStep->setArg(4, deviceMemory.shiftsSingleStep);
+    }
   } else {
     code = Dedispersion::getSubbandDedispersionStepOneOpenCL<inputDataType, outputDataType>(*(kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))), deviceOptions.padding.at(deviceOptions.deviceName), inputBits, inputDataName, intermediateDataName, outputDataName, observation, *hostMemory.shiftsStepOne);
     kernels.dedispersionStepOne = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID));
@@ -29,6 +38,18 @@ void generateOpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroData:
     code = Dedispersion::getSubbandDedispersionStepTwoOpenCL<outputDataType>(*(kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())), deviceOptions.padding.at(deviceOptions.deviceName), outputDataName, observation, *hostMemory.shiftsStepTwo);
     kernels.dedispersionStepTwo = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID));
     delete code;
+    if ( kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
+      // TODO: add support for splitBatches
+    } else {
+      kernels.dedispersionStepOne->setArg(0, deviceMemory.dispersedData);
+      kernels.dedispersionStepOne->setArg(1, deviceMemory.subbandedData);
+      kernels.dedispersionStepOne->setArg(2, deviceMemory.zappedChannels);
+      kernels.dedispersionStepOne->setArg(3, deviceMemory.shiftsStepOne);
+    }
+    kernels.dedispersionStepTwo->setArg(0, deviceMemory.subbandedData);
+    kernels.dedispersionStepTwo->setArg(1, deviceMemory.dedispersedData);
+    kernels.dedispersionStepTwo->setArg(2, deviceMemory.beamMapping);
+    kernels.dedispersionStepTwo->setArg(3, deviceMemory.shiftsStepTwo);
   }
   if ( ! options.subbandDedispersion ) {
     code = SNR::getSNRDMsSamplesOpenCL< outputDataType >(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), outputDataName, observation, observation.getNrSamplesPerBatch(), deviceOptions.padding.at(deviceOptions.deviceName));
