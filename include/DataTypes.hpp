@@ -18,22 +18,22 @@
 
 struct Options {
   // Debug mode
-  bool debug;
+  bool debug = false;
   // Print messages to standard output
-  bool print;
+  bool print = false;
   // Use subband dedispersion
-  bool subbandDedispersion;
+  bool subbandDedispersion = false;
   // Compact the triggered events in time and DM dimensions
-  bool compactResults;
+  bool compactResults = false;
   // Threshold for triggering
-  float threshold;
+  float threshold = 0.0f;
 };
 
 struct DeviceOptions {
   // OpenCL platform ID
-  unsigned int platformID;
+  unsigned int platformID = 0;
   // OpenCL device ID
-  unsigned int deviceID;
+  unsigned int deviceID = 0;
   // OpenCL device name
   std::string deviceName;
   // Padding of OpenCL devices
@@ -42,15 +42,15 @@ struct DeviceOptions {
 
 struct DataOptions {
   // Use LOFAR file as input
-  bool dataLOFAR;
+  bool dataLOFAR = false;
   // Use SIGPROC file as input
-  bool dataSIGPROC;
+  bool dataSIGPROC = false;
   // Use PSRDADA buffer as input
-  bool dataPSRDADA;
+  bool dataPSRDADA = false;
   // Limit the number of batches processed from a LOFAR file
-  bool limit;
+  bool limit = false;
   // Size (in bytes) of the SIGPROC file header
-  unsigned int headerSizeSIGPROC;
+  unsigned int headerSizeSIGPROC = 0;
   // Name of the input file
   std::string dataFile;
   // Name of the LOFAR header file
@@ -63,17 +63,17 @@ struct DataOptions {
   std::string integrationFile;
 #ifdef HAVE_PSRDADA
   // PSRDADA buffer key
-  key_t dadaKey;
+  key_t dadaKey = 0;
 #endif // HAVE_PSRDADA
 };
 
 struct GeneratorOptions {
   // Use random numbers in generated data
-  bool random;
+  bool random = false;
   // Width of random generated pulse
-  unsigned int width;
+  unsigned int width = 0;
   // DM of random generated pulse
-  float DM;
+  float DM = 0.0f;
 };
 
 struct HostMemory {
@@ -105,7 +105,7 @@ struct HostMemory {
   std::vector<float> * shiftsStepTwo;
 #ifdef HAVE_PSRDADA
   // PSRDADA ring buffer
-  dada_hdu_t * ringBuffer;
+  dada_hdu_t * ringBuffer = 0;
   // Input data
   std::vector<std::vector<inputDataType> *> inputDADA;
 #endif // HAVE_PSRDADA
@@ -151,11 +151,11 @@ struct KernelConfigurations {
 
 struct Kernels {
   // Single step dedispersion kernel
-  cl::Kernel * dedispersionSingleStep;
+  cl::Kernel * dedispersionSingleStep = 0;
   // Step one subbanding dedispersion kernel
-  cl::Kernel * dedispersionStepOne;
+  cl::Kernel * dedispersionStepOne = 0;
   // Step two subbanding dedispersion kernel
-  cl::Kernel * dedispersionStepTwo;
+  cl::Kernel * dedispersionStepTwo = 0;
   // Integration kernels, one for each integration step
   std::vector<cl::Kernel *> integration;
   // SNR kernels, one for the original data and one for each integration step
