@@ -1,7 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
-project(AMBER VERSION 2.1)
+project(AMBER)
+
+# Version
+set(PROJECT_VERSION_MAJOR 2)
+set(PROJECT_VERSION_MINOR 1)
+set(PROJECT_VERSION_PATCH 0)
+
+# Includes
 include(GNUInstallDirs)
 
+# CMake
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native -mtune=native")
 set(TARGET_LINK_LIBRARIES isa_utils isa_opencl astrodata dedispersion integration snr OpenCL)
