@@ -30,6 +30,8 @@ struct Options {
 };
 
 struct DeviceOptions {
+  // OpenCL synchronized operations
+  bool synchronized = false;
   // OpenCL platform ID
   unsigned int platformID = 0;
   // OpenCL device ID

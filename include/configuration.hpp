@@ -43,9 +43,6 @@
 
 #pragma once
 
-// SYNC mode, OpenCL queue operations
-const bool SYNC = true;
-
 // Input data type
 typedef std::uint8_t inputDataType;
 // Bits of the input data type
