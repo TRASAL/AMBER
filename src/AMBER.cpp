@@ -116,30 +116,6 @@ int main(int argc, char * argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
-  if ( ! options.subbandDedispersion ) {
-    if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
-      // TODO: add support for splitBatches
-    } else {
-      kernels.dedispersionSingleStep->setArg(0, deviceMemory.dispersedData);
-      kernels.dedispersionSingleStep->setArg(1, deviceMemory.dedispersedData);
-      kernels.dedispersionSingleStep->setArg(2, deviceMemory.beamMapping);
-      kernels.dedispersionSingleStep->setArg(3, deviceMemory.zappedChannels);
-      kernels.dedispersionSingleStep->setArg(4, deviceMemory.shiftsSingleStep);
-    }
-  } else {
-    if ( kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
-      // TODO: add support for splitBatches
-    } else {
-      kernels.dedispersionStepOne->setArg(0, deviceMemory.dispersedData);
-      kernels.dedispersionStepOne->setArg(1, deviceMemory.subbandedData);
-      kernels.dedispersionStepOne->setArg(2, deviceMemory.zappedChannels);
-      kernels.dedispersionStepOne->setArg(3, deviceMemory.shiftsStepOne);
-    }
-    kernels.dedispersionStepTwo->setArg(0, deviceMemory.subbandedData);
-    kernels.dedispersionStepTwo->setArg(1, deviceMemory.dedispersedData);
-    kernels.dedispersionStepTwo->setArg(2, deviceMemory.beamMapping);
-    kernels.dedispersionStepTwo->setArg(3, deviceMemory.shiftsStepTwo);
-  }
 
   // Generate run time configurations for the OpenCL kernels
   generateOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
