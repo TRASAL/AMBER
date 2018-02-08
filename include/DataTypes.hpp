@@ -23,6 +23,8 @@ struct Options {
   bool print = false;
   // Use subband dedispersion
   bool subbandDedispersion = false;
+  // Avoid merging batches of dispersed data into contiguous memory
+  bool splitBatchesDedispersion = false;
   // Compact the triggered events in time and DM dimensions
   bool compactResults = false;
   // Threshold for triggering
