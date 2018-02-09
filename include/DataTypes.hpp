@@ -102,14 +102,14 @@ struct HostMemory {
   // Index of the sample with highest SNR value
   std::vector<unsigned int> snrSamples;
   // Shifts single step dedispersion
-  std::vector<float> * shiftsSingleStep;
+  std::vector<float> * shiftsSingleStep = nullptr;
   // Shifts step one subbanding dedispersion
-  std::vector<float> * shiftsStepOne;
+  std::vector<float> * shiftsStepOne = nullptr;
   // Shifts step two subbanding dedispersion
-  std::vector<float> * shiftsStepTwo;
+  std::vector<float> * shiftsStepTwo = nullptr;
 #ifdef HAVE_PSRDADA
   // PSRDADA ring buffer
-  dada_hdu_t * ringBuffer = 0;
+  dada_hdu_t * ringBuffer = nullptr;
   // Input data
   std::vector<std::vector<inputDataType> *> inputDADA;
 #endif // HAVE_PSRDADA
@@ -155,11 +155,11 @@ struct KernelConfigurations {
 
 struct Kernels {
   // Single step dedispersion kernel
-  cl::Kernel * dedispersionSingleStep = 0;
+  cl::Kernel * dedispersionSingleStep = nullptr;
   // Step one subbanding dedispersion kernel
-  cl::Kernel * dedispersionStepOne = 0;
+  cl::Kernel * dedispersionStepOne = nullptr;
   // Step two subbanding dedispersion kernel
-  cl::Kernel * dedispersionStepTwo = 0;
+  cl::Kernel * dedispersionStepTwo = nullptr;
   // Integration kernels, one for each integration step
   std::vector<cl::Kernel *> integration;
   // SNR kernels, one for the original data and one for each integration step
@@ -220,9 +220,9 @@ using TriggeredEvents = std::vector<std::map<unsigned int, std::vector<Triggered
 using CompactedEvents = std::vector<std::vector<CompactedEvent>>;
 
 struct OpenCLRunTime {
-  cl::Context * context = 0;
-  std::vector<cl::Platform> * platforms = 0;
-  std::vector<cl::Device> * devices = 0;
-  std::vector<std::vector<cl::CommandQueue>> * queues = 0;
+  cl::Context * context = nullptr;
+  std::vector<cl::Platform> * platforms = nullptr;
+  std::vector<cl::Device> * devices = nullptr;
+  std::vector<std::vector<cl::CommandQueue>> * queues = nullptr;
 };
 
