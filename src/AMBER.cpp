@@ -49,10 +49,19 @@ int main(int argc, char * argv[]) {
 
   // Load or generate input data
   try {
+    hostMemory.zappedChannels.resize(observation.getNrChannels(deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                   / sizeof(unsigned int)));
+    try {
+      AstroData::readZappedChannels(observation, dataOptions.channelsFile, hostMemory.zappedChannels);
+      AstroData::readIntegrationSteps(observation, dataOptions.integrationFile, hostMemory.integrationSteps);
+    } catch ( AstroData::FileError & err ) {
+      std::cerr << err.what() << std::endl;
+      throw;
+    }
+    hostMemory.input.resize(observation.getNrBeams());
     if ( dataOptions.dataLOFAR || dataOptions.dataSIGPROC || dataOptions.dataPSRDADA ) {
       loadInput(observation, deviceOptions, dataOptions, hostMemory, timers);
     } else {
-      hostMemory.input.resize(observation.getNrBeams());
       for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
         // TODO: if there are multiple synthesized beams, the generated data should take this into account
         hostMemory.input.at(beam) = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
