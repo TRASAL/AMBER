@@ -21,20 +21,20 @@
 
 int main(int argc, char * argv[]) {
   // Command line options
-  Options options;
-  DeviceOptions deviceOptions;
-  DataOptions dataOptions;
-  GeneratorOptions generatorOptions;
+  Options options {};
+  DeviceOptions deviceOptions {};
+  DataOptions dataOptions {};
+  GeneratorOptions generatorOptions {};
   // Memory
-  HostMemory hostMemory;
-  DeviceMemory deviceMemory;
+  HostMemory hostMemory {};
+  DeviceMemory deviceMemory {};
   // OpenCL kernels
-  OpenCLRunTime openclRunTime;
-  KernelConfigurations kernelConfigurations;
-  Kernels kernels;
-  KernelRunTimeConfigurations kernelRunTimeConfigurations;
+  OpenCLRunTime openclRunTime {};
+  KernelConfigurations kernelConfigurations {};
+  Kernels kernels {};
+  KernelRunTimeConfigurations kernelRunTimeConfigurations {};
   // Timers
-  Timers timers;
+  Timers timers {};
   // Observation
   AstroData::Observation observation;
 
