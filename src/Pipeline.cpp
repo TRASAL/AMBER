@@ -59,15 +59,73 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
             for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
               for ( unsigned int chunk = 0; chunk < observation.getNrDelayBatches(true) - 1; chunk++ ) {
                 if ( inputBits >= 8 ) {
-                  memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (chunk * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&((hostMemory.input.at(beam)->at(batch + chunk))->at(channel * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))))), observation.getNrSamplesPerBatch() * sizeof(inputDataType));
+                  memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                      * observation.getNrSamplesPerDispersedBatch(true,
+                                                                  deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                      / sizeof(inputDataType)))
+                      + (channel
+                          * observation.getNrSamplesPerDispersedBatch(true,
+                                                                      deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                          / sizeof(inputDataType)))
+                      + (chunk * observation.getNrSamplesPerBatch())])),
+                         reinterpret_cast<void *>(
+                             &((hostMemory.input.at(beam)->at(batch + chunk))
+                                 ->at(channel
+                                          * observation.getNrSamplesPerBatch(false,
+                                                                             deviceOptions.padding
+                                                                                 .at(deviceOptions.deviceName)
+                                                                                 / sizeof(inputDataType))))),
+                         observation.getNrSamplesPerBatch() * sizeof(inputDataType));
                 } else {
-                  memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (chunk * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&((hostMemory.input.at(beam)->at(batch + chunk))->at(channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))))), (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
+                  memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                      * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true)
+                                            / (8 / inputBits),
+                                        deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)))
+                      + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits),
+                                                   deviceOptions.padding.at(deviceOptions.deviceName)
+                                                       / sizeof(inputDataType))) + (chunk
+                      * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])),
+                         reinterpret_cast<void *>(
+                             &((hostMemory.input.at(beam)->at(batch + chunk))
+                                 ->at(channel
+                                          * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits),
+                                                            deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                / sizeof(inputDataType))))),
+                         (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
                 }
               }
               if ( inputBits >= 8 ) {
-                memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches(true) - 1) * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&((hostMemory.input.at(beam)->at(batch + (observation.getNrDelayBatches(true) - 1)))->at(channel * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))))), (observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch()) * sizeof(inputDataType));
+                memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                    * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName)
+                        / sizeof(inputDataType)))
+                    + (channel
+                        * observation.getNrSamplesPerDispersedBatch(true,
+                                                                    deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                        / sizeof(inputDataType)))
+                    + ((observation.getNrDelayBatches(true) - 1) * observation.getNrSamplesPerBatch())])),
+                       reinterpret_cast<void *>(
+                           &((hostMemory.input.at(beam)->at(batch + (observation.getNrDelayBatches(true) - 1)))
+                               ->at(channel * observation.getNrSamplesPerBatch(false,
+                                                                               deviceOptions.padding
+                                                                                   .at(deviceOptions.deviceName)
+                                                                                   / sizeof(inputDataType))))),
+                       (observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch())
+                           * sizeof(inputDataType));
               } else {
-                memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches(true) - 1) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&((hostMemory.input.at(beam)->at(batch + (observation.getNrDelayBatches(true) - 1)))->at(channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))))), ((observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType));
+                memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                    * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits),
+                                      deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)))
+                    + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits),
+                                                 deviceOptions.padding.at(deviceOptions.deviceName)
+                                                     / sizeof(inputDataType)))
+                    + ((observation.getNrDelayBatches(true) - 1) * (observation.getNrSamplesPerBatch()
+                        / (8 / inputBits)))])), reinterpret_cast<void *>(&((hostMemory.input.at(beam)
+                    ->at(batch + (observation.getNrDelayBatches(true) - 1)))
+                    ->at(channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits),
+                                                   deviceOptions.padding.at(deviceOptions.deviceName)
+                                                       / sizeof(inputDataType))))),
+                       ((observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch())
+                           / (8 / inputBits)) * sizeof(inputDataType));
               }
             }
           }
@@ -78,15 +136,63 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
             for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
               for ( unsigned int chunk = 0; chunk < observation.getNrDelayBatches() - 1; chunk++ ) {
                 if ( inputBits >= 8 ) {
-                  memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (chunk * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&((hostMemory.input.at(beam)->at(batch + chunk))->at(channel * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))))), observation.getNrSamplesPerBatch() * sizeof(inputDataType));
+                  memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                      * observation.getNrSamplesPerDispersedBatch(false,
+                                                                  deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                      / sizeof(inputDataType))) + (channel
+                      * observation.getNrSamplesPerDispersedBatch(false,
+                                                                  deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                      / sizeof(inputDataType))) + (chunk
+                      * observation.getNrSamplesPerBatch())])),
+                         reinterpret_cast<void *>(&((hostMemory.input.at(beam)->at(batch + chunk))
+                             ->at(channel * observation.getNrSamplesPerBatch(
+                                 false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))))),
+                         observation.getNrSamplesPerBatch() * sizeof(inputDataType));
                 } else {
-                  memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (chunk * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&((hostMemory.input.at(beam)->at(batch + chunk))->at(channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))))), (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
+                  memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                      * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits),
+                                        deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)))
+                      + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits),
+                                                   deviceOptions.padding.at(deviceOptions.deviceName)
+                                                       / sizeof(inputDataType))) + (chunk
+                      * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])),
+                         reinterpret_cast<void *>(&((hostMemory.input.at(beam)->at(batch + chunk))
+                             ->at(channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits),
+                                                            deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                / sizeof(inputDataType))))),
+                         (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
                 }
               }
               if ( inputBits >= 8 ) {
-                memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1) * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&((hostMemory.input.at(beam)->at(batch + (observation.getNrDelayBatches() - 1)))->at(channel * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))))), (observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch()) * sizeof(inputDataType));
+                memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                    * observation.getNrSamplesPerDispersedBatch(false,
+                                                                deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                    / sizeof(inputDataType))) + (channel
+                    * observation.getNrSamplesPerDispersedBatch(false,
+                                                                deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                    / sizeof(inputDataType)))
+                    + ((observation.getNrDelayBatches() - 1) * observation.getNrSamplesPerBatch())])),
+                       reinterpret_cast<void *>(&((hostMemory.input.at(beam)
+                           ->at(batch + (observation.getNrDelayBatches() - 1)))
+                           ->at(channel * observation.getNrSamplesPerBatch(
+                               false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))))),
+                       (observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch())
+                           * sizeof(inputDataType));
               } else {
-                memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&((hostMemory.input.at(beam)->at(batch + (observation.getNrDelayBatches() - 1)))->at(channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))))), ((observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType));
+                memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                    * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits),
+                                      deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)))
+                    + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits),
+                                                 deviceOptions.padding.at(deviceOptions.deviceName)
+                                                     / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1)
+                    * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])),
+                       reinterpret_cast<void *>(&((hostMemory.input.at(beam)
+                           ->at(batch + (observation.getNrDelayBatches() - 1)))
+                           ->at(channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits),
+                                                          deviceOptions.padding.at(deviceOptions.deviceName)
+                                                              / sizeof(inputDataType))))),
+                       ((observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch())
+                           / (8 / inputBits)) * sizeof(inputDataType));
               }
             }
           }
@@ -100,9 +206,11 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
           break;
         }
         if ( options.subbandDedispersion ) {
-          AstroData::readPSRDADA(*hostMemory.ringBuffer, hostMemory.inputDADA.at(batch % observation.getNrDelayBatches(true)));
+          AstroData::readPSRDADA(*hostMemory.ringBuffer,
+                                 hostMemory.inputDADA.at(batch % observation.getNrDelayBatches(true)));
         } else {
-          AstroData::readPSRDADA(*hostMemory.ringBuffer, hostMemory.inputDADA.at(batch % observation.getNrDelayBatches()));
+          AstroData::readPSRDADA(*hostMemory.ringBuffer,
+                                 hostMemory.inputDADA.at(batch % observation.getNrDelayBatches()));
         }
       } catch ( AstroData::RingBufferError & err ) {
         std::cerr << "Error: " << err.what() << std::endl;
@@ -128,16 +236,68 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
               for ( unsigned int chunk = batch - (observation.getNrDelayBatches(true) - 1); chunk < batch; chunk++ ) {
                 // Full batches
                 if ( inputBits >= 8 ) {
-                  memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches(true) - 1))) * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&(hostMemory.inputDADA.at(chunk % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch()) + (channel * observation.getNrSamplesPerBatch())))), observation.getNrSamplesPerBatch() * sizeof(inputDataType));
+                  memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                      * observation.getNrSamplesPerDispersedBatch(true,
+                                                                  deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                      / sizeof(inputDataType))) + (channel
+                      * observation.getNrSamplesPerDispersedBatch(true,
+                                                                  deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                      / sizeof(inputDataType))) +
+                      ((chunk - (batch - (observation.getNrDelayBatches(true) - 1)))
+                          * observation.getNrSamplesPerBatch())])),
+                         reinterpret_cast<void *>(
+                             &(hostMemory.inputDADA.at(chunk % observation.getNrDelayBatches(true))
+                                 ->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch())
+                                          + (channel * observation.getNrSamplesPerBatch())))),
+                         observation.getNrSamplesPerBatch() * sizeof(inputDataType));
                 } else {
-                  memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches(true) - 1))) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&(hostMemory.inputDADA.at(chunk % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch() / (8 / inputBits)))))), (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
+                  memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                      * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits),
+                                        deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)))
+                      + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits),
+                                                   deviceOptions.padding.at(deviceOptions.deviceName)
+                                                       / sizeof(inputDataType))) + ((chunk - (batch
+                      - (observation.getNrDelayBatches(true) - 1))) * (observation.getNrSamplesPerBatch()
+                      / (8 / inputBits)))])),
+                         reinterpret_cast<void *>(&(hostMemory.inputDADA.at(chunk % observation.getNrDelayBatches(true))
+                             ->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch()
+                                 / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch()
+                                 / (8 / inputBits)))))),
+                         (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
                 }
               }
               // Remainder (part of current batch)
               if ( inputBits >= 8 ) {
-                memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches(true) - 1) * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&(hostMemory.inputDADA.at(batch % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch()) + (channel * observation.getNrSamplesPerBatch())))), (observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch()) * sizeof(inputDataType));
+                memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                    * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName)
+                        / sizeof(inputDataType)))
+                    + (channel
+                        * observation.getNrSamplesPerDispersedBatch(true,
+                                                                    deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                        / sizeof(inputDataType)))
+                    + ((observation.getNrDelayBatches(true) - 1) * observation.getNrSamplesPerBatch())])),
+                       reinterpret_cast<void *>(
+                           &(hostMemory.inputDADA.at(batch % observation.getNrDelayBatches(true))
+                               ->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch())
+                                        + (channel * observation.getNrSamplesPerBatch())))),
+                       (observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch())
+                           * sizeof(inputDataType));
               } else {
-                memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches(true) - 1) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&(hostMemory.inputDADA.at(batch % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch() / (8 / inputBits)))))), ((observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType));
+                memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                    * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits),
+                                      deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)))
+                    + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits),
+                                                 deviceOptions.padding.at(deviceOptions.deviceName)
+                                                     / sizeof(inputDataType)))
+                    + ((observation.getNrDelayBatches(true) - 1) * (observation.getNrSamplesPerBatch()
+                        / (8 / inputBits)))])),
+                       reinterpret_cast<void *>(
+                           &(hostMemory.inputDADA.at(batch % observation.getNrDelayBatches(true))
+                               ->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch()
+                                   / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch()
+                                   / (8 / inputBits)))))),
+                       ((observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch())
+                           / (8 / inputBits)) * sizeof(inputDataType));
               }
             }
           }
@@ -148,15 +308,65 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
             for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
               for ( unsigned int chunk = batch - (observation.getNrDelayBatches() - 1); chunk < batch; chunk++ ) {
                 if ( inputBits >= 8 ) {
-                  memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches() - 1))) * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&(hostMemory.inputDADA.at(chunk % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch()) + (channel * observation.getNrSamplesPerBatch())))), observation.getNrSamplesPerBatch() * sizeof(inputDataType));
+                  memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                      * observation.getNrSamplesPerDispersedBatch(false,
+                                                                  deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                      / sizeof(inputDataType))) +
+                      (channel
+                          * observation.getNrSamplesPerDispersedBatch(false,
+                                                                      deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                          / sizeof(inputDataType))) +
+                      ((chunk - (batch - (observation.getNrDelayBatches() - 1)))
+                          * observation.getNrSamplesPerBatch())])),
+                         reinterpret_cast<void *>(&(hostMemory.inputDADA.at(chunk % observation.getNrDelayBatches())
+                             ->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch())
+                                      + (channel * observation.getNrSamplesPerBatch())))),
+                         observation.getNrSamplesPerBatch() * sizeof(inputDataType));
                 } else {
-                  memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches() - 1))) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&(hostMemory.inputDADA.at(chunk % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch() / (8 / inputBits)))))), (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType));
+                  memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                      * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits),
+                                        deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)))
+                      + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits),
+                                                   deviceOptions.padding.at(deviceOptions.deviceName)
+                                                       / sizeof(inputDataType)))
+                      + ((chunk - (batch - (observation.getNrDelayBatches() - 1))) * (observation.getNrSamplesPerBatch()
+                          / (8 / inputBits)))])),
+                         reinterpret_cast<void *>(&(hostMemory.inputDADA.at(chunk % observation.getNrDelayBatches())
+                             ->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch()
+                                 / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch()
+                                 / (8 / inputBits)))))), (observation.getNrSamplesPerBatch() / (8 / inputBits))
+                             * sizeof(inputDataType));
                 }
               }
               if ( inputBits >= 8 ) {
-                memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1) * observation.getNrSamplesPerBatch())])), reinterpret_cast< void * >(&(hostMemory.inputDADA.at(batch % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch()) + (channel * observation.getNrSamplesPerBatch())))), (observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch()) * sizeof(inputDataType));
+                memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                    * observation.getNrSamplesPerDispersedBatch(false,
+                                                                deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                    / sizeof(inputDataType))) +
+                    (channel
+                        * observation.getNrSamplesPerDispersedBatch(false,
+                                                                    deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                        / sizeof(inputDataType)))
+                    + ((observation.getNrDelayBatches() - 1) * observation.getNrSamplesPerBatch())])),
+                       reinterpret_cast<void *>(&(hostMemory.inputDADA.at(batch % observation.getNrDelayBatches())
+                           ->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch())
+                                    + (channel * observation.getNrSamplesPerBatch())))),
+                       (observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch())
+                           * sizeof(inputDataType));
               } else {
-                memcpy(reinterpret_cast< void * >(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])), reinterpret_cast< void * >(&(hostMemory.inputDADA.at(batch % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch() / (8 / inputBits)))))), ((observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType));
+                memcpy(reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels()
+                    * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits),
+                                      deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)))
+                    + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits),
+                                                 deviceOptions.padding.at(deviceOptions.deviceName)
+                                                     / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1)
+                    * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])),
+                       reinterpret_cast<void *>(&(hostMemory.inputDADA.at(batch % observation.getNrDelayBatches())
+                           ->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch()
+                               / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch()
+                               / (8 / inputBits)))))),
+                       ((observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch())
+                           / (8 / inputBits)) * sizeof(inputDataType));
               }
             }
           }
@@ -169,34 +379,24 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
     try {
       if ( deviceOptions.synchronized ) {
         timers.inputCopy.start();
-        if ( options.subbandDedispersion ) {
-          if ( options.splitBatchesDedispersion ) {
-            // TODO: implement or remove splitBatches mode
-          } else {
-            openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_TRUE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()), 0, &syncPoint);
-          }
+        if ( options.splitBatchesDedispersion ) {
+          // TODO: implement or remove splitBatches mode
         } else {
-          if ( options.splitBatchesDedispersion ) {
-            // TODO: implement or remove splitBatches mode
-          } else {
-            openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_TRUE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()), 0, &syncPoint);
-          }
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueWriteBuffer(deviceMemory.dispersedData, CL_TRUE, 0,
+                                  hostMemory.dispersedData.size() * sizeof(inputDataType),
+                                  reinterpret_cast<void *>(hostMemory.dispersedData.data()), nullptr, &syncPoint);
         }
         syncPoint.wait();
         timers.inputCopy.stop();
       } else {
-        if ( options.subbandDedispersion ) {
-          if ( options.splitBatchesDedispersion ) {
-            // TODO: implement or remove splitBatches mode
-          } else {
-            openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_FALSE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()));
-          }
+        if ( options.splitBatchesDedispersion ) {
+          // TODO: implement or remove splitBatches mode
         } else {
-          if ( options.splitBatchesDedispersion ) {
-            // TODO: implement or remove splitBatches mode
-          } else {
-            openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueWriteBuffer(deviceMemory.dispersedData, CL_FALSE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(hostMemory.dispersedData.data()));
-          }
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueWriteBuffer(deviceMemory.dispersedData, CL_FALSE, 0,
+                                  hostMemory.dispersedData.size() * sizeof(inputDataType),
+                                  reinterpret_cast<void *>(hostMemory.dispersedData.data()));
         }
       }
       if ( options.debug ) {
@@ -207,8 +407,16 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
             for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
               std::cerr << "Beam: " << beam << std::endl;
               for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-                for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)); sample++ ) {
-                  std::cerr << static_cast< float >(hostMemory.dispersedData.at((beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + sample)) << " ";
+                for ( unsigned int sample = 0;
+                      sample < observation.getNrSamplesPerDispersedBatch(
+                          true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType));
+                      sample++ ) {
+                  std::cerr << static_cast<float>(hostMemory.dispersedData.at(
+                      (beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(
+                          true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel
+                          * observation.getNrSamplesPerDispersedBatch(
+                              true, deviceOptions.padding.at(deviceOptions.deviceName)
+                                  / sizeof(inputDataType))) + sample)) << " ";
                 }
                 std::cerr << std::endl;
               }
@@ -222,8 +430,16 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
             for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
               std::cerr << "Beam: " << beam << std::endl;
               for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-                for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)); sample++ ) {
-                  std::cerr << static_cast< float >(hostMemory.dispersedData.at((beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + sample)) << " ";
+                for ( unsigned int sample = 0;
+                      sample < observation.getNrSamplesPerDispersedBatch(
+                          false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType));
+                      sample++ ) {
+                  std::cerr << static_cast<float>(hostMemory.dispersedData.at(
+                      (beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(
+                          false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel
+                          * observation.getNrSamplesPerDispersedBatch(
+                              false, deviceOptions.padding.at(deviceOptions.deviceName)
+                                  / sizeof(inputDataType))) + sample)) << " ";
                 }
                 std::cerr << std::endl;
               }
@@ -235,19 +451,13 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
         }
       }
     } catch ( cl::Error & err ) {
-      std::cerr << "Input copy error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
+      std::cerr << "Input copy error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err();
+      std::cerr << std::endl;
       errorDetected = true;
     }
-    if ( options.subbandDedispersion ) {
-      if ( options.splitBatchesDedispersion && (batch < observation.getNrDelayBatches()) ) {
-        // Not enough batches in the buffer to start the search
-        continue;
-      }
-    } else {
-      if ( options.splitBatchesDedispersion && (batch < observation.getNrDelayBatches()) ) {
-        // Not enough batches in the buffer to start the search
-        continue;
-      }
+    if ( options.splitBatchesDedispersion && (batch < observation.getNrDelayBatches()) ) {
+      // Not enough batches in the buffer to start the search
+      continue;
     }
 
     // Dedispersion
@@ -258,33 +468,49 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
       if ( deviceOptions.synchronized ) {
         try {
           timers.dedispersionStepOne.start();
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange,
+                                    kernelRunTimeConfigurations.dedispersionStepOneGlobal,
+                                    kernelRunTimeConfigurations.dedispersionStepOneLocal, nullptr, &syncPoint);
           syncPoint.wait();
           timers.dedispersionStepOne.stop();
         } catch ( cl::Error & err ) {
-          std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
+          std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
+          std::cerr << err.err() << std::endl;
           errorDetected = true;
         }
         try {
           timers.dedispersionStepTwo.start();
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange,
+                                    kernelRunTimeConfigurations.dedispersionStepTwoGlobal,
+                                    kernelRunTimeConfigurations.dedispersionStepTwoLocal, nullptr, &syncPoint);
           syncPoint.wait();
           timers.dedispersionStepTwo.stop();
         } catch ( cl::Error & err ) {
-          std::cerr << "Dedispersion Step Two error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
+          std::cerr << "Dedispersion Step Two error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
+          std::cerr << err.err() << std::endl;
           errorDetected = true;
         }
       } else {
         try {
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, 0, 0);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange,
+                                    kernelRunTimeConfigurations.dedispersionStepOneGlobal,
+                                    kernelRunTimeConfigurations.dedispersionStepOneLocal, nullptr, nullptr);
         } catch ( cl::Error & err ) {
-          std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
+          std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
+          std::cerr << err.err() << std::endl;
           errorDetected = true;
         }
         try {
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, 0, 0);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange,
+                                    kernelRunTimeConfigurations.dedispersionStepTwoGlobal,
+                                    kernelRunTimeConfigurations.dedispersionStepTwoLocal, nullptr, nullptr);
         } catch ( cl::Error & err ) {
-          std::cerr << "Dedispersion Step Two error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
+          std::cerr << "Dedispersion Step Two error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
+          std::cerr << err.err() << std::endl;
           errorDetected = true;
         }
       }
@@ -295,23 +521,36 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
         }
         if ( deviceOptions.synchronized ) {
           timers.dedispersionSingleStep.start();
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal, 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange,
+                                    kernelRunTimeConfigurations.dedispersionSingleStepGlobal,
+                                    kernelRunTimeConfigurations.dedispersionSingleStepLocal, nullptr, &syncPoint);
           syncPoint.wait();
           timers.dedispersionSingleStep.stop();
         } else {
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange,
+                                    kernelRunTimeConfigurations.dedispersionSingleStepGlobal,
+                                    kernelRunTimeConfigurations.dedispersionSingleStepLocal);
         }
       } catch ( cl::Error & err ) {
-        std::cerr << "Dedispersion error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
+        std::cerr << "Dedispersion error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err();
+        std::cerr << std::endl;
         errorDetected = true;
       }
     }
     if ( options.debug ) {
       if ( options.subbandDedispersion ) {
         try {
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.subbandedData, CL_TRUE, 0, hostMemory.subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(hostMemory.subbandedData.data()), 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueReadBuffer(deviceMemory.subbandedData, CL_TRUE, 0,
+                                 hostMemory.subbandedData.size() * sizeof(outputDataType),
+                                 reinterpret_cast<void *>(hostMemory.subbandedData.data()), nullptr, &syncPoint);
           syncPoint.wait();
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0, hostMemory.dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(hostMemory.dedispersedData.data()), 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0,
+                                 hostMemory.dedispersedData.size() * sizeof(outputDataType),
+                                 reinterpret_cast<void *>(hostMemory.dedispersedData.data()), nullptr, &syncPoint);
           syncPoint.wait();
           std::cerr << "subbandedData" << std::endl;
           for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
@@ -320,7 +559,15 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
               std::cerr << "Subbanding DM: " << dm << std::endl;
               for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
                 for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(true); sample++ ) {
-                  std::cerr << hostMemory.subbandedData.at((beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << " ";
+                  std::cerr << hostMemory.subbandedData
+                      .at((beam * observation.getNrDMs(true) * observation.getNrSubbands()
+                          * observation.getNrSamplesPerBatch(true, deviceOptions.padding.at(deviceOptions.deviceName)
+                              / sizeof(outputDataType))) + (dm * observation.getNrSubbands()
+                          * observation.getNrSamplesPerBatch(true, deviceOptions.padding.at(deviceOptions.deviceName)
+                              / sizeof(outputDataType))) +
+                          (subband * observation.getNrSamplesPerBatch(true,
+                                                                      deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                          / sizeof(outputDataType))) + sample) << " ";
                 }
                 std::cerr << std::endl;
               }
@@ -335,7 +582,15 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
               for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
                 std::cerr << "DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
                 for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
-                  std::cerr << hostMemory.dedispersedData.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << " ";
+                  std::cerr << hostMemory.dedispersedData
+                      .at((sBeam * observation.getNrDMs(true) * observation.getNrDMs()
+                          * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName)
+                              / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs()
+                          * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName)
+                              / sizeof(outputDataType))) +
+                          (dm * observation.getNrSamplesPerBatch(false,
+                                                                 deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                     / sizeof(outputDataType))) + sample) << " ";
                 }
                 std::cerr << std::endl;
               }
@@ -344,12 +599,16 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
             std::cerr << std::endl;
           }
         } catch ( cl::Error & err) {
-          std::cerr << "Impossible to read deviceMemory.subbandedData and deviceMemory.dedispersedData: " << err.what() << " " << err.err() << std::endl;
+          std::cerr << "Impossible to read deviceMemory.subbandedData and deviceMemory.dedispersedData: ";
+          std::cerr << err.what() << " " << err.err() << std::endl;
           errorDetected = true;
         }
       } else {
         try {
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0, hostMemory.dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(hostMemory.dedispersedData.data()), 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0,
+                                 hostMemory.dedispersedData.size() * sizeof(outputDataType),
+                                 reinterpret_cast<void *>(hostMemory.dedispersedData.data()), nullptr, &syncPoint);
           syncPoint.wait();
           std::cerr << "dedispersedData" << std::endl;
           for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
@@ -357,44 +616,69 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
             for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
               std::cerr << "DM: " << dm << std::endl;
               for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
-                std::cerr << hostMemory.dedispersedData.at((sBeam * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << " ";
+                std::cerr << hostMemory.dedispersedData
+                    .at((sBeam * observation.getNrDMs()
+                        * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName)
+                            / sizeof(outputDataType)))
+                            + (dm * observation.getNrSamplesPerBatch(false,
+                                                                     deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                         / sizeof(outputDataType))) + sample) << " ";
               }
               std::cerr << std::endl;
             }
             std::cerr << std::endl;
           }
         } catch ( cl::Error & err ) {
-          std::cerr << "Impossible to read deviceMemory.dedispersedData: " << err.what() << " " << err.err() << std::endl;
+          std::cerr << "Impossible to read deviceMemory.dedispersedData: " << err.what() << " " << err.err();
+          std::cerr << std::endl;
           errorDetected = true;
         }
       }
     }
 
-// SNR of dedispersed data
+    // SNR of dedispersed data
     try {
       if ( deviceOptions.synchronized ) {
         timers.snr.start();
-        openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.snrLocal[hostMemory.integrationSteps.size()], 0, &syncPoint);
+        openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+            .enqueueNDRangeKernel(*kernels.snr[hostMemory.integrationSteps.size()], cl::NullRange,
+                                  kernelRunTimeConfigurations.snrGlobal[hostMemory.integrationSteps.size()],
+                                  kernelRunTimeConfigurations.snrLocal[hostMemory.integrationSteps.size()], nullptr,
+                                  &syncPoint);
         syncPoint.wait();
         timers.snr.stop();
         timers.outputCopy.start();
-        openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_TRUE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()), 0, &syncPoint);
+        openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+            .enqueueReadBuffer(deviceMemory.snrData, CL_TRUE, 0, hostMemory.snrData.size() * sizeof(float),
+                               reinterpret_cast<void *>(hostMemory.snrData.data()), nullptr, &syncPoint);
         syncPoint.wait();
-        openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_TRUE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()), 0, &syncPoint);
+        openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+            .enqueueReadBuffer(deviceMemory.snrSamples, CL_TRUE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int),
+                               reinterpret_cast<void *>(hostMemory.snrSamples.data()), nullptr, &syncPoint);
         syncPoint.wait();
         timers.outputCopy.stop();
       } else {
-        openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.snrLocal[hostMemory.integrationSteps.size()]);
-        openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()));
-        openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()));
-        openclRunTime.queues->at(deviceOptions.deviceID)[0].finish();
+        openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+            .enqueueNDRangeKernel(*kernels.snr[hostMemory.integrationSteps.size()], cl::NullRange,
+                                  kernelRunTimeConfigurations.snrGlobal[hostMemory.integrationSteps.size()],
+                                  kernelRunTimeConfigurations.snrLocal[hostMemory.integrationSteps.size()]);
+        openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+            .enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float),
+                               reinterpret_cast<void *>(hostMemory.snrData.data()));
+        openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+            .enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0,
+                               hostMemory.snrSamples.size() * sizeof(unsigned int),
+                               reinterpret_cast<void *>(hostMemory.snrSamples.data()));
+        openclRunTime.queues->at(deviceOptions.deviceID).at(0).finish();
       }
     } catch ( cl::Error & err ) {
-      std::cerr << "SNR dedispersed data error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err() << std::endl;
+      std::cerr << "SNR dedispersed data error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
+      std::cerr << err.err() << std::endl;
       errorDetected = true;
     }
     timers.trigger.start();
-    trigger(options.subbandDedispersion, deviceOptions.padding.at(deviceOptions.deviceName), 0, options.threshold, observation, hostMemory.snrData, hostMemory.snrSamples, triggeredEvents);
+    trigger(options.subbandDedispersion, deviceOptions.padding.at(deviceOptions.deviceName), 0, options.threshold,
+            observation, hostMemory.snrData, hostMemory.snrSamples, triggeredEvents);
     timers.trigger.stop();
     if ( options.debug ) {
       if ( options.subbandDedispersion ) {
@@ -403,7 +687,10 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
           std::cerr << "sBeam: " << sBeam << std::endl;
           for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
             for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-              std::cerr << hostMemory.snrData.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm) << " ";
+              std::cerr << hostMemory.snrData
+                  .at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(),
+                                               deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float)))
+                          + (subbandingDM * observation.getNrDMs()) + dm) << " ";
             }
           }
           std::cerr << std::endl;
@@ -413,7 +700,9 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
         for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
           std::cerr << "sBeam: " << sBeam << std::endl;
           for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-            std::cerr << hostMemory.snrData.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm) << " ";
+            std::cerr << hostMemory.snrData
+                .at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName)
+                    / sizeof(float))) + dm) << " ";
           }
           std::cerr << std::endl;
         }
@@ -421,7 +710,7 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
       std::cerr << std::endl;
     }
 
-// Integration and SNR loop
+    // Integration and SNR loop
     for ( unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++ ) {
       auto step = hostMemory.integrationSteps.begin();
 
@@ -429,36 +718,65 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
       try {
         if ( deviceOptions.synchronized ) {
           timers.integration.start();
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber], 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange,
+                                    kernelRunTimeConfigurations.integrationGlobal[stepNumber],
+                                    kernelRunTimeConfigurations.integrationLocal[stepNumber], nullptr, &syncPoint);
           syncPoint.wait();
           timers.integration.stop();
           timers.snr.start();
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[stepNumber], kernelRunTimeConfigurations.snrLocal[stepNumber], 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange,
+                                    kernelRunTimeConfigurations.snrGlobal[stepNumber],
+                                    kernelRunTimeConfigurations.snrLocal[stepNumber], nullptr, &syncPoint);
           syncPoint.wait();
           timers.snr.stop();
           timers.outputCopy.start();
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_TRUE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()), 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueReadBuffer(deviceMemory.snrData, CL_TRUE, 0,
+                                 hostMemory.snrData.size() * sizeof(float),
+                                 reinterpret_cast<void *>(hostMemory.snrData.data()), nullptr, &syncPoint);
           syncPoint.wait();
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_TRUE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()), 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueReadBuffer(deviceMemory.snrSamples, CL_TRUE, 0,
+                                 hostMemory.snrSamples.size() * sizeof(unsigned int),
+                                 reinterpret_cast<void *>(hostMemory.snrSamples.data()), nullptr, &syncPoint);
           syncPoint.wait();
           timers.outputCopy.stop();
         } else {
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber]);
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[stepNumber], kernelRunTimeConfigurations.snrLocal[stepNumber]);
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast< void * >(hostMemory.snrData.data()));
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast< void * >(hostMemory.snrSamples.data()));
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].finish();
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange,
+                                    kernelRunTimeConfigurations.integrationGlobal[stepNumber],
+                                    kernelRunTimeConfigurations.integrationLocal[stepNumber]);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange,
+                                    kernelRunTimeConfigurations.snrGlobal[stepNumber],
+                                    kernelRunTimeConfigurations.snrLocal[stepNumber]);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0,
+                                 hostMemory.snrData.size() * sizeof(float),
+                                 reinterpret_cast<void *>(hostMemory.snrData.data()));
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0,
+                                 hostMemory.snrSamples.size() * sizeof(unsigned int),
+                                 reinterpret_cast<void *>(hostMemory.snrSamples.data()));
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0).finish();
         }
       } catch ( cl::Error & err ) {
-        std::cerr << "SNR integration loop error -- Batch: " << std::to_string(batch) << ", Step: " << std::to_string(*step) << ", " << err.what() << " " << err.err() << std::endl;
+        std::cerr << "SNR integration loop error -- Batch: " << std::to_string(batch) << ", Step: ";
+        std::cerr << std::to_string(*step) << ", " << err.what() << " " << err.err() << std::endl;
         errorDetected = true;
       }
       if ( options.debug ) {
         try {
-          openclRunTime.queues->at(deviceOptions.deviceID)[0].enqueueReadBuffer(deviceMemory.integratedData, CL_TRUE, 0, hostMemory.integratedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(hostMemory.integratedData.data()), 0, &syncPoint);
+          openclRunTime.queues->at(deviceOptions.deviceID).at(0)
+              .enqueueReadBuffer(deviceMemory.integratedData, CL_TRUE, 0,
+                                 hostMemory.integratedData.size() * sizeof(outputDataType),
+                                 reinterpret_cast<void *>(hostMemory.integratedData.data()), nullptr, &syncPoint);
           syncPoint.wait();
         } catch ( cl::Error & err ) {
-          std::cerr << "Impossible to read deviceMemory.integratedData: " << err.what() << " " << err.err() << std::endl;
+          std::cerr << "Impossible to read deviceMemory.integratedData: " << err.what() << " " << err.err();
+          std::cerr << std::endl;
           errorDetected = true;
         }
         std::cerr << "integratedData" << std::endl;
@@ -469,7 +787,16 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
               for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
                 std::cerr << "DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
                 for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++ ) {
-                  std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << " ";
+                  std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs(true)
+                      * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() /
+                      *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName)
+                      / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() *
+                      isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()),
+                                      deviceOptions.padding.at(deviceOptions.deviceName)
+                                          / sizeof(outputDataType))) + (dm
+                      * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()),
+                                        deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)))
+                                                                + sample) << " ";
                 }
                 std::cerr << std::endl;
               }
@@ -482,7 +809,12 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
             for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
               std::cerr << "DM: " << dm << std::endl;
               for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++ ) {
-                std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << " ";
+                std::cerr << hostMemory.integratedData
+                    .at((sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() /
+                        *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName)
+                        / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() /
+                        *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName)
+                        / sizeof(outputDataType))) + sample) << " ";
               }
               std::cerr << std::endl;
             }
@@ -491,7 +823,8 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
         }
       }
       timers.trigger.start();
-      trigger(options.subbandDedispersion, deviceOptions.padding.at(deviceOptions.deviceName), *step, options.threshold, observation, hostMemory.snrData, hostMemory.snrSamples, triggeredEvents);
+      trigger(options.subbandDedispersion, deviceOptions.padding.at(deviceOptions.deviceName), *step, options.threshold,
+              observation, hostMemory.snrData, hostMemory.snrSamples, triggeredEvents);
       timers.trigger.stop();
       if ( options.debug ) {
         if ( options.subbandDedispersion ) {
@@ -500,7 +833,10 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
             std::cerr << "sBeam: " << sBeam << std::endl;
             for ( unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++ ) {
               for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-                std::cerr << hostMemory.snrData.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm) << " ";
+                std::cerr << hostMemory.snrData
+                    .at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(),
+                                                 deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float)))
+                            + (subbandingDM * observation.getNrDMs()) + dm) << " ";
               }
             }
             std::cerr << std::endl;
@@ -510,7 +846,9 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
           for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
             std::cerr << "sBeam: " << sBeam << std::endl;
             for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-              std::cerr << hostMemory.snrData.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm) << " ";
+              std::cerr << hostMemory.snrData
+                  .at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName)
+                      / sizeof(float))) + dm) << " ";
             }
             std::cerr << std::endl;
           }
@@ -534,59 +872,85 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
     timers.trigger.start();
     if ( options.compactResults ) {
       compact(observation, triggeredEvents, compactedEvents);
-      for ( auto beamEvents = compactedEvents.begin(); beamEvents != compactedEvents.end(); ++beamEvents ) {
-        for ( auto event = beamEvents->begin(); event != beamEvents->end(); ++event ) {
+      for ( auto & compactedEvent : compactedEvents ) {
+        for ( auto & event : compactedEvent ) {
           unsigned int integration = 0;
+          float firstDM;
+#ifdef HAVE_PSRDADA
           unsigned int delay = 0;
-          float firstDM = 0.0f;
+#endif // HAVE_PSRDADA
 
-          if ( event->integration == 0 ) {
+          if ( event.integration == 0 ) {
             integration = 1;
           } else {
-            integration = event->integration;
+            integration = event.integration;
           }
           if ( options.subbandDedispersion ) {
+#ifdef HAVE_PSRDADA
             delay = observation.getNrDelayBatches(true) - 1;
+#endif // HAVE_PSRADA
             firstDM = observation.getFirstDM(true);
           } else {
+#ifdef HAVE_PSRDADA
             delay = observation.getNrDelayBatches() - 1;
+#endif // HAVE_PSRDADA
             firstDM = observation.getFirstDM();
           }
           if ( dataOptions.dataPSRDADA ) {
 #ifdef HAVE_PSRDADA
-            outputTrigger << event->beam << " " << (batch - delay) << " " << event->sample  << " " << integration << " " << event->compactedIntegration << " " << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event->sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event->DM * observation.getDMStep()) << " " << event->compactedDMs << " " << event->SNR << std::endl;
+            outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample  << " " << integration;
+            outputTrigger << " " << event.compactedIntegration << " ";
+            outputTrigger << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event.sample * integration))
+                * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
+            outputTrigger << event.compactedDMs << " " << event.SNR << std::endl;
 #endif // HAVE_PSRDADA
           } else {
-            outputTrigger << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << event->compactedIntegration << " " << ((batch * observation.getNrSamplesPerBatch()) + (event->sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event->DM * observation.getDMStep()) << " " << event->compactedDMs << " " << event->SNR << std::endl;
+            outputTrigger << event.beam << " " << batch << " " << event.sample  << " " << integration << " ";
+            outputTrigger << event.compactedIntegration << " " << ((batch * observation.getNrSamplesPerBatch())
+                + (event.sample * integration)) * observation.getSamplingTime() << " ";
+            outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.compactedDMs << " ";
+            outputTrigger << event.SNR << std::endl;
           }
         }
       }
     } else {
-      for ( auto beamEvents = triggeredEvents.begin(); beamEvents != triggeredEvents.end(); ++beamEvents ) {
-        for ( auto dmEvents = beamEvents->begin(); dmEvents != beamEvents->end(); ++dmEvents) {
-          for ( auto event = dmEvents->second.begin(); event != dmEvents->second.end(); ++event ) {
+      for ( auto & triggeredEvent : triggeredEvents ) {
+        for ( auto & dmEvents : triggeredEvent ) {
+          for ( auto & event : dmEvents.second ) {
             unsigned int integration = 0;
+            float firstDM;
+#ifdef HAVE_PSRDADA
             unsigned int delay = 0;
-            float firstDM = 0.0f;
+#endif // HAVE_PSRDADA
 
-            if ( event->integration == 0 ) {
+            if (event.integration == 0 ) {
               integration = 1;
             } else {
-              integration = event->integration;
+              integration = event.integration;
             }
             if ( options.subbandDedispersion ) {
+#ifdef HAVE_PSRDADA
               delay = observation.getNrDelayBatches(true) - 1;
+#endif // HAVE_PSRDADA
               firstDM = observation.getFirstDM(true);
             } else {
+#ifdef HAVE_PSRDADA
               delay = observation.getNrDelayBatches() - 1;
+#endif // HAVE_PSRDADA
               firstDM = observation.getFirstDM();
             }
             if ( dataOptions.dataPSRDADA ) {
 #ifdef HAVE_PSRDADA
-              outputTrigger << event->beam << " " << (batch - delay) << " " << event->sample  << " " << integration << " " << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event->sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event->DM * observation.getDMStep()) << " " << event->SNR << std::endl;
+              outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample  << " " << integration;
+              outputTrigger << " " << (((batch - delay) * observation.getNrSamplesPerBatch())
+                  + (event.sample * integration)) * observation.getSamplingTime() << " ";
+              outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.SNR << std::endl;
 #endif // HAVE_PSRDADA
             } else {
-              outputTrigger << event->beam << " " << batch << " " << event->sample  << " " << integration << " " << ((batch * observation.getNrSamplesPerBatch()) + (event->sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event->DM * observation.getDMStep()) << " " << event->SNR << std::endl;
+              outputTrigger << event.beam << " " << batch << " " << event.sample  << " " << integration << " ";
+              outputTrigger << ((batch * observation.getNrSamplesPerBatch()) + (event.sample * integration))
+                  * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
+              outputTrigger << event.SNR << std::endl;
             }
           }
         }
