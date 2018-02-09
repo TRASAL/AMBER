@@ -16,15 +16,6 @@
 #include <Memory.hpp>
 
 void loadInput(AstroData::Observation & observation, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, HostMemory & hostMemory, Timers & timers) {
-  hostMemory.zappedChannels.resize(observation.getNrChannels(deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
-  try {
-    AstroData::readZappedChannels(observation, dataOptions.channelsFile, hostMemory.zappedChannels);
-    AstroData::readIntegrationSteps(observation, dataOptions.integrationFile, hostMemory.integrationSteps);
-  } catch ( AstroData::FileError & err ) {
-    std::cerr << err.what() << std::endl;
-    throw;
-  }
-  hostMemory.input.resize(observation.getNrBeams());
   if ( dataOptions.dataLOFAR ) {
 #ifdef HAVE_HDF5
     hostMemory.input.at(0) = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
