@@ -41,7 +41,8 @@ int main(int argc, char * argv[]) {
   // Process command line arguments
   isa::utils::ArgumentList args(argc, argv);
   try {
-    processCommandLineOptions(args, options, deviceOptions, dataOptions, kernelConfigurations, generatorOptions, observation);
+    processCommandLineOptions(args, options, deviceOptions, dataOptions, kernelConfigurations, generatorOptions,
+                              observation);
   } catch ( std::exception & err ) {
     return 1;
   }
@@ -55,7 +56,9 @@ int main(int argc, char * argv[]) {
       for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
         // TODO: if there are multiple synthesized beams, the generated data should take this into account
         hostMemory.input.at(beam) = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
-        AstroData::generateSinglePulse(generatorOptions.width, generatorOptions.DM, observation, deviceOptions.padding.at(deviceOptions.deviceName), *(hostMemory.input.at(beam)), inputBits, generatorOptions.random);
+        AstroData::generateSinglePulse(generatorOptions.width, generatorOptions.DM, observation,
+                                       deviceOptions.padding.at(deviceOptions.deviceName),
+                                       *(hostMemory.input.at(beam)), inputBits, generatorOptions.random);
       }
     }
   } catch ( std::exception & err ) {
@@ -65,7 +68,8 @@ int main(int argc, char * argv[]) {
 
   // Print message with observation and search information
   if ( options.print) {
-    std::cout << "Device: " << deviceOptions.deviceName << "(" + std::to_string(deviceOptions.platformID) +  ", " + std::to_string(deviceOptions.deviceID) + ")" << std::endl;
+    std::cout << "Device: " << deviceOptions.deviceName << "(" + std::to_string(deviceOptions.platformID) +  ", ";
+    std::cout << std::to_string(deviceOptions.deviceID) + ")" << std::endl;
     std::cout << "Padding: " << deviceOptions.padding[deviceOptions.deviceName] << " bytes" << std::endl;
     std::cout << std::endl;
     std::cout << "Beams: " << observation.getNrBeams() << std::endl;
@@ -73,15 +77,22 @@ int main(int argc, char * argv[]) {
     std::cout << "Batches: " << observation.getNrBatches() << std::endl;
     std::cout << "Samples: " << observation.getNrSamplesPerBatch() << std::endl;
     std::cout << "Sampling time: " << observation.getSamplingTime() << std::endl;
-    std::cout << "Frequency range: " << observation.getMinFreq() << " MHz, " << observation.getMaxFreq() << " MHz" << std::endl;
-    std::cout << "Subbands: " << observation.getNrSubbands() << " (" << observation.getSubbandBandwidth() << " MHz)" << std::endl;
-    std::cout << "Channels: " << observation.getNrChannels() << " (" << observation.getChannelBandwidth() << " MHz)" << std::endl;
+    std::cout << "Frequency range: " << observation.getMinFreq() << " MHz, " << observation.getMaxFreq() << " MHz";
+    std::cout << std::endl;
+    std::cout << "Subbands: " << observation.getNrSubbands() << " (" << observation.getSubbandBandwidth() << " MHz)";
+    std::cout << std::endl;
+    std::cout << "Channels: " << observation.getNrChannels() << " (" << observation.getChannelBandwidth() << " MHz)";
+    std::cout << std::endl;
     std::cout << "Zapped Channels: " << observation.getNrZappedChannels() << std::endl;
     std::cout << "Integration steps: " << hostMemory.integrationSteps.size() << std::endl;
     if ( options.subbandDedispersion ) {
-      std::cout << "Subbanding DMs: " << observation.getNrDMs(true) << " (" << observation.getFirstDM(true) << ", " << observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)) << ")" << std::endl;
+      std::cout << "Subbanding DMs: " << observation.getNrDMs(true) << " (" << observation.getFirstDM(true) << ", ";
+      std::cout << observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true));
+      std::cout << ")" << std::endl;
     }
-    std::cout << "DMs: " << observation.getNrDMs() << " (" << observation.getFirstDM() << ", " << observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()) << ")" << std::endl;
+    std::cout << "DMs: " << observation.getNrDMs() << " (" << observation.getFirstDM() << ", ";
+    std::cout << observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()) << ")";
+    std::cout << std::endl;
     std::cout << std::endl;
   }
 
@@ -91,7 +102,8 @@ int main(int argc, char * argv[]) {
   openclRunTime.devices = new std::vector<cl::Device>();
   openclRunTime.queues = new std::vector<std::vector<cl::CommandQueue>>();
   try {
-    isa::OpenCL::initializeOpenCL(deviceOptions.platformID, 1, openclRunTime.platforms, openclRunTime.context, openclRunTime.devices, openclRunTime.queues);
+    isa::OpenCL::initializeOpenCL(deviceOptions.platformID, 1, openclRunTime.platforms, openclRunTime.context,
+                                  openclRunTime.devices, openclRunTime.queues);
   } catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
@@ -112,17 +124,20 @@ int main(int argc, char * argv[]) {
 
   // Generate OpenCL kernels
   try {
-    generateOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
+    generateOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory,
+                          deviceMemory, kernels);
   } catch ( std::exception & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
 
   // Generate run time configurations for the OpenCL kernels
-  generateOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
+  generateOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory,
+                                      kernelRunTimeConfigurations);
 
   // Search loop
-  pipeline(openclRunTime, observation, options, deviceOptions, dataOptions, timers, kernels, kernelConfigurations, kernelRunTimeConfigurations, hostMemory, deviceMemory);
+  pipeline(openclRunTime, observation, options, deviceOptions, dataOptions, timers, kernels, kernelConfigurations,
+           kernelRunTimeConfigurations, hostMemory, deviceMemory);
 
   // Store performance statistics before shutting down
   std::ofstream outputStats;
@@ -139,26 +154,38 @@ int main(int argc, char * argv[]) {
   outputStats << "# timers.search" << std::endl;
   outputStats << timers.search.getTotalTime() << std::endl;
   outputStats << "# inputHandlingTotal inputHandlingAvg err" << std::endl;
-  outputStats << timers.inputHandling.getTotalTime() << " " << timers.inputHandling.getAverageTime() << " " << timers.inputHandling.getStandardDeviation() << std::endl;
+  outputStats << timers.inputHandling.getTotalTime() << " " << timers.inputHandling.getAverageTime() << " ";
+  outputStats << timers.inputHandling.getStandardDeviation() << std::endl;
   outputStats << "# inputCopyTotal inputCopyAvg err" << std::endl;
-  outputStats << timers.inputCopy.getTotalTime() << " " << timers.inputCopy.getAverageTime() << " " << timers.inputCopy.getStandardDeviation() << std::endl;
+  outputStats << timers.inputCopy.getTotalTime() << " " << timers.inputCopy.getAverageTime() << " ";
+  outputStats << timers.inputCopy.getStandardDeviation() << std::endl;
   if ( ! options.subbandDedispersion ) {
     outputStats << "# dedispersionSingleStepTotal dedispersionSingleStepAvg err" << std::endl;
-    outputStats << timers.dedispersionSingleStep.getTotalTime() << " " << timers.dedispersionSingleStep.getAverageTime() << " " << timers.dedispersionSingleStep.getStandardDeviation() << std::endl;
+    outputStats << timers.dedispersionSingleStep.getTotalTime() << " ";
+    outputStats << timers.dedispersionSingleStep.getAverageTime() << " ";
+    outputStats << timers.dedispersionSingleStep.getStandardDeviation() << std::endl;
   } else {
     outputStats << "# dedispersionStepOneTotal dedispersionStepOneAvg err" << std::endl;
-    outputStats << timers.dedispersionStepOne.getTotalTime() << " " << timers.dedispersionStepOne.getAverageTime() << " " << timers.dedispersionStepOne.getStandardDeviation() << std::endl;
+    outputStats << timers.dedispersionStepOne.getTotalTime() << " ";
+    outputStats << timers.dedispersionStepOne.getAverageTime() << " ";
+    outputStats << timers.dedispersionStepOne.getStandardDeviation() << std::endl;
     outputStats << "# dedispersionStepTwoTotal dedispersionStepTwoAvg err" << std::endl;
-    outputStats << timers.dedispersionStepTwo.getTotalTime() << " " << timers.dedispersionStepTwo.getAverageTime() << " " << timers.dedispersionStepTwo.getStandardDeviation() << std::endl;
+    outputStats << timers.dedispersionStepTwo.getTotalTime() << " ";
+    outputStats << timers.dedispersionStepTwo.getAverageTime() << " ";
+    outputStats << timers.dedispersionStepTwo.getStandardDeviation() << std::endl;
   }
   outputStats << "# integrationTotal integrationAvg err" << std::endl;
-  outputStats << timers.integration.getTotalTime() << " " << timers.integration.getAverageTime() << " " << timers.integration.getStandardDeviation() << std::endl;
+  outputStats << timers.integration.getTotalTime() << " " << timers.integration.getAverageTime() << " ";
+  outputStats << timers.integration.getStandardDeviation() << std::endl;
   outputStats << "# snrTotal snrAvg err" << std::endl;
-  outputStats << timers.snr.getTotalTime() << " " << timers.snr.getAverageTime() << " " << timers.snr.getStandardDeviation() << std::endl;
+  outputStats << timers.snr.getTotalTime() << " " << timers.snr.getAverageTime() << " ";
+  outputStats << timers.snr.getStandardDeviation() << std::endl;
   outputStats << "# outputCopyTotal outputCopyAvg err" << std::endl;
-  outputStats << timers.outputCopy.getTotalTime() << " " << timers.outputCopy.getAverageTime() << " " << timers.outputCopy.getStandardDeviation() << std::endl;
+  outputStats << timers.outputCopy.getTotalTime() << " " << timers.outputCopy.getAverageTime() << " ";
+  outputStats << timers.outputCopy.getStandardDeviation() << std::endl;
   outputStats << "# triggerTimeTotal triggerTimeAvg err" << std::endl;
-  outputStats << timers.trigger.getTotalTime() << " " << timers.trigger.getAverageTime() << " " << timers.trigger.getStandardDeviation() << std::endl;
+  outputStats << timers.trigger.getTotalTime() << " " << timers.trigger.getAverageTime() << " ";
+  outputStats << timers.trigger.getStandardDeviation() << std::endl;
   outputStats.close();
 
   return 0;
