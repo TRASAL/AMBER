@@ -49,14 +49,19 @@ int main(int argc, char * argv[]) {
 
   // Load or generate input data
   try {
-    hostMemory.zappedChannels.resize(observation.getNrChannels(deviceOptions.padding.at(deviceOptions.deviceName)
-                                                                   / sizeof(unsigned int)));
+    try {
+      hostMemory.zappedChannels.resize(observation.getNrChannels(deviceOptions.padding.at(deviceOptions.deviceName)
+                                                                 / sizeof(unsigned int)));
+    } catch ( std::out_of_range & err ) {
+      std::cerr << "No padding specified for " << deviceOptions.deviceName << "." << std::endl;
+      return 1;
+    }
     try {
       AstroData::readZappedChannels(observation, dataOptions.channelsFile, hostMemory.zappedChannels);
       AstroData::readIntegrationSteps(observation, dataOptions.integrationFile, hostMemory.integrationSteps);
     } catch ( AstroData::FileError & err ) {
       std::cerr << err.what() << std::endl;
-      throw;
+      return 1;
     }
     hostMemory.input.resize(observation.getNrBeams());
     if ( dataOptions.dataLOFAR || dataOptions.dataSIGPROC || dataOptions.dataPSRDADA ) {
