@@ -17,7 +17,11 @@
 
 #pragma once
 
-// Function to generate all necessary OpenCL kernels
+/**
+ * @brief Generate the OpenCL kernels according to the provided configurations.
+ */
 void generateOpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, const DeviceMemory & deviceMemory, Kernels & kernels);
-// Function to generate the run time configurations for the OpenCL kernels
+/**
+ * @brief Generate the run-time configurations for the OpenCL kernels, according to the provided configurations.
+ */
 void generateOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, KernelRunTimeConfigurations & kernelRunTimeConfigurations);
