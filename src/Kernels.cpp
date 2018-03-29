@@ -113,6 +113,9 @@ void generateSNROpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroDa
   }
 }
 
+/**
+ * @brief Generate all OpenCL kernels.
+ */
 void generateOpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, const DeviceMemory & deviceMemory, Kernels & kernels) {
   generateDedispersionOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
   generateIntegrationOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
@@ -226,6 +229,9 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation & obser
   }
 }
 
+/**
+ * @brief Generate OpenCL run-time configurations for all kernels.
+ */
 void generateOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, KernelRunTimeConfigurations & kernelRunTimeConfigurations) {
   generateDedispersionOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
   generateIntegrationOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
