@@ -18,7 +18,10 @@
 /**
  * @brief Generate the dedispersion OpenCL kernels.
  */
-void generateDedispersionOpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, const DeviceMemory & deviceMemory, Kernels & kernels) {
+void generateDedispersionOpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation,
+                                       const Options & options, const DeviceOptions & deviceOptions,
+                                       const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory,
+                                       const DeviceMemory & deviceMemory, Kernels & kernels) {
   std::string * code = nullptr;
 
   if ( ! options.subbandDedispersion ) {
@@ -59,7 +62,10 @@ void generateDedispersionOpenCLKernels(const OpenCLRunTime & openclRunTime, cons
 /**
  * @brief Generate the integration OpenCL kernels.
  */
-void generateIntegrationOpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, const DeviceMemory & deviceMemory, Kernels & kernels) {
+void generateIntegrationOpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation,
+                                      const Options & options, const DeviceOptions & deviceOptions,
+                                      const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory,
+                                      const DeviceMemory & deviceMemory, Kernels & kernels) {
   std::string * code = nullptr;
 
   for ( unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++ ) {
@@ -83,7 +89,10 @@ void generateIntegrationOpenCLKernels(const OpenCLRunTime & openclRunTime, const
 /**
  * @brief Generate the SNR OpenCL kernels.
  */
-void generateSNROpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, const DeviceMemory & deviceMemory, Kernels & kernels) {
+void generateSNROpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation,
+                              const Options & options, const DeviceOptions & deviceOptions,
+                              const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory,
+                              const DeviceMemory & deviceMemory, Kernels & kernels) {
   std::string * code = nullptr;
 
   if ( ! options.subbandDedispersion ) {
@@ -116,16 +125,26 @@ void generateSNROpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroDa
 /**
  * @brief Generate all OpenCL kernels.
  */
-void generateOpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, const DeviceMemory & deviceMemory, Kernels & kernels) {
-  generateDedispersionOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
-  generateIntegrationOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
-  generateSNROpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
+void generateOpenCLKernels(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation,
+                           const Options & options, const DeviceOptions & deviceOptions,
+                           const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory,
+                           const DeviceMemory & deviceMemory, Kernels & kernels) {
+  generateDedispersionOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations,
+                                    hostMemory, deviceMemory, kernels);
+  generateIntegrationOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory,
+                                   deviceMemory, kernels);
+  generateSNROpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory,
+                           deviceMemory, kernels);
 }
 
 /**
  * @brief Generate the run-time configuration for the dedispersion OpenCL kernels.
  */
-void generateDedispersionOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, KernelRunTimeConfigurations & kernelRunTimeConfigurations) {
+void generateDedispersionOpenCLRunTimeConfigurations(const AstroData::Observation & observation,
+                                                     const Options & options, const DeviceOptions & deviceOptions,
+                                                     const KernelConfigurations & kernelConfigurations,
+                                                     const HostMemory & hostMemory,
+                                                     KernelRunTimeConfigurations & kernelRunTimeConfigurations) {
   if ( ! options.subbandDedispersion ) {
     kernelRunTimeConfigurations.dedispersionSingleStepGlobal = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0()), observation.getNrDMs() / kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1(), observation.getNrSynthesizedBeams());
     kernelRunTimeConfigurations.dedispersionSingleStepLocal = cl::NDRange(kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0(), kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD1(), 1);
@@ -155,7 +174,11 @@ void generateDedispersionOpenCLRunTimeConfigurations(const AstroData::Observatio
 /**
  * @brief Generate the run-time configuration for the integration OpenCL kernels.
  */
-void generateIntegrationOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, KernelRunTimeConfigurations & kernelRunTimeConfigurations) {
+void generateIntegrationOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options,
+                                                    const DeviceOptions & deviceOptions,
+                                                    const KernelConfigurations & kernelConfigurations,
+                                                    const HostMemory & hostMemory,
+                                                    KernelRunTimeConfigurations & kernelRunTimeConfigurations) {
   kernelRunTimeConfigurations.integrationGlobal.resize(hostMemory.integrationSteps.size());
   kernelRunTimeConfigurations.integrationLocal.resize(hostMemory.integrationSteps.size());
   for ( unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++ ) {
@@ -185,7 +208,11 @@ void generateIntegrationOpenCLRunTimeConfigurations(const AstroData::Observation
 /**
  * @brief Generate the run-time configuration for the SNR OpenCL kernels.
  */
-void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, KernelRunTimeConfigurations & kernelRunTimeConfigurations) {
+void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options,
+                                            const DeviceOptions & deviceOptions,
+                                            const KernelConfigurations & kernelConfigurations,
+                                            const HostMemory & hostMemory,
+                                            KernelRunTimeConfigurations & kernelRunTimeConfigurations) {
   kernelRunTimeConfigurations.snrGlobal.resize(hostMemory.integrationSteps.size() + 1);
   kernelRunTimeConfigurations.snrLocal.resize(hostMemory.integrationSteps.size() + 1);
   if ( ! options.subbandDedispersion ) {
@@ -232,8 +259,15 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation & obser
 /**
  * @brief Generate OpenCL run-time configurations for all kernels.
  */
-void generateOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, KernelRunTimeConfigurations & kernelRunTimeConfigurations) {
-  generateDedispersionOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
-  generateIntegrationOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
-  generateSNROpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
+void generateOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options,
+                                         const DeviceOptions & deviceOptions,
+                                         const KernelConfigurations & kernelConfigurations,
+                                         const HostMemory & hostMemory,
+                                         KernelRunTimeConfigurations & kernelRunTimeConfigurations) {
+  generateDedispersionOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory,
+                                                  kernelRunTimeConfigurations);
+  generateIntegrationOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory,
+                                                 kernelRunTimeConfigurations);
+  generateSNROpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory,
+                                         kernelRunTimeConfigurations);
 }
