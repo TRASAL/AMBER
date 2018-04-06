@@ -141,7 +141,7 @@ int main(int argc, char * argv[]) {
     generateOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory,
                           deviceMemory, kernels);
   } catch ( std::exception & err ) {
-    std::cerr << err.what() << std::endl;
+    std::cerr << "OpenCL code generation error: " << err.what() << std::endl;
     return 1;
   }
 
