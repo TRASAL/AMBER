@@ -124,7 +124,7 @@ int main(int argc, char * argv[]) {
   }
 
   // Memory allocation
-  allocateHostMemory(observation, options, deviceOptions, kernelConfigurations, hostMemory);
+  allocateHostMemory(observation, options, deviceOptions, dataOptions, kernelConfigurations, hostMemory);
   if ( observation.getNrDelayBatches() > observation.getNrBatches() ) {
     std::cerr << "Not enough input batches for the specified search." << std::endl;
     return 1;
