@@ -49,7 +49,7 @@ void loadInput(AstroData::Observation & observation, const DeviceOptions & devic
   }
 }
 
-void allocateHostMemory(AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, HostMemory & hostMemory) {
+void allocateHostMemory(AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, const KernelConfigurations & kernelConfigurations, HostMemory & hostMemory) {
   if ( !options.subbandDedispersion ) {
     hostMemory.shiftsSingleStep = Dedispersion::getShifts(observation, deviceOptions.padding.at(deviceOptions.deviceName));
     if ( options.debug ) {
