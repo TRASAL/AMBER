@@ -17,9 +17,57 @@
 
 #pragma once
 
-// Main pipeline component
-void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation,
-              const Options & options, const DeviceOptions & deviceOptions, const DataOptions & dataOptions,
-              Timers & timers, const Kernels & kernels, const KernelConfigurations & kernelConfigurations,
-              const KernelRunTimeConfigurations & kernelRunTimeConfigurations, HostMemory & hostMemory,
+/**
+ * @brief Execute the pipeline.
+ *
+ * @param openclRunTime
+ * @param observation
+ * @param options
+ * @param deviceOptions
+ * @param dataOptions
+ * @param timers
+ * @param kernels
+ * @param kernelConfigurations
+ * @param kernelRunTimeConfigurations
+ * @param hostMemory
+ * @param deviceMemory
+ */
+void pipeline(OpenCLRunTime & openclRunTime, AstroData::Observation & observation,
+              Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions,
+              Timers & timers, Kernels & kernels, KernelConfigurations & kernelConfigurations,
+              KernelRunTimeConfigurations & kernelRunTimeConfigurations, HostMemory & hostMemory,
               DeviceMemory & deviceMemory);
+
+/**
+ * @brief Prepare input data for transfer to OpenCL devices.
+ *
+ * @param batch
+ * @param observation
+ * @param options
+ * @param deviceOptions
+ * @param dataOptions
+ * @param timers
+ * @param hostMemory
+ * @param deviceMemory
+ *
+ * @return status code
+ */
+int inputHandling(unsigned int batch, AstroData::Observation & observation, Options & options,
+                   DeviceOptions & deviceOptions, DataOptions & dataOptions, Timers & timers,
+                   HostMemory & hostMemory, DeviceMemory & deviceMemory);
+
+/**
+ *
+ * @param batch
+ * @param openclRunTime
+ * @param observation
+ * @param options
+ * @param deviceOptions
+ * @param timers
+ * @param hostMemory
+ * @param deviceMemory
+ * @return
+ */
+int copyInputToDevice(unsigned int batch, OpenCLRunTime & openclRunTime, AstroData::Observation & observation,
+                      Options & options, DeviceOptions & deviceOptions, Timers & timers, HostMemory & hostMemory,
+                      DeviceMemory & deviceMemory);
