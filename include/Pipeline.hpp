@@ -32,11 +32,11 @@
  * @param hostMemory
  * @param deviceMemory
  */
-void pipeline(OpenCLRunTime & openclRunTime, AstroData::Observation & observation,
-              Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions,
-              Timers & timers, Kernels & kernels, KernelConfigurations & kernelConfigurations,
-              KernelRunTimeConfigurations & kernelRunTimeConfigurations, HostMemory & hostMemory,
-              DeviceMemory & deviceMemory);
+void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation,
+  const Options & options, const DeviceOptions & deviceOptions, const DataOptions & dataOptions,
+  const Timers & timers, const Kernels & kernels, const KernelConfigurations & kernelConfigurations,
+  const KernelRunTimeConfigurations & kernelRunTimeConfigurations, const HostMemory & hostMemory,
+  const DeviceMemory & deviceMemory);
 
 /**
  * @brief Prepare input data for transfer to OpenCL devices.
@@ -52,9 +52,9 @@ void pipeline(OpenCLRunTime & openclRunTime, AstroData::Observation & observatio
  *
  * @return status code
  */
-int inputHandling(unsigned int batch, AstroData::Observation & observation, Options & options,
-                   DeviceOptions & deviceOptions, DataOptions & dataOptions, Timers & timers,
-                   HostMemory & hostMemory, DeviceMemory & deviceMemory);
+int inputHandling(const unsigned int batch, const AstroData::Observation & observation, const Options & options,
+  const DeviceOptions & deviceOptions, const DataOptions & dataOptions, const Timers & timers,
+  const HostMemory & hostMemory, const DeviceMemory & deviceMemory);
 
 /**
  *
@@ -68,6 +68,6 @@ int inputHandling(unsigned int batch, AstroData::Observation & observation, Opti
  * @param deviceMemory
  * @return
  */
-int copyInputToDevice(unsigned int batch, OpenCLRunTime & openclRunTime, AstroData::Observation & observation,
-                      Options & options, DeviceOptions & deviceOptions, Timers & timers, HostMemory & hostMemory,
-                      DeviceMemory & deviceMemory);
+int copyInputToDevice(const unsigned int batch, const OpenCLRunTime & openclRunTime,
+    const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, 
+    const Timers & timers, const HostMemory & hostMemory, const DeviceMemory & deviceMemory);

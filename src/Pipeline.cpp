@@ -12,14 +12,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include <Pipeline.hpp>
 #include <Trigger.hpp>
 
-void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options,
-              const DeviceOptions & deviceOptions, const DataOptions & dataOptions, Timers & timers,
-              const Kernels & kernels, const KernelConfigurations & kernelConfigurations,
-              const KernelRunTimeConfigurations & kernelRunTimeConfigurations, HostMemory & hostMemory,
-              DeviceMemory & deviceMemory) {
+void pipeline(OpenCLRunTime & openclRunTime, AstroData::Observation & observation, Options & options,
+  DeviceOptions & deviceOptions, DataOptions & dataOptions, Timers & timers,
+  Kernels & kernels, KernelConfigurations & kernelConfigurations,
+  KernelRunTimeConfigurations & kernelRunTimeConfigurations, HostMemory & hostMemory,
+  DeviceMemory & deviceMemory) {
   bool errorDetected = false;
   int status = 0;
   std::ofstream outputTrigger;
@@ -569,8 +570,8 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
 
 }
 
-int inputHandling(const unsigned int batch, const AstroData::Observation & observation, const Options & options,
-                   const DeviceOptions & deviceOptions, const DataOptions & dataOptions, Timers & timers,
+int inputHandling(unsigned int batch, AstroData::Observation & observation, Options & options,
+  DeviceOptions & deviceOptions, DataOptions & dataOptions, Timers & timers,
                    HostMemory & hostMemory, DeviceMemory & deviceMemory) {
   // Load the input
   timers.inputHandling.start();
@@ -770,9 +771,9 @@ int inputHandling(const unsigned int batch, const AstroData::Observation & obser
   timers.inputHandling.stop();
 }
 
-int copyInputToDevice(const unsigned int batch, const OpenCLRunTime & openclRunTime,
-                      const AstroData::Observation & observation, const Options & options,
-                      const DeviceOptions & deviceOptions, Timers & timers, HostMemory & hostMemory,
+int copyInputToDevice(unsigned int batch, OpenCLRunTime & openclRunTime,
+  AstroData::Observation & observation, Options & options,
+  DeviceOptions & deviceOptions, Timers & timers, HostMemory & hostMemory,
                       DeviceMemory & deviceMemory) {
   cl::Event syncPoint;
 
