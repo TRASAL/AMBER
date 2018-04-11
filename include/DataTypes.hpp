@@ -51,6 +51,8 @@ struct DataOptions {
   bool dataSIGPROC = false;
   // Use PSRDADA buffer as input
   bool dataPSRDADA = false;
+  // SIGPROC streaming mode
+  bool streamingMode = false;
   // Size (in bytes) of the SIGPROC file header
   unsigned int headerSizeSIGPROC = 0;
   // Name of the input file
