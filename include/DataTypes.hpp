@@ -51,20 +51,22 @@ struct DataOptions {
   bool dataSIGPROC = false;
   // Use PSRDADA buffer as input
   bool dataPSRDADA = false;
-  // Limit the number of batches processed from a LOFAR file
-  bool limit = false;
   // Size (in bytes) of the SIGPROC file header
   unsigned int headerSizeSIGPROC = 0;
   // Name of the input file
   std::string dataFile{};
-  // Name of the LOFAR header file
-  std::string headerFile{};
   // Basename for the output files
   std::string outputFile{};
   // Name of the file containing the zapped channels
   std::string channelsFile{};
   // Name of the file containing the integration steps
   std::string integrationFile{};
+#ifdef HAVE_HDF5
+  // Limit the number of batches processed from a LOFAR file
+  bool limit = false;
+  // Name of the LOFAR header file
+  std::string headerFile{};
+#endif // HAVE_HDF5
 #ifdef HAVE_PSRDADA
   // PSRDADA buffer key
   key_t dadaKey = 0;

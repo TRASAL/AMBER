@@ -68,6 +68,7 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
                                           argumentList.getSwitchArgument<std::string>("-integration_file"));
     SNR::readTunedSNRConf(kernelConfigurations.snrParameters, argumentList.getSwitchArgument<std::string>("-snr_file"));
     if ( dataOptions.dataLOFAR ) {
+#ifdef HAVE_HDF5
       observation.setNrBeams(1);
       observation.setNrSynthesizedBeams(1);
       dataOptions.headerFile = argumentList.getSwitchArgument<std::string>("-header");
@@ -76,6 +77,7 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
       if ( dataOptions.limit ) {
         observation.setNrBatches(argumentList.getSwitchArgument<unsigned int>("-batches"));
       }
+#endif // HAVE_HDF5
     } else if ( dataOptions.dataSIGPROC ) {
       observation.setNrBeams(1);
       observation.setNrSynthesizedBeams(1);
@@ -167,7 +169,7 @@ void usage(const std::string & program) {
   std::cerr << "\tLOFAR: -lofar -header ... -data ... [-limit]" << std::endl;
   std::cerr << "\t\t -limit -batches ..." << std::endl;
 #endif // HAVE_HDF5
-  std::cerr << "\tSIGPROC: -sigproc -header ... -data ... -batches ... -channels ... -min_freq ...";
+  std::cerr << "\tSIGPROC: -sigproc [-stream] -header ... -data ... -batches ... -channels ... -min_freq ...";
   std::cerr << "-channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
 #ifdef HAVE_PSRDADA
   std::cerr << "\tPSRDADA: -dada -dada_key ... -beams ... -synthesized_beams ... -batches ..." << std::endl;
