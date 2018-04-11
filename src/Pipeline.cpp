@@ -767,7 +767,10 @@ int inputHandling(const unsigned int batch, const AstroData::Observation & obser
   timers.inputHandling.stop();
 }
 
-int copyInputToDevice(const unsigned int batch, const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, Timers & timers, HostMemory & hostMemory, DeviceMemory & deviceMemory) {
+int copyInputToDevice(const unsigned int batch, const OpenCLRunTime & openclRunTime,
+                      const AstroData::Observation & observation, const Options & options,
+                      const DeviceOptions & deviceOptions, Timers & timers, HostMemory & hostMemory,
+                      DeviceMemory & deviceMemory) {
   cl::Event syncPoint;
 
   // Copy input from host to device
