@@ -662,6 +662,7 @@ int inputHandling(const unsigned int batch, const AstroData::Observation & obser
     }
   } else {
     if ( dataOptions.dataPSRDADA ) {
+#ifdef HAVE_PSRDADA
       try {
         if ( ipcbuf_eod(reinterpret_cast< ipcbuf_t * >(hostMemory.ringBuffer->data_block)) ) {
           return -1;
@@ -677,95 +678,95 @@ int inputHandling(const unsigned int batch, const AstroData::Observation & obser
         std::cerr << "Error: " << err.what() << std::endl;
         throw std::exception();
       }
-      // If there are enough data buffered, proceed with the computation
-      // Otherwise, move to the next iteration of the search loop
-      if ( options.subbandDedispersion ) {
-        if ( batch < observation.getNrDelayBatches(true) - 1 ) {
-          return 1;
-        }
-      } else {
-        if ( batch < observation.getNrDelayBatches() - 1 ) {
-          return 1;
-        }
-      }
-      for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
-        if ( options.subbandDedispersion ) {
-        if ( options.splitBatchesDedispersion ) {
-          // TODO: implement or remove splitBatches mode
-        } else {
-            for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-              for ( unsigned int chunk = batch - (observation.getNrDelayBatches(true) - 1); chunk < batch; chunk++ ) {
-                // Full batches
-                if ( inputBits >= 8 ) {
-                  memcpy(
-                    reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches(true) - 1))) * observation.getNrSamplesPerBatch())])),
-                    reinterpret_cast<void *>(&(hostMemory.inputStream.at(chunk % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch()) + (channel * observation.getNrSamplesPerBatch())))),
-                    observation.getNrSamplesPerBatch() * sizeof(inputDataType)
-                  );
-                } else {
-                  memcpy(
-                    reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches(true) - 1))) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])),
-                    reinterpret_cast<void *>(&(hostMemory.inputStream.at(chunk % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch() / (8 / inputBits)))))),
-                    (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType)
-                  );
-                }
-              }
-              // Remainder (part of current batch)
-              if ( inputBits >= 8 ) {
-                memcpy(
-                  reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches(true) - 1) * observation.getNrSamplesPerBatch())])),
-                  reinterpret_cast<void *>(&(hostMemory.inputStream.at(batch % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch()) + (channel * observation.getNrSamplesPerBatch())))),
-                  (observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch()) * sizeof(inputDataType)
-                );
-              } else {
-                memcpy(
-                  reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches(true) - 1) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])),
-                  reinterpret_cast<void *>(&(hostMemory.inputStream.at(batch % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch() / (8 / inputBits)))))),
-                  ((observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType)
-                );
-              }
-            }
-          }
-        } else {
-        if ( options.splitBatchesDedispersion ) {
-          // TODO: implement or remove splitBatches mode
-        } else {
-            for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-              for ( unsigned int chunk = batch - (observation.getNrDelayBatches() - 1); chunk < batch; chunk++ ) {
-                if ( inputBits >= 8 ) {
-                  memcpy(
-                    reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches() - 1))) * observation.getNrSamplesPerBatch())])),
-                    reinterpret_cast<void *>(&(hostMemory.inputStream.at(chunk % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch()) + (channel * observation.getNrSamplesPerBatch())))),
-                    observation.getNrSamplesPerBatch() * sizeof(inputDataType)
-                  );
-                } else {
-                  memcpy(
-                    reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches() - 1))) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])),
-                    reinterpret_cast<void *>(&(hostMemory.inputStream.at(chunk % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch() / (8 / inputBits)))))), (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType)
-                  );
-                }
-              }
-              if ( inputBits >= 8 ) {
-                memcpy(
-                  reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1) * observation.getNrSamplesPerBatch())])),
-                  reinterpret_cast<void *>(&(hostMemory.inputStream.at(batch % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch()) + (channel * observation.getNrSamplesPerBatch())))),
-                  (observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch()) * sizeof(inputDataType)
-                );
-              } else {
-                memcpy(
-                  reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])),
-                  reinterpret_cast<void *>(&(hostMemory.inputStream.at(batch % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch() / (8 / inputBits)))))),
-                  ((observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType)
-                );
-              }
-            }
-          }
-        }
-      }
 #endif // HAVE_PSRDADA
     } else if ( dataOptions.streamingMode ) {
+      readSIGPROC(observation, deviceOptions.padding.at(deviceOptions.deviceName), inputBits, dataOptions.headerSizeSIGPROC, dataOptions.dataFile, hostMemory.inputStream.at(batch % observation.getNrDelayBatches()), batch);
     }
-#ifdef HAVE_PSRDADA
+    // If there are enough data buffered, proceed with the computation
+    // Otherwise, move to the next iteration of the search loop
+    if ( options.subbandDedispersion ) {
+      if ( batch < observation.getNrDelayBatches(true) - 1 ) {
+        return 1;
+      }
+    } else {
+      if ( batch < observation.getNrDelayBatches() - 1 ) {
+        return 1;
+      }
+    }
+    for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
+      if ( options.subbandDedispersion ) {
+      if ( options.splitBatchesDedispersion ) {
+        // TODO: implement or remove splitBatches mode
+      } else {
+          for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+            for ( unsigned int chunk = batch - (observation.getNrDelayBatches(true) - 1); chunk < batch; chunk++ ) {
+              // Full batches
+              if ( inputBits >= 8 ) {
+                memcpy(
+                  reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches(true) - 1))) * observation.getNrSamplesPerBatch())])),
+                  reinterpret_cast<void *>(&(hostMemory.inputStream.at(chunk % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch()) + (channel * observation.getNrSamplesPerBatch())))),
+                  observation.getNrSamplesPerBatch() * sizeof(inputDataType)
+                );
+              } else {
+                memcpy(
+                  reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches(true) - 1))) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])),
+                  reinterpret_cast<void *>(&(hostMemory.inputStream.at(chunk % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch() / (8 / inputBits)))))),
+                  (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType)
+                );
+              }
+            }
+            // Remainder (part of current batch)
+            if ( inputBits >= 8 ) {
+              memcpy(
+                reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches(true) - 1) * observation.getNrSamplesPerBatch())])),
+                reinterpret_cast<void *>(&(hostMemory.inputStream.at(batch % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch()) + (channel * observation.getNrSamplesPerBatch())))),
+                (observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch()) * sizeof(inputDataType)
+              );
+            } else {
+              memcpy(
+                reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches(true) - 1) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])),
+                reinterpret_cast<void *>(&(hostMemory.inputStream.at(batch % observation.getNrDelayBatches(true))->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch() / (8 / inputBits)))))),
+                ((observation.getNrSamplesPerDispersedBatch(true) % observation.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType)
+              );
+            }
+          }
+        }
+      } else {
+      if ( options.splitBatchesDedispersion ) {
+        // TODO: implement or remove splitBatches mode
+      } else {
+          for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+            for ( unsigned int chunk = batch - (observation.getNrDelayBatches() - 1); chunk < batch; chunk++ ) {
+              if ( inputBits >= 8 ) {
+                memcpy(
+                  reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches() - 1))) * observation.getNrSamplesPerBatch())])),
+                  reinterpret_cast<void *>(&(hostMemory.inputStream.at(chunk % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch()) + (channel * observation.getNrSamplesPerBatch())))),
+                  observation.getNrSamplesPerBatch() * sizeof(inputDataType)
+                );
+              } else {
+                memcpy(
+                  reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((chunk - (batch - (observation.getNrDelayBatches() - 1))) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])),
+                  reinterpret_cast<void *>(&(hostMemory.inputStream.at(chunk % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch() / (8 / inputBits)))))), (observation.getNrSamplesPerBatch() / (8 / inputBits)) * sizeof(inputDataType)
+                );
+              }
+            }
+            if ( inputBits >= 8 ) {
+              memcpy(
+                reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1) * observation.getNrSamplesPerBatch())])),
+                reinterpret_cast<void *>(&(hostMemory.inputStream.at(batch % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * observation.getNrSamplesPerBatch()) + (channel * observation.getNrSamplesPerBatch())))),
+                (observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch()) * sizeof(inputDataType)
+              );
+            } else {
+              memcpy(
+                reinterpret_cast<void *>(&(hostMemory.dispersedData.data()[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + ((observation.getNrDelayBatches() - 1) * (observation.getNrSamplesPerBatch() / (8 / inputBits)))])),
+                reinterpret_cast<void *>(&(hostMemory.inputStream.at(batch % observation.getNrDelayBatches())->at((beam * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits))) + (channel * (observation.getNrSamplesPerBatch() / (8 / inputBits)))))),
+                ((observation.getNrSamplesPerDispersedBatch() % observation.getNrSamplesPerBatch()) / (8 / inputBits)) * sizeof(inputDataType)
+              );
+            }
+          }
+        }
+      }
+    }
   }
   timers.inputHandling.stop();
 }
