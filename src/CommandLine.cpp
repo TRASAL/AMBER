@@ -15,7 +15,7 @@
 
 #include <CommandLine.hpp>
 
-void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions, KernelConfigurations & kernelConfigurations, GeneratorOptions & generatorOptions, AstroData::Observation & observation) {
+void processCommandLineOptions(const isa::utils::ArgumentList & argumentList, const Options & options, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, const KernelConfigurations & kernelConfigurations, const GeneratorOptions & generatorOptions, const AstroData::Observation & observation) {
   try {
     options.debug = argumentList.getSwitch("-debug");
     options.print = argumentList.getSwitch("-print");
@@ -147,7 +147,7 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
   }
 }
 
-void usage(std::string & program) {
+void usage(const std::string & program) {
   std::cerr << program << " -opencl_platform ... -opencl_device ... -device_name ... [-sync] -padding_file ...";
   std::cerr << "-zapped_channels ... -integration_steps ... -integration_file ... -snr_file ...";
   std::cerr << "[-splitbatches_dedispersion] [-subband_dedispersion] [-debug] [-print] [-compact_results] -output ...";
