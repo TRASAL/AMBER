@@ -763,6 +763,7 @@ int inputHandling(const unsigned int batch, const AstroData::Observation & obser
     }
   }
   timers.inputHandling.stop();
+  return 0;
 }
 
 int copyInputToDevice(const unsigned int batch, const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, Timers & timers, HostMemory & hostMemory, const DeviceMemory & deviceMemory) {
