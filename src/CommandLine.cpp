@@ -81,6 +81,7 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
     } else if ( dataOptions.dataSIGPROC ) {
       observation.setNrBeams(1);
       observation.setNrSynthesizedBeams(1);
+      dataOptions.streamingMode = argumentList.getSwitch("-stream");
       dataOptions.headerSizeSIGPROC = argumentList.getSwitchArgument<unsigned int>("-header");
       dataOptions.dataFile = argumentList.getSwitchArgument<std::string>("-data");
       observation.setNrBatches(argumentList.getSwitchArgument<unsigned int>("-batches"));
