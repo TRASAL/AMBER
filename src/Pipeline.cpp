@@ -16,11 +16,7 @@
 #include <Pipeline.hpp>
 #include <Trigger.hpp>
 
-void pipeline(OpenCLRunTime & openclRunTime, AstroData::Observation & observation, Options & options,
-  DeviceOptions & deviceOptions, DataOptions & dataOptions, Timers & timers,
-  Kernels & kernels, KernelConfigurations & kernelConfigurations,
-  KernelRunTimeConfigurations & kernelRunTimeConfigurations, HostMemory & hostMemory,
-  DeviceMemory & deviceMemory) {
+void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, Timers & timers, const Kernels & kernels, const KernelConfigurations & kernelConfigurations, const KernelRunTimeConfigurations & kernelRunTimeConfigurations, HostMemory & hostMemory, const DeviceMemory & deviceMemory) {
   bool errorDetected = false;
   int status = 0;
   std::ofstream outputTrigger;
@@ -570,9 +566,7 @@ void pipeline(OpenCLRunTime & openclRunTime, AstroData::Observation & observatio
 
 }
 
-int inputHandling(unsigned int batch, AstroData::Observation & observation, Options & options,
-  DeviceOptions & deviceOptions, DataOptions & dataOptions, Timers & timers,
-                   HostMemory & hostMemory, DeviceMemory & deviceMemory) {
+int inputHandling(const unsigned int batch, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, Timers & timers, HostMemory & hostMemory, const DeviceMemory & deviceMemory) {
   // Load the input
   timers.inputHandling.start();
   if ( !dataOptions.dataPSRDADA || !dataOptions.streamingMode ) {
@@ -680,7 +674,7 @@ int inputHandling(unsigned int batch, AstroData::Observation & observation, Opti
       }
 #endif // HAVE_PSRDADA
     } else if ( dataOptions.streamingMode ) {
-      readSIGPROC(observation, deviceOptions.padding.at(deviceOptions.deviceName), inputBits, dataOptions.headerSizeSIGPROC, dataOptions.dataFile, hostMemory.inputStream.at(batch % observation.getNrDelayBatches()), batch);
+      AstroData::readSIGPROC(observation, deviceOptions.padding.at(deviceOptions.deviceName), inputBits, dataOptions.headerSizeSIGPROC, dataOptions.dataFile, hostMemory.inputStream.at(batch % observation.getNrDelayBatches()), batch);
     }
     // If there are enough data buffered, proceed with the computation
     // Otherwise, move to the next iteration of the search loop
@@ -771,10 +765,7 @@ int inputHandling(unsigned int batch, AstroData::Observation & observation, Opti
   timers.inputHandling.stop();
 }
 
-int copyInputToDevice(unsigned int batch, OpenCLRunTime & openclRunTime,
-  AstroData::Observation & observation, Options & options,
-  DeviceOptions & deviceOptions, Timers & timers, HostMemory & hostMemory,
-                      DeviceMemory & deviceMemory) {
+int copyInputToDevice(const unsigned int batch, const OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, Timers & timers, HostMemory & hostMemory, const DeviceMemory & deviceMemory) {
   cl::Event syncPoint;
 
   // Copy input from host to device
