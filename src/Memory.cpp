@@ -63,12 +63,12 @@ void allocateHostMemory(AstroData::Observation & observation, const Options & op
     observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch()) / observation.getNrSamplesPerBatch())));
 #ifdef HAVE_PSRDADA
     if ( dataOptions.dataPSRDADA ) {
-      hostMemory.inputDADA.resize(observation.getNrDelayBatches());
+      hostMemory.inputStream.resize(observation.getNrDelayBatches());
       for ( unsigned int batch = 0; batch < observation.getNrDelayBatches(); batch++ ) {
         if ( inputBits >= 8 ) {
-          hostMemory.inputDADA.at(batch) = new std::vector<inputDataType>(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch());
+          hostMemory.inputStream.at(batch) = new std::vector<inputDataType>(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch());
         } else {
-          hostMemory.inputDADA.at(batch) = new std::vector<inputDataType>(observation.getNrBeams() * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits)));
+          hostMemory.inputStream.at(batch) = new std::vector<inputDataType>(observation.getNrBeams() * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits)));
         }
       }
     }
@@ -106,12 +106,12 @@ void allocateHostMemory(AstroData::Observation & observation, const Options & op
     observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch(true)) / observation.getNrSamplesPerBatch())), true);
 #ifdef HAVE_PSRDADA
     if ( dataOptions.dataPSRDADA ) {
-      hostMemory.inputDADA.resize(observation.getNrDelayBatches(true));
+      hostMemory.inputStream.resize(observation.getNrDelayBatches(true));
       for ( unsigned int batch = 0; batch < observation.getNrDelayBatches(true); batch++ ) {
         if ( inputBits >= 8 ) {
-          hostMemory.inputDADA.at(batch) = new std::vector<inputDataType>(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch());
+          hostMemory.inputStream.at(batch) = new std::vector<inputDataType>(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch());
         } else {
-          hostMemory.inputDADA.at(batch) = new std::vector<inputDataType>(observation.getNrBeams() * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits)));
+          hostMemory.inputStream.at(batch) = new std::vector<inputDataType>(observation.getNrBeams() * observation.getNrChannels() * (observation.getNrSamplesPerBatch() / (8 / inputBits)));
         }
       }
     }

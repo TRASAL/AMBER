@@ -85,8 +85,10 @@ struct GeneratorOptions {
 };
 
 struct HostMemory {
-  // Input data
+  // Input data when reading a whole input file
   std::vector<std::vector<std::vector<inputDataType> *> *> input;
+  // Input data when in streaming mode
+  std::vector<std::vector<inputDataType> *> inputStream;
   // Zapped channels
   std::vector<unsigned int> zappedChannels;
   // Integration steps
@@ -114,8 +116,6 @@ struct HostMemory {
 #ifdef HAVE_PSRDADA
   // PSRDADA ring buffer
   dada_hdu_t * ringBuffer = nullptr;
-  // Input data
-  std::vector<std::vector<inputDataType> *> inputDADA;
 #endif // HAVE_PSRDADA
 };
 
