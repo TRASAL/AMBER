@@ -23,4 +23,4 @@ void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options 
                                KernelConfigurations & kernelConfigurations, GeneratorOptions & generatorOptions,
                                AstroData::Observation & observation);
 // Function to print the usage message
-void usage(const std::string & program);
+void usage(std::string & program);
