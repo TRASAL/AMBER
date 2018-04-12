@@ -18,7 +18,7 @@
 #pragma once
 
 // Load input files
-void loadInput(AstroData::Observation & observation, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, HostMemory & hostMemory, Timers & timers);
+void loadInput(const AstroData::Observation & observation, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, HostMemory & hostMemory, Timers & timers);
 // Allocate host memory
 void allocateHostMemory(AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, const KernelConfigurations & kernelConfigurations, HostMemory & hostMemory);
 // Allocate device memory

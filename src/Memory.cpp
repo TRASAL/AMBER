@@ -15,7 +15,7 @@
 
 #include <Memory.hpp>
 
-void loadInput(AstroData::Observation & observation, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, HostMemory & hostMemory, Timers & timers) {
+void loadInput(const AstroData::Observation & observation, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, HostMemory & hostMemory, Timers & timers) {
   if ( dataOptions.dataLOFAR ) {
 #ifdef HAVE_HDF5
     hostMemory.input.at(0) = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
@@ -27,7 +27,7 @@ void loadInput(AstroData::Observation & observation, const DeviceOptions & devic
     }
     timers.inputLoad.stop();
 #endif // HAVE_HDF5
-  } else if ( dataOptions.dataSIGPROC ) {
+  } else if ( dataOptions.dataSIGPROC && !dataOptions.streamingMode ) {
     hostMemory.input.at(0) = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
     timers.inputLoad.start();
     AstroData::readSIGPROC(observation, deviceOptions.padding.at(deviceOptions.deviceName), inputBits, dataOptions.headerSizeSIGPROC, dataOptions.dataFile, *(hostMemory.input.at(0)));
