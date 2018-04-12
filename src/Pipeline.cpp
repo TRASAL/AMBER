@@ -569,7 +569,7 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
 int inputHandling(const unsigned int batch, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, Timers & timers, HostMemory & hostMemory, const DeviceMemory & deviceMemory) {
   // Load the input
   timers.inputHandling.start();
-  if ( !dataOptions.dataPSRDADA || !dataOptions.streamingMode ) {
+  if ( !dataOptions.dataPSRDADA && !dataOptions.streamingMode ) {
     // If there are not enough available batches, computation is complete
     if ( options.subbandDedispersion ) {
       if ( batch == observation.getNrBatches() - observation.getNrDelayBatches(true) ) {
