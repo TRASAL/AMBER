@@ -674,7 +674,11 @@ int inputHandling(const unsigned int batch, const AstroData::Observation & obser
       }
 #endif // HAVE_PSRDADA
     } else if ( dataOptions.streamingMode ) {
-      AstroData::readSIGPROC(observation, deviceOptions.padding.at(deviceOptions.deviceName), inputBits, dataOptions.headerSizeSIGPROC, dataOptions.dataFile, hostMemory.inputStream.at(batch % observation.getNrDelayBatches()), batch);
+      if ( options.subbandDedispersion ) {
+        AstroData::readSIGPROC(observation, deviceOptions.padding.at(deviceOptions.deviceName), inputBits, dataOptions.headerSizeSIGPROC, dataOptions.dataFile, hostMemory.inputStream.at(batch % observation.getNrDelayBatches(true)), batch);
+      } else {
+        AstroData::readSIGPROC(observation, deviceOptions.padding.at(deviceOptions.deviceName), inputBits, dataOptions.headerSizeSIGPROC, dataOptions.dataFile, hostMemory.inputStream.at(batch % observation.getNrDelayBatches()), batch);
+      }
     }
     // If there are enough data buffered, proceed with the computation
     // Otherwise, move to the next iteration of the search loop
