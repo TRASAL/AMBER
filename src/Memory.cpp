@@ -61,8 +61,7 @@ void allocateHostMemory(AstroData::Observation & observation, const Options & op
     }
     observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(hostMemory.shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
     observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch()) / observation.getNrSamplesPerBatch())));
-#ifdef HAVE_PSRDADA
-    if ( dataOptions.dataPSRDADA ) {
+    if ( dataOptions.dataPSRDADA || dataOptions.streamingMode ) {
       hostMemory.inputStream.resize(observation.getNrDelayBatches());
       for ( unsigned int batch = 0; batch < observation.getNrDelayBatches(); batch++ ) {
         if ( inputBits >= 8 ) {
@@ -72,7 +71,6 @@ void allocateHostMemory(AstroData::Observation & observation, const Options & op
         }
       }
     }
-#endif // HAVE_PSRDADA
     if ( kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getSplitBatches() ) {
       // TODO: add support for splitBatches
     } else {
@@ -104,8 +102,7 @@ void allocateHostMemory(AstroData::Observation & observation, const Options & op
     observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(hostMemory.shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
     observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch(true) + static_cast<unsigned int>(hostMemory.shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))), true);
     observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch(true)) / observation.getNrSamplesPerBatch())), true);
-#ifdef HAVE_PSRDADA
-    if ( dataOptions.dataPSRDADA ) {
+    if ( dataOptions.dataPSRDADA || dataOptions.streamingMode ) {
       hostMemory.inputStream.resize(observation.getNrDelayBatches(true));
       for ( unsigned int batch = 0; batch < observation.getNrDelayBatches(true); batch++ ) {
         if ( inputBits >= 8 ) {
@@ -115,7 +112,6 @@ void allocateHostMemory(AstroData::Observation & observation, const Options & op
         }
       }
     }
-#endif // HAVE_PSRDADA
     if ( kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getSplitBatches() ) {
       // TODO: add support for splitBatches
     } else {
