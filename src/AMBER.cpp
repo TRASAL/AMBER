@@ -82,7 +82,7 @@ int main(int argc, char * argv[]) {
 
   // Print message with observation and search information
   if ( options.print) {
-    std::cout << "Device: " << deviceOptions.deviceName << "(" + std::to_string(deviceOptions.platformID) +  ", ";
+    std::cout << "Device: " << deviceOptions.deviceName << " (" + std::to_string(deviceOptions.platformID) +  ", ";
     std::cout << std::to_string(deviceOptions.deviceID) + ")" << std::endl;
     std::cout << "Padding: " << deviceOptions.padding[deviceOptions.deviceName] << " bytes" << std::endl;
     std::cout << std::endl;
