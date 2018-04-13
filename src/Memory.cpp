@@ -15,7 +15,7 @@
 
 #include <Memory.hpp>
 
-void loadInput(const AstroData::Observation & observation, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, HostMemory & hostMemory, Timers & timers) {
+void loadInput(AstroData::Observation & observation, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, HostMemory & hostMemory, Timers & timers) {
   if ( dataOptions.dataLOFAR ) {
 #ifdef HAVE_HDF5
     hostMemory.input.at(0) = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
