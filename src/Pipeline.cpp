@@ -471,9 +471,7 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
         for ( auto & event : compactedEvent ) {
           unsigned int integration = 0;
           float firstDM;
-#ifdef HAVE_PSRDADA
           unsigned int delay = 0;
-#endif // HAVE_PSRDADA
 
           if ( event.integration == 0 ) {
             integration = 1;
@@ -481,24 +479,22 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
             integration = event.integration;
           }
           if ( options.subbandDedispersion ) {
-#ifdef HAVE_PSRDADA
-            delay = observation.getNrDelayBatches(true) - 1;
-#endif // HAVE_PSRADA
+            if ( dataOptions.dataPSRDADA || dataOptions.streamingMode ) {
+              delay = observation.getNrDelayBatches(true) - 1;
+            }
             firstDM = observation.getFirstDM(true);
           } else {
-#ifdef HAVE_PSRDADA
-            delay = observation.getNrDelayBatches() - 1;
-#endif // HAVE_PSRDADA
+            if ( dataOptions.dataPSRDADA || dataOptions.streamingMode ) {
+              delay = observation.getNrDelayBatches() - 1;
+            }
             firstDM = observation.getFirstDM();
           }
-          if ( dataOptions.dataPSRDADA ) {
-#ifdef HAVE_PSRDADA
+          if ( dataOptions.dataPSRDADA || dataOptions.streamingMode ) {
             outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample  << " " << integration;
             outputTrigger << " " << event.compactedIntegration << " ";
             outputTrigger << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event.sample * integration))
                 * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
             outputTrigger << event.compactedDMs << " " << event.SNR << std::endl;
-#endif // HAVE_PSRDADA
           } else {
             outputTrigger << event.beam << " " << batch << " " << event.sample  << " " << integration << " ";
             outputTrigger << event.compactedIntegration << " " << ((batch * observation.getNrSamplesPerBatch())
@@ -514,9 +510,7 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
           for ( auto & event : dmEvents.second ) {
             unsigned int integration = 0;
             float firstDM;
-#ifdef HAVE_PSRDADA
             unsigned int delay = 0;
-#endif // HAVE_PSRDADA
 
             if (event.integration == 0 ) {
               integration = 1;
@@ -524,23 +518,21 @@ void pipeline(const OpenCLRunTime & openclRunTime, const AstroData::Observation 
               integration = event.integration;
             }
             if ( options.subbandDedispersion ) {
-#ifdef HAVE_PSRDADA
-              delay = observation.getNrDelayBatches(true) - 1;
-#endif // HAVE_PSRDADA
+              if ( dataOptions.dataPSRDADA || dataOptions.streamingMode ) {
+                delay = observation.getNrDelayBatches(true) - 1;
+              }
               firstDM = observation.getFirstDM(true);
             } else {
-#ifdef HAVE_PSRDADA
-              delay = observation.getNrDelayBatches() - 1;
-#endif // HAVE_PSRDADA
+              if ( dataOptions.dataPSRDADA || dataOptions.streamingMode ) {
+                delay = observation.getNrDelayBatches() - 1;
+              }
               firstDM = observation.getFirstDM();
             }
-            if ( dataOptions.dataPSRDADA ) {
-#ifdef HAVE_PSRDADA
+            if ( dataOptions.dataPSRDADA || dataOptions.streamingMode ) {
               outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample  << " " << integration;
               outputTrigger << " " << (((batch - delay) * observation.getNrSamplesPerBatch())
                   + (event.sample * integration)) * observation.getSamplingTime() << " ";
               outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.SNR << std::endl;
-#endif // HAVE_PSRDADA
             } else {
               outputTrigger << event.beam << " " << batch << " " << event.sample  << " " << integration << " ";
               outputTrigger << ((batch * observation.getNrSamplesPerBatch()) + (event.sample * integration))
