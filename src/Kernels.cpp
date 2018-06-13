@@ -208,7 +208,6 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
         if (!options.subbandDedispersion)
         {
             code = SNR::getMedianOfMediansOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), SNR::DataOrdering::DMsSamples, outputDataName, observation, 1, options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
-        
         }
         else
         {
@@ -241,7 +240,6 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
         if (!options.subbandDedispersion)
         {
             code = SNR::getMedianOfMediansOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / options.medianStepSize)), SNR::DataOrdering::DMsSamples, outputDataName, observation, 1, observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
-        
         }
         else
         {
@@ -275,7 +273,6 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
         if (!options.subbandDedispersion)
         {
             code = SNR::getMedianOfMediansAbsoluteDeviationOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), SNR::DataOrdering::DMsSamples, outputDataName, observation, 1, options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
-        
         }
         else
         {
@@ -396,55 +393,273 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
                                             const HostMemory &hostMemory,
                                             KernelRunTimeConfigurations &kernelRunTimeConfigurations)
 {
-    kernelRunTimeConfigurations.snrGlobal.resize(hostMemory.integrationSteps.size() + 1);
-    kernelRunTimeConfigurations.snrLocal.resize(hostMemory.integrationSteps.size() + 1);
-    if (!options.subbandDedispersion)
+    if (options.snrMode == SNRMode::Standard)
     {
-        kernelRunTimeConfigurations.snrGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), observation.getNrDMs(), observation.getNrSynthesizedBeams());
-        kernelRunTimeConfigurations.snrLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
-        if (options.debug)
-        {
-            std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
-            std::cout << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
-            std::cout << std::endl;
-        }
-    }
-    else
-    {
-        kernelRunTimeConfigurations.snrGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
-        kernelRunTimeConfigurations.snrLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
-        if (options.debug)
-        {
-            std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
-            std::cout << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
-            std::cout << std::endl;
-        }
-    }
-    for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
-    {
-        auto step = hostMemory.integrationSteps.begin();
-
-        std::advance(step, stepNumber);
+        kernelRunTimeConfigurations.snrGlobal.resize(hostMemory.integrationSteps.size() + 1);
+        kernelRunTimeConfigurations.snrLocal.resize(hostMemory.integrationSteps.size() + 1);
         if (!options.subbandDedispersion)
         {
-            kernelRunTimeConfigurations.snrGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), observation.getNrDMs(), observation.getNrSynthesizedBeams());
-            kernelRunTimeConfigurations.snrLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+            kernelRunTimeConfigurations.snrGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+            kernelRunTimeConfigurations.snrLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
             if (options.debug)
             {
-                std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
-                std::cout << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
                 std::cout << std::endl;
             }
         }
         else
         {
-            kernelRunTimeConfigurations.snrGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
-            kernelRunTimeConfigurations.snrLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+            kernelRunTimeConfigurations.snrGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+            kernelRunTimeConfigurations.snrLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
             if (options.debug)
             {
-                std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
-                std::cout << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
                 std::cout << std::endl;
+            }
+        }
+        for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+        {
+            auto step = hostMemory.integrationSteps.begin();
+
+            std::advance(step, stepNumber);
+            if (!options.subbandDedispersion)
+            {
+                kernelRunTimeConfigurations.snrGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+                kernelRunTimeConfigurations.snrLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+                if (options.debug)
+                {
+                    std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << std::endl;
+                }
+            }
+            else
+            {
+                kernelRunTimeConfigurations.snrGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+                kernelRunTimeConfigurations.snrLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+                if (options.debug)
+                {
+                    std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << std::endl;
+                }
+            }
+        }
+    }
+    else if (options.snrMode == SNRMode::Momad)
+    {
+        // Max kernel
+        kernelRunTimeConfigurations.maxGlobal.resize(hostMemory.integrationSteps.size() + 1);
+        kernelRunTimeConfigurations.maxLocal.resize(hostMemory.integrationSteps.size() + 1);
+        if (!options.subbandDedispersion)
+        {
+            kernelRunTimeConfigurations.maxGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+            kernelRunTimeConfigurations.maxLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
+            if (options.debug)
+            {
+                std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << std::endl;
+            }
+        }
+        else
+        {
+            kernelRunTimeConfigurations.maxGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+            kernelRunTimeConfigurations.maxLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
+            if (options.debug)
+            {
+                std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << std::endl;
+            }
+        }
+        for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+        {
+            auto step = hostMemory.integrationSteps.begin();
+
+            std::advance(step, stepNumber);
+            if (!options.subbandDedispersion)
+            {
+                kernelRunTimeConfigurations.maxGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+                kernelRunTimeConfigurations.maxLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+                if (options.debug)
+                {
+                    std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << std::endl;
+                }
+            }
+            else
+            {
+                kernelRunTimeConfigurations.maxGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+                kernelRunTimeConfigurations.maxLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+                if (options.debug)
+                {
+                    std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << std::endl;
+                }
+            }
+        }
+        // Median of medians first step kernel
+        kernelRunTimeConfigurations.medianOfMediansStepOneGlobal.resize(hostMemory.integrationSteps.size() + 1);
+        kernelRunTimeConfigurations.medianOfMediansStepOneLocal.resize(hostMemory.integrationSteps.size() + 1);
+        if (!options.subbandDedispersion)
+        {
+            kernelRunTimeConfigurations.medianOfMediansStepOneGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / options.medianStepSize), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+            kernelRunTimeConfigurations.medianOfMediansStepOneLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
+            if (options.debug)
+            {
+                std::cout << "Median of medians first step (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << std::endl;
+            }
+        }
+        else
+        {
+            kernelRunTimeConfigurations.medianOfMediansStepOneGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / options.medianStepSize), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+            kernelRunTimeConfigurations.medianOfMediansStepOneLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
+            if (options.debug)
+            {
+                std::cout << "Median of medians first step (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << std::endl;
+            }
+        }
+        for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+        {
+            auto step = hostMemory.integrationSteps.begin();
+
+            std::advance(step, stepNumber);
+            if (!options.subbandDedispersion)
+            {
+                kernelRunTimeConfigurations.medianOfMediansStepOneGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / *step / options.medianStepSize), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+                kernelRunTimeConfigurations.medianOfMediansStepOneLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+                if (options.debug)
+                {
+                    std::cout << "Median of medians first step (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << std::endl;
+                }
+            }
+            else
+            {
+                kernelRunTimeConfigurations.medianOfMediansStepOneGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / *step / options.medianStepSize), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+                kernelRunTimeConfigurations.medianOfMediansStepOneLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+                if (options.debug)
+                {
+                    std::cout << "Median of medians first step (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << std::endl;
+                }
+            }
+        }
+        // Median of medians second step kernel
+        kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.resize(hostMemory.integrationSteps.size() + 1);
+        kernelRunTimeConfigurations.medianOfMediansStepTwoLocal.resize(hostMemory.integrationSteps.size() + 1);
+        if (!options.subbandDedispersion)
+        {
+            kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / options.medianStepSize), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+            kernelRunTimeConfigurations.medianOfMediansStepTwoLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
+            if (options.debug)
+            {
+                std::cout << "Median of medians second step (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << std::endl;
+            }
+        }
+        else
+        {
+            kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / options.medianStepSize), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+            kernelRunTimeConfigurations.medianOfMediansStepTwoLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
+            if (options.debug)
+            {
+                std::cout << "Median of medians second step (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << std::endl;
+            }
+        }
+        for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+        {
+            auto step = hostMemory.integrationSteps.begin();
+
+            std::advance(step, stepNumber);
+            if (!options.subbandDedispersion)
+            {
+                kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / *step / options.medianStepSize), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+                kernelRunTimeConfigurations.medianOfMediansStepTwoLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+                if (options.debug)
+                {
+                    std::cout << "Median of medians second step (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << std::endl;
+                }
+            }
+            else
+            {
+                kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / *step / options.medianStepSize), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+                kernelRunTimeConfigurations.medianOfMediansStepTwoLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+                if (options.debug)
+                {
+                    std::cout << "Median of medians second step (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << std::endl;
+                }
+            }
+        }
+        // Median of medians absolute deviation kernel
+        kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.resize(hostMemory.integrationSteps.size() + 1);
+        kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.resize(hostMemory.integrationSteps.size() + 1);
+        if (!options.subbandDedispersion)
+        {
+            kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / options.medianStepSize), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+            kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
+            if (options.debug)
+            {
+                std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << std::endl;
+            }
+        }
+        else
+        {
+            kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / options.medianStepSize), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+            kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0(), 1, 1);
+            if (options.debug)
+            {
+                std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << std::endl;
+            }
+        }
+        for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+        {
+            auto step = hostMemory.integrationSteps.begin();
+
+            std::advance(step, stepNumber);
+            if (!options.subbandDedispersion)
+            {
+                kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / *step / options.medianStepSize), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+                kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+                if (options.debug)
+                {
+                    std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << std::endl;
+                }
+            }
+            else
+            {
+                kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / *step / options.medianStepSize), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+                kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->getNrThreadsD0(), 1, 1);
+                if (options.debug)
+                {
+                    std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << std::endl;
+                }
             }
         }
     }
