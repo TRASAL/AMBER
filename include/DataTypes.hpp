@@ -231,10 +231,26 @@ struct KernelRunTimeConfigurations
     std::vector<cl::NDRange> integrationGlobal;
     // Local NDRange for integration
     std::vector<cl::NDRange> integrationLocal;
-    // Global NDRange for SNR
+    // Global NDRange for SNR (SNR mode)
     std::vector<cl::NDRange> snrGlobal;
-    // Local NDRange for SNR
+    // Local NDRange for SNR (SNR mode)
     std::vector<cl::NDRange> snrLocal;
+    // Global NDRange for max (MOMAD mode)
+    std::vector<cl::NDRange> maxGlobal;
+    // Local NDRange for max (MOMAD mode)
+    std::vector<cl::NDRange> maxLocal;
+    // Global NDRange for median of medians first step (MOMAD mode)
+    std::vector<cl::NDRange> medianOfMediansStepOneGlobal;
+    // Local NDRange for median of medians first step (MOMAD mode)
+    std::vector<cl::NDRange> medianOfMediansStepOneLocal;
+    // Global NDRange for median of medians second step (MOMAD mode)
+    std::vector<cl::NDRange> medianOfMediansStepTwoGlobal;
+    // Local NDRange for median of medians second step (MOMAD mode)
+    std::vector<cl::NDRange> medianOfMediansStepTwoLocal;
+    // Global NDRange for median of medians absolute deviation (MOMAD mode)
+    std::vector<cl::NDRange> medianOfMediansAbsoluteDeviationGlobal;
+    // Local NDRange for median of medians absolute deviation (MOMAD mode)
+    std::vector<cl::NDRange> medianOfMediansAbsoluteDeviationLocal;
 };
 
 struct Timers
