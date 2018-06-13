@@ -86,7 +86,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             SNR::readTunedSNRConf(kernelConfigurations.maxParameters, argumentList.getSwitchArgument<std::string>("-max_file"));
             SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansStepOneParameters, argumentList.getSwitchArgument<std::string>("-mom_stepone_file"));
             SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansStepTwoParameters, argumentList.getSwitchArgument<std::string>("-mom_steptwo_file"));
-            SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters, argumentList.getSwitchArgument<std::string>("-momad"));
+            SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters, argumentList.getSwitchArgument<std::string>("-momad_file"));
         }
         if (dataOptions.dataLOFAR)
         {
