@@ -285,8 +285,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                 errorDetected = true;
             }
             timers.trigger.start();
-            trigger(options.subbandDedispersion, deviceOptions.padding.at(deviceOptions.deviceName), 0, options.threshold,
-                    observation, hostMemory.snrData, hostMemory.snrSamples, triggeredEvents);
+            trigger(options, deviceOptions.padding.at(deviceOptions.deviceName), 0, observation, hostMemory, triggeredEvents);
             timers.trigger.stop();
             if (options.debug)
             {
@@ -394,8 +393,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                 errorDetected = true;
             }
             timers.trigger.start();
-            trigger(options.subbandDedispersion, deviceOptions.padding.at(deviceOptions.deviceName), 0, options.threshold,
-                    observation, hostMemory.snrData, hostMemory.snrSamples, triggeredEvents);
+            trigger(options, deviceOptions.padding.at(deviceOptions.deviceName), 0, observation, hostMemory, triggeredEvents);
             timers.trigger.stop();
         }
     }
