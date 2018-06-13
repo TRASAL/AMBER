@@ -264,6 +264,11 @@ struct Timers
     isa::utils::Timer dedispersionStepTwo;
     isa::utils::Timer integration;
     isa::utils::Timer snr;
+    isa::utils::Timer max;
+    isa::utils::Timer medianOfMediansStepOne;
+    isa::utils::Timer medianOfMediansStepTwo;
+    isa::utils::Timer medianOfMediansAbsoluteDeviationStepOne;
+    isa::utils::Timer medianOfMediansAbsoluteDeviationStepTwo;
     isa::utils::Timer outputCopy;
     isa::utils::Timer trigger;
 };
