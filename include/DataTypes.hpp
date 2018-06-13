@@ -299,8 +299,8 @@ struct OpenCLRunTime
     std::vector<std::vector<cl::CommandQueue>> *queues = nullptr;
 };
 
-enum SNRMode
+typedef enum
 {
     Standard,
     Momad
-};
+} SNRMode;
