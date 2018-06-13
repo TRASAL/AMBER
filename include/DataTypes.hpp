@@ -107,10 +107,18 @@ struct HostMemory
     std::vector<outputDataType> dedispersedData;
     // Integrated data
     std::vector<outputDataType> integratedData;
-    // SNR data
+    // SNR data (SNR mode)
     std::vector<float> snrData;
-    // Index of the sample with highest SNR value
+    // Index of the sample with highest SNR value (SNR mode)
     std::vector<unsigned int> snrSamples;
+    // Value of max sample (MOMAD mode)
+    std::vector<outputDataType> maxValues;
+    // Index of max sample (MOMAD MODE)
+    std::vector<unsigned int> maxIndices;
+    // Medians of medians (MOMAD mode)
+    std::vector<outputDataType> mediansOfMedians;
+    // Medians of medians absolute deviation (MOMAD mode)
+    std::vector<outputDataType> medianOfMediansAbsoluteDeviation;
     // Shifts single step dedispersion
     std::vector<float> *shiftsSingleStep = nullptr;
     // Shifts step one subbanding dedispersion
@@ -143,10 +151,18 @@ struct DeviceMemory
     cl::Buffer dedispersedData;
     // Integrated data
     cl::Buffer integratedData;
-    // SNR data
+    // SNR data (SNR mode)
     cl::Buffer snrData;
-    // Index of the sample with highest SNR value
+    // Index of the sample with highest SNR value (SNR mode)
     cl::Buffer snrSamples;
+    // Value of max sample (MOMAD mode)
+    cl::Buffer maxValues;
+    // Index of max sample (MOMAD mode)
+    cl::Buffer maxIndices;
+    // Median of medians first step (MOMAD mode)
+    cl::Buffer medianOfMediansStepOne;
+    // Median of medians second step (MOMAD mode)
+    cl::Buffer medianOfMediansSecondStep;
 };
 
 struct KernelConfigurations
