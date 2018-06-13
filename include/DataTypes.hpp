@@ -179,8 +179,16 @@ struct KernelConfigurations
     Dedispersion::tunedDedispersionConf dedispersionStepTwoParameters;
     // Configuration of integration kernel
     Integration::tunedIntegrationConf integrationParameters;
-    // Configuration of SNR kernel
+    // Configuration of SNR kernel (SNR mode)
     SNR::tunedSNRConf snrParameters;
+    // Configuration of max kernel (MOMAD mode)
+    SNR::tunedSNRConf maxParameters;
+    // Configuration of median of medians first step (MOMAD mode)
+    SNR::tunedSNRConf medianOfMediansStepOneParameters;
+    // Configuration of median of medians second step (MOMAD mode)
+    SNR::tunedSNRConf medianOfMediansStepTwoParameters;
+    // Configuration of median of medians absolute deviation (MOMAD mode)
+    SNR::tunedSNRConf medianOfMediansAbsoluteDeviationParameters;
 };
 
 struct Kernels
