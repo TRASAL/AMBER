@@ -29,6 +29,8 @@ struct Options
     bool compactResults = false;
     // Threshold for triggering
     float threshold = 0.0f;
+    // SNR mode
+    SNRMode snrMode;
 };
 
 struct DeviceOptions
