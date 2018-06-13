@@ -31,6 +31,8 @@ struct Options
     float threshold = 0.0f;
     // SNR mode
     SNRMode snrMode;
+    // Step size for median of medians (MOMAD mode)
+    unsigned int stepSize = 5;
 };
 
 struct DeviceOptions
@@ -164,7 +166,7 @@ struct DeviceMemory
     // Median of medians first step (MOMAD mode)
     cl::Buffer medianOfMediansStepOne;
     // Median of medians second step (MOMAD mode)
-    cl::Buffer medianOfMediansSecondStep;
+    cl::Buffer medianOfMediansStepTwo;
 };
 
 struct KernelConfigurations
