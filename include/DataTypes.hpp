@@ -32,7 +32,7 @@ struct Options
     // SNR mode
     SNRMode snrMode;
     // Step size for median of medians (MOMAD mode)
-    unsigned int stepSize = 5;
+    unsigned int medianStepSize = 5;
 };
 
 struct DeviceOptions
@@ -201,8 +201,16 @@ struct Kernels
     cl::Kernel *dedispersionStepTwo = nullptr;
     // Integration kernels, one for each integration step
     std::vector<cl::Kernel *> integration;
-    // SNR kernels, one for the original data and one for each integration step
+    // SNR kernels, one for the original data and one for each integration step (SNR mode)
     std::vector<cl::Kernel *> snr;
+    // Max kernels, one for the original data and one for each integration step (MOMAD mode)
+    std::vector<cl::Kernel *> max;
+    // Median of medians first step, one for the original data and one for each integration step (MOMAD mode)
+    std::vector<cl::Kernel *> medianOfMediansStepOne;
+    // Median of medians second step, one for the original data and one for each integration step (MOMAD mode)
+    std::vector<cl::Kernel *> medianOfMediansStepTwo;
+    // Median of medians absolute deviation, one for the original data and one for each integration step (MOMAD mode)
+    std::vector<cl::Kernel *> medianOfMediansAbsoluteDeviation;
 };
 
 struct KernelRunTimeConfigurations
