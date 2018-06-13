@@ -211,7 +211,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
         }
         else
         {
-            code = SNR::getMedianOfMediansOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), SNR::DataOrdering::DMsSamples, outputDataName, observation, 1, deviceOptions.padding.at(deviceOptions.deviceName));
+            code = SNR::getMedianOfMediansOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), SNR::DataOrdering::DMsSamples, outputDataName, observation, 1, options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
         }
         kernels.medianOfMediansStepOne.push_back(isa::OpenCL::compile("medianOfMedians_DMsSamples_" + std::to_string(options.medianStepSize), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
         kernels.medianOfMediansStepOne.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.dedispersedData);
@@ -262,7 +262,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
             }
             else
             {
-                code = SNR::getMedianOfMediansAbsoluteDeviatioOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, *step, options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
+                code = SNR::getMedianOfMediansAbsoluteDeviationOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, *step, options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
             }
             kernels.medianOfMediansAbsoluteDeviation.push_back(isa::OpenCL::compile("medianOfMediansAbsoluteDeviation_DMsSamples_" + std::to_string(options.medianStepSize), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
             kernels.medianOfMediansAbsoluteDeviation.at(stepNumber)->setArg(0, deviceMemory.medianOfMediansStepTwo);
@@ -276,7 +276,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
         }
         else
         {
-            code = SNR::getMedianOfMediansAbsoluteDeviationOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), SNR::DataOrdering::DMsSamples, outputDataName, observation, 1, deviceOptions.padding.at(deviceOptions.deviceName));
+            code = SNR::getMedianOfMediansAbsoluteDeviationOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), SNR::DataOrdering::DMsSamples, outputDataName, observation, 1, options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
         }
         kernels.medianOfMediansAbsoluteDeviation.push_back(isa::OpenCL::compile("medianOfMediansAbsoluteDeviation_DMsSamples_" + std::to_string(options.medianStepSize), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
         kernels.medianOfMediansAbsoluteDeviation.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.medianOfMediansStepTwo);
