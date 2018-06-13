@@ -15,6 +15,12 @@
 
 #pragma once
 
+typedef enum
+{
+    Standard,
+    Momad
+} SNRMode;
+
 struct Options
 {
     // Debug mode
@@ -298,9 +304,3 @@ struct OpenCLRunTime
     std::vector<cl::Device> *devices = nullptr;
     std::vector<std::vector<cl::CommandQueue>> *queues = nullptr;
 };
-
-typedef enum
-{
-    Standard,
-    Momad
-} SNRMode;
