@@ -396,176 +396,126 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
             trigger(options, deviceOptions.padding.at(deviceOptions.deviceName), 0, observation, hostMemory, triggeredEvents);
             timers.trigger.stop();
         }
-    }
 
-    // Integration and SNR loop
-    for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
-    {
-        auto step = hostMemory.integrationSteps.begin();
+        // Integration and SNR loop
+        for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+        {
+            auto step = hostMemory.integrationSteps.begin();
 
-        std::advance(step, stepNumber);
-        try
-        {
-            if (deviceOptions.synchronized)
-            {
-                timers.integration.start();
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber], nullptr, &syncPoint);
-                syncPoint.wait();
-                timers.integration.stop();
-                if (options.snrMode == SNRMode::Standard)
-                {
-                    timers.snr.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[stepNumber], kernelRunTimeConfigurations.snrLocal[stepNumber], nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.snr.stop();
-                    timers.outputCopy.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.snrData, CL_TRUE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast<void *>(hostMemory.snrData.data()), nullptr, &syncPoint);
-                    syncPoint.wait();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.snrSamples, CL_TRUE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.snrSamples.data()), nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.outputCopy.stop();
-                }
-                else if (options.snrMode == SNRMode::Momad)
-                {
-                    // Max
-                    timers.max.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.max[stepNumber], cl::NullRange, kernelRunTimeConfigurations.maxGlobal[stepNumber], kernelRunTimeConfigurations.maxLocal[stepNumber], nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.max.stop();
-                    // Transfer of max values to host
-                    timers.outputCopy.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxValues, CL_TRUE, 0, hostMemory.maxValues.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.maxValues.data()), nullptr, &syncPoint);
-                    syncPoint.wait();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxIndices, CL_TRUE, 0, hostMemory.maxIndices.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.maxIndices.data()), nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.outputCopy.stop();
-                    // Median of medians first step
-                    timers.medianOfMediansStepOne.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepOne[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepOneGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepOneLocal[stepNumber], nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.medianOfMediansStepOne.stop();
-                    // Median of medians second step
-                    timers.medianOfMediansStepTwo.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber], nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.medianOfMediansStepTwo.stop();
-                    // Trasfer of medians of medians to host
-                    timers.outputCopy.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.mediansOfMedians.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.mediansOfMedians.data()), nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.outputCopy.stop();
-                    // Median of medians absolute deviation first step
-                    timers.medianOfMediansAbsoluteDeviationStepOne.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansAbsoluteDeviation[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal[stepNumber], nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.medianOfMediansAbsoluteDeviationStepOne.stop();
-                    // Median of medians absolute deviation second step
-                    timers.medianOfMediansAbsoluteDeviationStepTwo.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber], nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.medianOfMediansAbsoluteDeviationStepTwo.stop();
-                    // Transfers of median of medians absolute deviation to host
-                    timers.outputCopy.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.medianOfMediansAbsoluteDeviation.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMediansAbsoluteDeviation.data()), nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.outputCopy.stop();
-                }
-            }
-            else
-            {
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber]);
-                if (options.snrMode == SNRMode::Standard)
-                {
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[stepNumber], kernelRunTimeConfigurations.snrLocal[stepNumber]);
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast<void *>(hostMemory.snrData.data()));
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.snrSamples.data()));
-                }
-                else if (options.snrMode == SNRMode::Momad)
-                {
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.max[stepNumber], cl::NullRange, kernelRunTimeConfigurations.maxGlobal[stepNumber], kernelRunTimeConfigurations.maxLocal[stepNumber]);
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxValues, CL_FALSE, 0, hostMemory.maxValues.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.maxValues.data()));
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxIndices, CL_FALSE, 0, hostMemory.maxIndices.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.maxIndices.data()));
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepOne[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepOneGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepOneLocal[stepNumber]);
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber]);
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_FALSE, 0, hostMemory.mediansOfMedians.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.mediansOfMedians.data()));
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansAbsoluteDeviation[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal[stepNumber]);
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber]);
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_FALSE, 0, hostMemory.medianOfMediansAbsoluteDeviation.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMediansAbsoluteDeviation.data()));
-                }
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).finish();
-            }
-        }
-        catch (cl::Error &err)
-        {
-            std::cerr << "SNR integration loop error -- Batch: " << std::to_string(batch) << ", Step: ";
-            std::cerr << std::to_string(*step) << ", " << err.what() << " " << err.err() << std::endl;
-            errorDetected = true;
-        }
-        if (options.debug)
-        {
+            std::advance(step, stepNumber);
             try
             {
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.integratedData, CL_TRUE, 0, hostMemory.integratedData.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.integratedData.data()), nullptr, &syncPoint);
-                syncPoint.wait();
+                if (deviceOptions.synchronized)
+                {
+                    timers.integration.start();
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber], nullptr, &syncPoint);
+                    syncPoint.wait();
+                    timers.integration.stop();
+                    if (options.snrMode == SNRMode::Standard)
+                    {
+                        timers.snr.start();
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[stepNumber], kernelRunTimeConfigurations.snrLocal[stepNumber], nullptr, &syncPoint);
+                        syncPoint.wait();
+                        timers.snr.stop();
+                        timers.outputCopy.start();
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.snrData, CL_TRUE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast<void *>(hostMemory.snrData.data()), nullptr, &syncPoint);
+                        syncPoint.wait();
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.snrSamples, CL_TRUE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.snrSamples.data()), nullptr, &syncPoint);
+                        syncPoint.wait();
+                        timers.outputCopy.stop();
+                    }
+                    else if (options.snrMode == SNRMode::Momad)
+                    {
+                        // Max
+                        timers.max.start();
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.max[stepNumber], cl::NullRange, kernelRunTimeConfigurations.maxGlobal[stepNumber], kernelRunTimeConfigurations.maxLocal[stepNumber], nullptr, &syncPoint);
+                        syncPoint.wait();
+                        timers.max.stop();
+                        // Transfer of max values to host
+                        timers.outputCopy.start();
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxValues, CL_TRUE, 0, hostMemory.maxValues.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.maxValues.data()), nullptr, &syncPoint);
+                        syncPoint.wait();
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxIndices, CL_TRUE, 0, hostMemory.maxIndices.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.maxIndices.data()), nullptr, &syncPoint);
+                        syncPoint.wait();
+                        timers.outputCopy.stop();
+                        // Median of medians first step
+                        timers.medianOfMediansStepOne.start();
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepOne[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepOneGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepOneLocal[stepNumber], nullptr, &syncPoint);
+                        syncPoint.wait();
+                        timers.medianOfMediansStepOne.stop();
+                        // Median of medians second step
+                        timers.medianOfMediansStepTwo.start();
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber], nullptr, &syncPoint);
+                        syncPoint.wait();
+                        timers.medianOfMediansStepTwo.stop();
+                        // Trasfer of medians of medians to host
+                        timers.outputCopy.start();
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.mediansOfMedians.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.mediansOfMedians.data()), nullptr, &syncPoint);
+                        syncPoint.wait();
+                        timers.outputCopy.stop();
+                        // Median of medians absolute deviation first step
+                        timers.medianOfMediansAbsoluteDeviationStepOne.start();
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansAbsoluteDeviation[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal[stepNumber], nullptr, &syncPoint);
+                        syncPoint.wait();
+                        timers.medianOfMediansAbsoluteDeviationStepOne.stop();
+                        // Median of medians absolute deviation second step
+                        timers.medianOfMediansAbsoluteDeviationStepTwo.start();
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber], nullptr, &syncPoint);
+                        syncPoint.wait();
+                        timers.medianOfMediansAbsoluteDeviationStepTwo.stop();
+                        // Transfers of median of medians absolute deviation to host
+                        timers.outputCopy.start();
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.medianOfMediansAbsoluteDeviation.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMediansAbsoluteDeviation.data()), nullptr, &syncPoint);
+                        syncPoint.wait();
+                        timers.outputCopy.stop();
+                    }
+                }
+                else
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber]);
+                    if (options.snrMode == SNRMode::Standard)
+                    {
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[stepNumber], kernelRunTimeConfigurations.snrLocal[stepNumber]);
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast<void *>(hostMemory.snrData.data()));
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.snrSamples.data()));
+                    }
+                    else if (options.snrMode == SNRMode::Momad)
+                    {
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.max[stepNumber], cl::NullRange, kernelRunTimeConfigurations.maxGlobal[stepNumber], kernelRunTimeConfigurations.maxLocal[stepNumber]);
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxValues, CL_FALSE, 0, hostMemory.maxValues.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.maxValues.data()));
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxIndices, CL_FALSE, 0, hostMemory.maxIndices.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.maxIndices.data()));
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepOne[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepOneGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepOneLocal[stepNumber]);
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber]);
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_FALSE, 0, hostMemory.mediansOfMedians.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.mediansOfMedians.data()));
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansAbsoluteDeviation[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal[stepNumber]);
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber]);
+                        openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_FALSE, 0, hostMemory.medianOfMediansAbsoluteDeviation.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMediansAbsoluteDeviation.data()));
+                    }
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).finish();
+                }
             }
             catch (cl::Error &err)
             {
-                std::cerr << "Impossible to read deviceMemory.integratedData: " << err.what() << " " << err.err();
-                std::cerr << std::endl;
+                std::cerr << "SNR integration loop error -- Batch: " << std::to_string(batch) << ", Step: ";
+                std::cerr << std::to_string(*step) << ", " << err.what() << " " << err.err() << std::endl;
                 errorDetected = true;
             }
-            std::cerr << "integratedData" << std::endl;
-            if (options.subbandDedispersion)
-            {
-                for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
-                {
-                    std::cerr << "sBeam: " << sBeam << std::endl;
-                    for (unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++)
-                    {
-                        for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
-                        {
-                            std::cerr << "DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
-                            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++)
-                            {
-                                std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << " ";
-                            }
-                            std::cerr << std::endl;
-                        }
-                    }
-                    std::cerr << std::endl;
-                }
-            }
-            else
-            {
-                for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
-                {
-                    std::cerr << "sBeam: " << sBeam << std::endl;
-                    for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
-                    {
-                        std::cerr << "DM: " << dm << std::endl;
-                        for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++)
-                        {
-                            std::cerr << hostMemory.integratedData
-                                             .at((sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample)
-                                      << " ";
-                        }
-                        std::cerr << std::endl;
-                    }
-                    std::cerr << std::endl;
-                }
-            }
-        }
-        timers.trigger.start();
-        trigger(options.subbandDedispersion, deviceOptions.padding.at(deviceOptions.deviceName), *step, options.threshold,
-                observation, hostMemory.snrData, hostMemory.snrSamples, triggeredEvents);
-        timers.trigger.stop();
-        if (options.snrMode == SNRMode::Standard)
-        {
             if (options.debug)
             {
+                try
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.integratedData, CL_TRUE, 0, hostMemory.integratedData.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.integratedData.data()), nullptr, &syncPoint);
+                    syncPoint.wait();
+                }
+                catch (cl::Error &err)
+                {
+                    std::cerr << "Impossible to read deviceMemory.integratedData: " << err.what() << " " << err.err();
+                    std::cerr << std::endl;
+                    errorDetected = true;
+                }
+                std::cerr << "integratedData" << std::endl;
                 if (options.subbandDedispersion)
                 {
-                    std::cerr << "hostMemory.snrData" << std::endl;
                     for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
                     {
                         std::cerr << "sBeam: " << sBeam << std::endl;
@@ -573,11 +523,12 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                         {
                             for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
                             {
-                                std::cerr << hostMemory.snrData
-                                                 .at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(),
-                                                                              deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) +
-                                                     (subbandingDM * observation.getNrDMs()) + dm)
-                                          << " ";
+                                std::cerr << "DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
+                                for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++)
+                                {
+                                    std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << " ";
+                                }
+                                std::cerr << std::endl;
                             }
                         }
                         std::cerr << std::endl;
@@ -585,99 +536,93 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                 }
                 else
                 {
-                    std::cerr << "hostMemory.snrData" << std::endl;
                     for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
                     {
                         std::cerr << "sBeam: " << sBeam << std::endl;
                         for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
                         {
-                            std::cerr << hostMemory.snrData
-                                             .at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm)
-                                      << " ";
+                            std::cerr << "DM: " << dm << std::endl;
+                            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / *step; sample++)
+                            {
+                                std::cerr << hostMemory.integratedData
+                                                 .at((sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample)
+                                          << " ";
+                            }
+                            std::cerr << std::endl;
                         }
                         std::cerr << std::endl;
                     }
                 }
-                std::cerr << std::endl;
+            }
+            timers.trigger.start();
+            trigger(options, deviceOptions.padding.at(deviceOptions.deviceName), *step, observation, hostMemory, triggeredEvents);
+            timers.trigger.stop();
+            if (options.snrMode == SNRMode::Standard)
+            {
+                if (options.debug)
+                {
+                    if (options.subbandDedispersion)
+                    {
+                        std::cerr << "hostMemory.snrData" << std::endl;
+                        for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
+                        {
+                            std::cerr << "sBeam: " << sBeam << std::endl;
+                            for (unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++)
+                            {
+                                for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
+                                {
+                                    std::cerr << hostMemory.snrData
+                                                     .at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(),
+                                                                                  deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) +
+                                                         (subbandingDM * observation.getNrDMs()) + dm)
+                                              << " ";
+                                }
+                            }
+                            std::cerr << std::endl;
+                        }
+                    }
+                    else
+                    {
+                        std::cerr << "hostMemory.snrData" << std::endl;
+                        for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
+                        {
+                            std::cerr << "sBeam: " << sBeam << std::endl;
+                            for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
+                            {
+                                std::cerr << hostMemory.snrData
+                                                 .at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm)
+                                          << " ";
+                            }
+                            std::cerr << std::endl;
+                        }
+                    }
+                    std::cerr << std::endl;
+                }
             }
         }
-    }
-    if (errorDetected)
-    {
-        outputTrigger.close();
+        if (errorDetected)
+        {
+            outputTrigger.close();
 #ifdef HAVE_PSRDADA
-        if (dataOptions.dataPSRDADA)
-        {
-            if (dada_hdu_unlock_read(hostMemory.ringBuffer) != 0)
+            if (dataOptions.dataPSRDADA)
             {
-                std::cerr << "Impossible to unlock the PSRDADA ringbuffer for reading the header." << std::endl;
+                if (dada_hdu_unlock_read(hostMemory.ringBuffer) != 0)
+                {
+                    std::cerr << "Impossible to unlock the PSRDADA ringbuffer for reading the header." << std::endl;
+                }
+                dada_hdu_disconnect(hostMemory.ringBuffer);
             }
-            dada_hdu_disconnect(hostMemory.ringBuffer);
-        }
 #endif // HAVE_PSRDADA
-        return;
-    }
-    // Print and compact results
-    timers.trigger.start();
-    if (options.compactResults)
-    {
-        compact(observation, triggeredEvents, compactedEvents);
-        for (auto &compactedEvent : compactedEvents)
-        {
-            for (auto &event : compactedEvent)
-            {
-                unsigned int integration = 0;
-                float firstDM;
-                unsigned int delay = 0;
-
-                if (event.integration == 0)
-                {
-                    integration = 1;
-                }
-                else
-                {
-                    integration = event.integration;
-                }
-                if (options.subbandDedispersion)
-                {
-                    if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
-                    {
-                        delay = observation.getNrDelayBatches(true) - 1;
-                    }
-                    firstDM = observation.getFirstDM(true);
-                }
-                else
-                {
-                    if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
-                    {
-                        delay = observation.getNrDelayBatches() - 1;
-                    }
-                    firstDM = observation.getFirstDM();
-                }
-                if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
-                {
-                    outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " " << integration;
-                    outputTrigger << " " << event.compactedIntegration << " ";
-                    outputTrigger << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event.sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
-                    outputTrigger << event.compactedDMs << " " << event.SNR << std::endl;
-                }
-                else
-                {
-                    outputTrigger << event.beam << " " << batch << " " << event.sample << " " << integration << " ";
-                    outputTrigger << event.compactedIntegration << " " << ((batch * observation.getNrSamplesPerBatch()) + (event.sample * integration)) * observation.getSamplingTime() << " ";
-                    outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.compactedDMs << " ";
-                    outputTrigger << event.SNR << std::endl;
-                }
-            }
+            return;
         }
-    }
-    else
-    {
-        for (auto &triggeredEvent : triggeredEvents)
+        // Print and compact results
+        timers.trigger.start();
+        if (options.compactResults)
         {
-            for (auto &dmEvents : triggeredEvent)
+            compact(observation, triggeredEvents, compactedEvents);
+            for (auto &compactedEvent : compactedEvents)
             {
-                for (auto &event : dmEvents.second)
+                for (auto &event : compactedEvent)
                 {
                     unsigned int integration = 0;
                     float firstDM;
@@ -710,33 +655,86 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                     if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
                     {
                         outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " " << integration;
-                        outputTrigger << " " << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event.sample * integration)) * observation.getSamplingTime() << " ";
-                        outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.SNR << std::endl;
+                        outputTrigger << " " << event.compactedIntegration << " ";
+                        outputTrigger << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event.sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
+                        outputTrigger << event.compactedDMs << " " << event.SNR << std::endl;
                     }
                     else
                     {
                         outputTrigger << event.beam << " " << batch << " " << event.sample << " " << integration << " ";
-                        outputTrigger << ((batch * observation.getNrSamplesPerBatch()) + (event.sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
+                        outputTrigger << event.compactedIntegration << " " << ((batch * observation.getNrSamplesPerBatch()) + (event.sample * integration)) * observation.getSamplingTime() << " ";
+                        outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.compactedDMs << " ";
                         outputTrigger << event.SNR << std::endl;
                     }
                 }
             }
         }
+        else
+        {
+            for (auto &triggeredEvent : triggeredEvents)
+            {
+                for (auto &dmEvents : triggeredEvent)
+                {
+                    for (auto &event : dmEvents.second)
+                    {
+                        unsigned int integration = 0;
+                        float firstDM;
+                        unsigned int delay = 0;
+
+                        if (event.integration == 0)
+                        {
+                            integration = 1;
+                        }
+                        else
+                        {
+                            integration = event.integration;
+                        }
+                        if (options.subbandDedispersion)
+                        {
+                            if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
+                            {
+                                delay = observation.getNrDelayBatches(true) - 1;
+                            }
+                            firstDM = observation.getFirstDM(true);
+                        }
+                        else
+                        {
+                            if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
+                            {
+                                delay = observation.getNrDelayBatches() - 1;
+                            }
+                            firstDM = observation.getFirstDM();
+                        }
+                        if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
+                        {
+                            outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " " << integration;
+                            outputTrigger << " " << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event.sample * integration)) * observation.getSamplingTime() << " ";
+                            outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.SNR << std::endl;
+                        }
+                        else
+                        {
+                            outputTrigger << event.beam << " " << batch << " " << event.sample << " " << integration << " ";
+                            outputTrigger << ((batch * observation.getNrSamplesPerBatch()) + (event.sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
+                            outputTrigger << event.SNR << std::endl;
+                        }
+                    }
+                }
+            }
+        }
+        timers.trigger.stop();
     }
-    timers.trigger.stop();
-}
 #ifdef HAVE_PSRDADA
-if (dataOptions.dataPSRDADA)
-{
-    if (dada_hdu_unlock_read(hostMemory.ringBuffer) != 0)
+    if (dataOptions.dataPSRDADA)
     {
-        std::cerr << "Impossible to unlock the PSRDADA ringbuffer for reading the header." << std::endl;
+        if (dada_hdu_unlock_read(hostMemory.ringBuffer) != 0)
+        {
+            std::cerr << "Impossible to unlock the PSRDADA ringbuffer for reading the header." << std::endl;
+        }
+        dada_hdu_disconnect(hostMemory.ringBuffer);
     }
-    dada_hdu_disconnect(hostMemory.ringBuffer);
-}
 #endif // HAVE_PSRDADA
-outputTrigger.close();
-timers.search.stop();
+    outputTrigger.close();
+    timers.search.stop();
 }
 
 int inputHandling(const unsigned int batch, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const DataOptions &dataOptions, Timers &timers, HostMemory &hostMemory, const DeviceMemory &deviceMemory)
