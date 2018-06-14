@@ -172,7 +172,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
             kernels.max.at(stepNumber)->setArg(2, deviceMemory.maxIndices);
             delete code;
         }
-        if (!options.subbandDedispersion)
+        if (options.subbandDedispersion)
         {
             code = SNR::getMaxOpenCL<outputDataType>(*(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), SNR::DataOrdering::DMsSamples, outputDataName, observation, 1, deviceOptions.padding.at(deviceOptions.deviceName));
         }
