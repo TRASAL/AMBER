@@ -218,9 +218,30 @@ int main(int argc, char *argv[])
     outputStats << "# integrationTotal integrationAvg err" << std::endl;
     outputStats << timers.integration.getTotalTime() << " " << timers.integration.getAverageTime() << " ";
     outputStats << timers.integration.getStandardDeviation() << std::endl;
-    outputStats << "# snrTotal snrAvg err" << std::endl;
-    outputStats << timers.snr.getTotalTime() << " " << timers.snr.getAverageTime() << " ";
-    outputStats << timers.snr.getStandardDeviation() << std::endl;
+    if (options.snrMode == SNRMode::Standard)
+    {
+        outputStats << "# snrTotal snrAvg err" << std::endl;
+        outputStats << timers.snr.getTotalTime() << " " << timers.snr.getAverageTime() << " ";
+        outputStats << timers.snr.getStandardDeviation() << std::endl;
+    }
+    else if (options.snrMode == SNRMode::Momad)
+    {
+        outputStats << "# maxTotal maxAvg err" << std::endl;
+        outputStats << timers.max.getTotalTime() << " " << timers.max.getAverageTime() << " ";
+        outputStats << timers.max.getStandardDeviation() << std::endl;
+        outputStats << "# medianOfMediansStepOneTotal medianOfMediansStepOneAvg err" << std::endl;
+        outputStats << timers.medianOfMediansStepOne.getTotalTime() << " " << timers.medianOfMediansStepOne.getAverageTime() << " ";
+        outputStats << timers.medianOfMediansStepOne.getStandardDeviation() << std::endl;
+        outputStats << "# medianOfMediansStepTwoTotal medianOfMediansStepTwoAvg err" << std::endl;
+        outputStats << timers.medianOfMediansStepTwo.getTotalTime() << " " << timers.medianOfMediansStepTwo.getAverageTime() << " ";
+        outputStats << timers.medianOfMediansStepTwo.getStandardDeviation() << std::endl;
+        outputStats << "# medianOfMediansAbsoluteDeviationStepOneTotal medianOfMediansAbsoluteDeviationStepOneAvg err" << std::endl;
+        outputStats << timers.medianOfMediansAbsoluteDeviationStepOne.getTotalTime() << " " << timers.medianOfMediansAbsoluteDeviationStepOne.getAverageTime() << " ";
+        outputStats << timers.medianOfMediansAbsoluteDeviationStepOne.getStandardDeviation() << std::endl;
+        outputStats << "# medianOfMediansAbsoluteDeviationStepTwoTotal medianOfMediansAbsoluteDeviationStepTwoAvg err" << std::endl;
+        outputStats << timers.medianOfMediansAbsoluteDeviationStepTwo.getTotalTime() << " " << timers.medianOfMediansAbsoluteDeviationStepTwo.getAverageTime() << " ";
+        outputStats << timers.medianOfMediansAbsoluteDeviationStepTwo.getStandardDeviation() << std::endl;
+    }
     outputStats << "# outputCopyTotal outputCopyAvg err" << std::endl;
     outputStats << timers.outputCopy.getTotalTime() << " " << timers.outputCopy.getAverageTime() << " ";
     outputStats << timers.outputCopy.getStandardDeviation() << std::endl;
