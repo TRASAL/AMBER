@@ -141,6 +141,46 @@ struct HostMemory
 #endif // HAVE_PSRDADA
 };
 
+struct HostMemoryDumpFiles
+{
+    /**
+     ** @brief File where to dump subbanded data.
+     */
+    std::ofstream subbandedData;
+    /**
+     ** @brief File where to dump dedispersed data.
+     */
+    std::ofstream dedispersedData;
+    /**
+     ** @brief File where to dump integrated data.
+     */
+    std::ofstream integratedData;
+    /**
+     ** @brief File where to dump SNR data (SNR mode).
+     */
+    std::ofstream snrData;
+    /**
+     ** @brief File where to dump max SNR sample indices (SNR mode) data.
+     */
+    std::ofstream snrSamplesData;
+    /**
+     ** @brief File where to dump max values (MOMAD mode) data.
+     */
+    std::ofstream maxValuesData;
+    /**
+     ** @brief File where to dump max indices (MOMAD mode) data.
+     */
+    std::ofstream maxIndicesData;
+    /**
+     ** @brief File where to dump medians of medians (MOMAD mode) data.
+     */
+    std::ofstream mediansOfMediansData;
+    /**
+     ** @brief File where to dump median of medians absolute deviation (MOMAD mode) data.
+     */
+    std::ofstream medianOfMediansAbsoluteDeviationData;
+};
+
 struct DeviceMemory
 {
     // Shifts single step dedispersion
