@@ -561,7 +561,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
         kernelRunTimeConfigurations.medianOfMediansStepTwoLocal.resize(hostMemory.integrationSteps.size() + 1);
         if (!options.subbandDedispersion)
         {
-            kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / options.medianStepSize)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / options.medianStepSize), observation.getNrDMs(), observation.getNrSynthesizedBeams());
+            kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / options.medianStepSize)->getNrThreadsD0(), observation.getNrDMs(), observation.getNrSynthesizedBeams());
             kernelRunTimeConfigurations.medianOfMediansStepTwoLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / options.medianStepSize)->getNrThreadsD0(), 1, 1);
             if (options.debug)
             {
@@ -572,7 +572,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
         }
         else
         {
-            kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / options.medianStepSize)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / options.medianStepSize), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
+            kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / options.medianStepSize)->getNrThreadsD0(), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
             kernelRunTimeConfigurations.medianOfMediansStepTwoLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / options.medianStepSize)->getNrThreadsD0(), 1, 1);
             if (options.debug)
             {
