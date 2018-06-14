@@ -205,7 +205,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
             kernels.medianOfMediansStepOne.at(stepNumber)->setArg(1, deviceMemory.medianOfMediansStepOne);
             delete code;
         }
-        if (!options.subbandDedispersion)
+        if (options.subbandDedispersion)
         {
             code = SNR::getMedianOfMediansOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), SNR::DataOrdering::DMsSamples, outputDataName, observation, 1, options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
         }
@@ -237,7 +237,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
             kernels.medianOfMediansStepTwo.at(stepNumber)->setArg(1, deviceMemory.medianOfMediansStepTwo);
             delete code;
         }
-        if (!options.subbandDedispersion)
+        if (options.subbandDedispersion)
         {
             code = SNR::getMedianOfMediansOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / options.medianStepSize)), SNR::DataOrdering::DMsSamples, outputDataName, observation, 1, observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
         }
@@ -270,7 +270,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
             kernels.medianOfMediansAbsoluteDeviation.at(stepNumber)->setArg(2, deviceMemory.medianOfMediansStepOne);
             delete code;
         }
-        if (!options.subbandDedispersion)
+        if (options.subbandDedispersion)
         {
             code = SNR::getMedianOfMediansAbsoluteDeviationOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())), SNR::DataOrdering::DMsSamples, outputDataName, observation, 1, options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
         }
