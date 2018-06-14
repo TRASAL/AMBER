@@ -166,7 +166,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
             {
                 code = SNR::getMaxOpenCL<outputDataType>(*(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, *step, deviceOptions.padding.at(deviceOptions.deviceName));
             }
-            kernels.max.push_back(isa::OpenCL::compile("getmax_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / *step), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
+            kernels.max.push_back(isa::OpenCL::compile("getMax_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / *step), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
             kernels.max.at(stepNumber)->setArg(0, deviceMemory.integratedData);
             kernels.max.at(stepNumber)->setArg(1, deviceMemory.maxValues);
             kernels.max.at(stepNumber)->setArg(2, deviceMemory.maxIndices);
