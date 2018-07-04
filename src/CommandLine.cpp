@@ -21,6 +21,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
     {
         options.debug = argumentList.getSwitch("-debug");
         options.print = argumentList.getSwitch("-print");
+        options.dataDump = argumentList.getSwitch("-data_dump");
         options.splitBatchesDedispersion = argumentList.getSwitch("-splitbatches_dedispersion");
         options.subbandDedispersion = argumentList.getSwitch("-subband_dedispersion");
         options.compactResults = argumentList.getSwitch("-compact_results");
@@ -197,9 +198,9 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
 
 void usage(const std::string &program)
 {
-    std::cerr << program << " -opencl_platform ... -opencl_device ... -device_name ... [-sync] -padding_file ...";
-    std::cerr << " -zapped_channels ... -integration_steps ... -integration_file ...";
-    std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad] [-debug] [-print]";
+    std::cerr << program << " [-debug] [-print] [-data_dump] -opencl_platform ... -opencl_device ... -device_name ... [-sync]";
+    std::cerr << "  -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ...";
+    std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad]";
     std::cerr << " [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
 #ifdef HAVE_HDF5
     std::cerr << " [-lofar]";
