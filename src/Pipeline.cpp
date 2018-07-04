@@ -854,6 +854,27 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
 #endif // HAVE_PSRDADA
     outputTrigger.close();
     timers.search.stop();
+    if (options.dataDump)
+    {
+        if (options.subbandDedispersion)
+        {
+            hostMemoryDumpFiles.subbandedData.close();
+        }
+        hostMemoryDumpFiles.dedispersedData.close();
+        hostMemoryDumpFiles.integratedData.close();
+        if (options.snrMode == SNRMode::Standard)
+        {
+            hostMemoryDumpFiles.snrData.close();
+            hostMemoryDumpFiles.snrSamplesData.close();
+        }
+        else if (options.snrMode == SNRMode::Momad)
+        {
+            hostMemoryDumpFiles.maxValuesData.close();
+            hostMemoryDumpFiles.maxIndicesData.close();
+            hostMemoryDumpFiles.mediansOfMediansData.close();
+            hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData.close();
+        }
+    }
 }
 
 int inputHandling(const unsigned int batch, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const DataOptions &dataOptions, Timers &timers, HostMemory &hostMemory, const DeviceMemory &deviceMemory)
