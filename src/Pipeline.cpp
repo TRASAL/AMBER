@@ -598,6 +598,19 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                     std::cerr << std::endl;
                     errorDetected = true;
                 }
+                hostMemoryDumpFiles.integratedData << "Integration: " << *step << std::endl;
+                if (options.snrMode == SNRMode::Standard)
+                {
+                    hostMemoryDumpFiles.snrData << "Integration: " << *step << std::endl;
+                    hostMemoryDumpFiles.snrSamplesData << "Integration: " << *step << std::endl;
+                }
+                else if (options.snrMode == SNRMode::Momad)
+                {
+                    hostMemoryDumpFiles.maxValuesData << "Integration: " << *step << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << "Integration: " << *step << std::endl;
+                    hostMemoryDumpFiles.mediansOfMediansData << "Integration: " << *step << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "Integration: " << *step << std::endl;
+                }
                 if (options.subbandDedispersion)
                 {
                     for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
