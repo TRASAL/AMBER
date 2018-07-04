@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
     // Memory
     HostMemory hostMemory{};
     DeviceMemory deviceMemory{};
+    HostMemoryDumpFiles hostMemoryDumpFiles{};
     // OpenCL kernels
     OpenCLRunTime openclRunTime{};
     KernelConfigurations kernelConfigurations{};
@@ -172,7 +173,7 @@ int main(int argc, char *argv[])
     generateOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
 
     // Search loop
-    pipeline(openclRunTime, observation, options, deviceOptions, dataOptions, timers, kernels, kernelConfigurations, kernelRunTimeConfigurations, hostMemory, deviceMemory);
+    pipeline(openclRunTime, observation, options, deviceOptions, dataOptions, timers, kernels, kernelConfigurations, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles);
 
     // Store performance statistics before shutting down
     std::ofstream outputStats;
