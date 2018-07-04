@@ -1189,67 +1189,6 @@ int copyInputToDevice(const unsigned int batch, const OpenCLRunTime &openclRunTi
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.dispersedData, CL_FALSE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast<void *>(hostMemory.dispersedData.data()));
             }
         }
-        if (options.debug)
-        {
-            // TODO: implement or remove splitBatches mode
-            std::cerr << "dispersedData" << std::endl;
-            if (options.subbandDedispersion)
-            {
-                if (inputBits >= 8)
-                {
-                    for (unsigned int beam = 0; beam < observation.getNrBeams(); beam++)
-                    {
-                        std::cerr << "Beam: " << beam << std::endl;
-                        for (unsigned int channel = 0; channel < observation.getNrChannels(); channel++)
-                        {
-                            for (unsigned int sample = 0;
-                                 sample < observation.getNrSamplesPerDispersedBatch(
-                                              true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType));
-                                 sample++)
-                            {
-                                std::cerr << static_cast<float>(hostMemory.dispersedData.at(
-                                                 (beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + sample))
-                                          << " ";
-                            }
-                            std::cerr << std::endl;
-                        }
-                        std::cerr << std::endl;
-                    }
-                }
-                else
-                {
-                    // TODO: add support for input data less than 8 bit
-                }
-            }
-            else
-            {
-                if (inputBits >= 8)
-                {
-                    for (unsigned int beam = 0; beam < observation.getNrBeams(); beam++)
-                    {
-                        std::cerr << "Beam: " << beam << std::endl;
-                        for (unsigned int channel = 0; channel < observation.getNrChannels(); channel++)
-                        {
-                            for (unsigned int sample = 0;
-                                 sample < observation.getNrSamplesPerDispersedBatch(
-                                              false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType));
-                                 sample++)
-                            {
-                                std::cerr << static_cast<float>(hostMemory.dispersedData.at(
-                                                 (beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + sample))
-                                          << " ";
-                            }
-                            std::cerr << std::endl;
-                        }
-                        std::cerr << std::endl;
-                    }
-                }
-                else
-                {
-                    // TODO: add support for input data less than 8 bit
-                }
-            }
-        }
     }
     catch (cl::Error &err)
     {
