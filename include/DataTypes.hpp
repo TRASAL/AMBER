@@ -131,7 +131,7 @@ struct HostMemory
     // Index of max sample (MOMAD MODE)
     std::vector<unsigned int> maxIndices;
     // Medians of medians (MOMAD mode)
-    std::vector<outputDataType> mediansOfMedians;
+    std::vector<outputDataType> medianOfMedians;
     // Medians of medians absolute deviation (MOMAD mode)
     std::vector<outputDataType> medianOfMediansAbsoluteDeviation;
     // Shifts single step dedispersion
@@ -179,7 +179,7 @@ struct HostMemoryDumpFiles
     /**
      ** @brief File where to dump medians of medians (MOMAD mode) data.
      */
-    std::ofstream mediansOfMediansData;
+    std::ofstream medianOfMediansData;
     /**
      ** @brief File where to dump median of medians absolute deviation (MOMAD mode) data.
      */
