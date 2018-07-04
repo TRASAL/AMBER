@@ -39,6 +39,11 @@ struct Options
     SNRMode snrMode;
     // Step size for median of medians (MOMAD mode)
     unsigned int medianStepSize = 5;
+    /**
+     ** @brief Data dumping mode.
+     ** In this mode, all data are dumped to disk. Only intended for debug purpose.
+     */
+    bool dataDump = false;
 };
 
 struct DeviceOptions
