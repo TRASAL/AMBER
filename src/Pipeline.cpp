@@ -97,7 +97,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
             hostMemoryDumpFiles.integratedData << "Batch: " << batch << std::endl;
             if (options.snrMode == SNRMode::Standard)
             {
-                hostMemoryDumpFiles << "Batch: " << batch << std::endl;
+                hostMemoryDumpFiles.snrData << "Batch: " << batch << std::endl;
                 hostMemoryDumpFiles.snrSamplesData << "Batch: " << batch << std::endl;
             }
             else if (options.snrMode == SNRMode::Momad)
@@ -490,7 +490,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
                             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << " ";
                         }
-                        F << std::endl;
+                        hostMemoryDumpFiles.maxValuesData << std::endl;
                         hostMemoryDumpFiles.maxIndicesData << std::endl;
                         hostMemoryDumpFiles.mediansOfMediansData << std::endl;
                         hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl;
