@@ -28,6 +28,17 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
         if (options.subbandDedispersion)
         {
             hostMemoryDumpFiles.subbandedData.open(hostMemoryDumpFiles.dumpFilesPrefix + "subbandedData.dump");
+            if (options.snrMode == SNRMode::Momad)
+            {
+                hostMemory.medianOfMediansStepOne.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
+            }
+        }
+        else
+        {
+            if (options.snrMode == SNRMode::Momad)
+            {
+                hostMemory.medianOfMediansStepOne.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
+            }
         }
         hostMemoryDumpFiles.dedispersedData.open(hostMemoryDumpFiles.dumpFilesPrefix + "dedispersedData.dump");
         hostMemoryDumpFiles.integratedData.open(hostMemoryDumpFiles.dumpFilesPrefix + "integratedData.dump");
@@ -38,7 +49,6 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
         }
         else if (options.snrMode == SNRMode::Momad)
         {
-            hostMemory.medianOfMediansStepOne.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
             hostMemoryDumpFiles.maxValuesData.open(hostMemoryDumpFiles.dumpFilesPrefix + "maxValuesData.dump");
             hostMemoryDumpFiles.maxIndicesData.open(hostMemoryDumpFiles.dumpFilesPrefix + "maxIndicesData.dump");
             hostMemoryDumpFiles.medianOfMediansStepOneData.open(hostMemoryDumpFiles.dumpFilesPrefix + "medianOfMediansStepOneData.dump");
