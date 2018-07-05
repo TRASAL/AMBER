@@ -27,21 +27,21 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
     {
         if (options.subbandDedispersion)
         {
-            hostMemoryDumpFiles.subbandedData.open("subbandedData.dump");
+            hostMemoryDumpFiles.subbandedData.open(hostMemoryDumpFiles.dumpFilesPrefix + "subbandedData.dump");
         }
-        hostMemoryDumpFiles.dedispersedData.open("dedispersedData.dump");
-        hostMemoryDumpFiles.integratedData.open("integratedData.dump");
+        hostMemoryDumpFiles.dedispersedData.open(hostMemoryDumpFiles.dumpFilesPrefix + "dedispersedData.dump");
+        hostMemoryDumpFiles.integratedData.open(hostMemoryDumpFiles.dumpFilesPrefix + "integratedData.dump");
         if (options.snrMode == SNRMode::Standard)
         {
-            hostMemoryDumpFiles.snrData.open("snrData.dump");
-            hostMemoryDumpFiles.snrSamplesData.open("snrSamplesData.dump");
+            hostMemoryDumpFiles.snrData.open(hostMemoryDumpFiles.dumpFilesPrefix + "snrData.dump");
+            hostMemoryDumpFiles.snrSamplesData.open(hostMemoryDumpFiles.dumpFilesPrefix + "snrSamplesData.dump");
         }
         else if (options.snrMode == SNRMode::Momad)
         {
-            hostMemoryDumpFiles.maxValuesData.open("maxValuesData.dump");
-            hostMemoryDumpFiles.maxIndicesData.open("maxIndicesData.dump");
-            hostMemoryDumpFiles.medianOfMediansData.open("medianOfMediansData.dump");
-            hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData.open("medianOfMediansAbsoluteDeviation.dump");
+            hostMemoryDumpFiles.maxValuesData.open(hostMemoryDumpFiles.dumpFilesPrefix + "maxValuesData.dump");
+            hostMemoryDumpFiles.maxIndicesData.open(hostMemoryDumpFiles.dumpFilesPrefix + "maxIndicesData.dump");
+            hostMemoryDumpFiles.medianOfMediansData.open(hostMemoryDumpFiles.dumpFilesPrefix + "medianOfMediansData.dump");
+            hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData.open(hostMemoryDumpFiles.dumpFilesPrefix + "medianOfMediansAbsoluteDeviation.dump");
         }
     }
     timers.search.start();
