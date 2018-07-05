@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     isa::utils::ArgumentList args(argc, argv);
     try
     {
-        processCommandLineOptions(args, options, deviceOptions, dataOptions, kernelConfigurations, generatorOptions, observation);
+        processCommandLineOptions(args, options, deviceOptions, dataOptions, hostMemoryDumpFiles, kernelConfigurations, generatorOptions, observation);
     }
     catch (std::exception &err)
     {
