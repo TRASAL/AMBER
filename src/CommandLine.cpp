@@ -15,13 +15,17 @@
 
 #include <CommandLine.hpp>
 
-void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &options, DeviceOptions &deviceOptions, DataOptions &dataOptions, KernelConfigurations &kernelConfigurations, GeneratorOptions &generatorOptions, AstroData::Observation &observation)
+void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &options, DeviceOptions &deviceOptions, DataOptions &dataOptions, HostMemoryDumpFiles & hostMemoryDumpFiles, KernelConfigurations &kernelConfigurations, GeneratorOptions &generatorOptions, AstroData::Observation &observation)
 {
     try
     {
         options.debug = argumentList.getSwitch("-debug");
         options.print = argumentList.getSwitch("-print");
         options.dataDump = argumentList.getSwitch("-data_dump");
+        if (options.dataDump)
+        {
+            hostMemoryDumpFiles.dumpFilesPrefix = argumentList.getSwitchArgument<std::string>("-dump_prefix");
+        }
         options.splitBatchesDedispersion = argumentList.getSwitch("-splitbatches_dedispersion");
         options.subbandDedispersion = argumentList.getSwitch("-subband_dedispersion");
         options.compactResults = argumentList.getSwitch("-compact_results");
@@ -209,6 +213,7 @@ void usage(const std::string &program)
     std::cerr << " [-dada]";
 #endif // HAVE_PSRDADA
     std::cerr << std::endl;
+    std::cerr << "\tData dump: -dump_prefix ..." << std::endl;
     std::cerr << "\tDedispersion: -dedispersion_file ..." << std::endl;
     std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_stepone_file ...";
     std::cerr << "-dedispersion_steptwo_file ... -subbands ... -subbanding_dms ... -subbanding_dm_first ...";

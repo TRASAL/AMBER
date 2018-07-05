@@ -18,6 +18,6 @@
 #pragma once
 
 // Function to process the command line options
-void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions, KernelConfigurations & kernelConfigurations, GeneratorOptions & generatorOptions, AstroData::Observation & observation);
+void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions, HostMemoryDumpFiles & hostMemoryDumpFiles, KernelConfigurations & kernelConfigurations, GeneratorOptions & generatorOptions, AstroData::Observation & observation);
 // Function to print the usage message
 void usage(const std::string & program);
