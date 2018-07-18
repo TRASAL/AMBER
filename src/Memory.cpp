@@ -65,16 +65,6 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
     if (!options.subbandDedispersion)
     {
         hostMemory.shiftsSingleStep = Dedispersion::getShifts(observation, deviceOptions.padding.at(deviceOptions.deviceName));
-        if (options.debug)
-        {
-            std::cerr << "shiftsSingleStep" << std::endl;
-            for (unsigned int channel = 0; channel < observation.getNrChannels(); channel++)
-            {
-                std::cerr << hostMemory.shiftsSingleStep->at(channel) << " ";
-            }
-            std::cerr << std::endl
-                      << std::endl;
-        }
         observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(hostMemory.shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
         observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch()) / observation.getNrSamplesPerBatch())));
         if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
@@ -130,22 +120,6 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
     {
         hostMemory.shiftsStepOne = Dedispersion::getShifts(observation, deviceOptions.padding.at(deviceOptions.deviceName));
         hostMemory.shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, deviceOptions.padding.at(deviceOptions.deviceName));
-        if (options.debug)
-        {
-            std::cerr << "shiftsStepOne" << std::endl;
-            for (unsigned int channel = 0; channel < observation.getNrChannels(); channel++)
-            {
-                std::cerr << hostMemory.shiftsStepOne->at(channel) << " ";
-            }
-            std::cerr << std::endl
-                      << "shiftsStepTwo" << std::endl;
-            for (unsigned int subband = 0; subband < observation.getNrSubbands(); subband++)
-            {
-                std::cerr << hostMemory.shiftsStepTwo->at(subband) << " ";
-            }
-            std::cerr << std::endl
-                      << std::endl;
-        }
         observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(hostMemory.shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
         observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch(true) + static_cast<unsigned int>(hostMemory.shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))), true);
         observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch(true)) / observation.getNrSamplesPerBatch())), true);
@@ -189,7 +163,7 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
         if (options.snrMode == SNRMode::Standard)
         {
             hostMemory.snrData.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float)));
-        hostMemory.snrSamples.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
+            hostMemory.snrSamples.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
         }
         else if (options.snrMode == SNRMode::Momad)
         {
