@@ -703,7 +703,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             std::advance(step, stepNumber);
             if (!options.subbandDedispersion)
             {
-                global[0] = kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step / options.medianStepSize)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / *step / options.medianStepSize);
+                global[0] = kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step / options.medianStepSize)->getNrThreadsD0();
                 global[1] = observation.getNrDMs();
                 global[2] = observation.getNrSynthesizedBeams();
                 kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
@@ -722,7 +722,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             }
             else
             {
-                global[0] = kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step / options.medianStepSize)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / *step / options.medianStepSize);
+                global[0] = kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step / options.medianStepSize)->getNrThreadsD0();
                 global[1] = observation.getNrDMs(true) * observation.getNrDMs();
                 global[2] = observation.getNrSynthesizedBeams();
                 kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
