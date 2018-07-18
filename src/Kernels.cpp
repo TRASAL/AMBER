@@ -326,8 +326,8 @@ void generateDedispersionOpenCLRunTimeConfigurations(const AstroData::Observatio
         kernelRunTimeConfigurations.dedispersionSingleStepLocal = cl::NDRange(local[0], local[1], local[2]);
         if (options.debug)
         {
-            std::cout << "DedispersionSingleStep" << " ";
-            std::cout << kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->print() << std::endl;
+            std::cout << "DedispersionSingleStep" << std::endl;
+            std::cout << "\tConfiguration: " << kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->print() << std::endl;
             std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
             std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
             std::cout << std::endl;
@@ -345,8 +345,8 @@ void generateDedispersionOpenCLRunTimeConfigurations(const AstroData::Observatio
         kernelRunTimeConfigurations.dedispersionStepOneLocal = cl::NDRange(local[0], local[1], local[2]);
         if (options.debug)
         {
-            std::cout << "DedispersionStepOne" << " ";
-            std::cout << kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->print() << std::endl;
+            std::cout << "DedispersionStepOne" << std::endl;
+            std::cout << "\tConfiguration: " << kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->print() << std::endl;
             std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
             std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
             std::cout << std::endl;
@@ -361,8 +361,8 @@ void generateDedispersionOpenCLRunTimeConfigurations(const AstroData::Observatio
         kernelRunTimeConfigurations.dedispersionStepTwoLocal = cl::NDRange(local[0], local[1], local[2]);
         if (options.debug)
         {
-            std::cout << "DedispersionStepTwo" << " ";
-            std::cout << kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->print() << std::endl;
+            std::cout << "DedispersionStepTwo" << std::endl;
+            std::cout << "\tConfiguration: " << kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->print() << std::endl;
             std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
             std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
             std::cout << std::endl;
@@ -401,8 +401,8 @@ void generateIntegrationOpenCLRunTimeConfigurations(const AstroData::Observation
             kernelRunTimeConfigurations.integrationLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "Integration (" + std::to_string(*step) + ")" << " ";
-                std::cout << kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(*step)->print() << std::endl;
+                std::cout << "Integration (" + std::to_string(*step) + ")" << std::endl;
+                std::cout << "\tConfiguration: " << kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(*step)->print() << std::endl;
                 std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                 std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
@@ -420,8 +420,8 @@ void generateIntegrationOpenCLRunTimeConfigurations(const AstroData::Observation
             kernelRunTimeConfigurations.integrationLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "Integration (" + std::to_string(*step) + ")" << " ";
-                std::cout << kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->print() << std::endl;
+                std::cout << "Integration (" + std::to_string(*step) + ")" << std::endl;
+                std::cout << "\tConfiguration: " << kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->print() << std::endl;
                 std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                 std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
@@ -458,8 +458,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             kernelRunTimeConfigurations.snrLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << " ";
-                std::cout << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << "\tConfiguration: " << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
                 std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                 std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
@@ -477,8 +477,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             kernelRunTimeConfigurations.snrLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << " ";
-                std::cout << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << "\tConfiguration: " << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
                 std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                 std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
@@ -501,8 +501,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
                 kernelRunTimeConfigurations.snrLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
                 if (options.debug)
                 {
-                    std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << " ";
-                    std::cout << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << "\tConfiguration: " << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
                     std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                     std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                     std::cout << std::endl;
@@ -520,8 +520,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
                 kernelRunTimeConfigurations.snrLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
                 if (options.debug)
                 {
-                    std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << " ";
-                    std::cout << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << "SNR (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << "\tConfiguration: " << kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
                     std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                     std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                     std::cout << std::endl;
@@ -546,8 +546,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             kernelRunTimeConfigurations.maxLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << " ";
-                std::cout << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
                 std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                 std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
@@ -565,8 +565,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             kernelRunTimeConfigurations.maxLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << " ";
-                std::cout << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
                 std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                 std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
@@ -589,8 +589,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
                 kernelRunTimeConfigurations.maxLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
                 if (options.debug)
                 {
-                    std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << " ";
-                    std::cout << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
                     std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                     std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                     std::cout << std::endl;
@@ -608,8 +608,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
                 kernelRunTimeConfigurations.maxLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
                 if (options.debug)
                 {
-                    std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << " ";
-                    std::cout << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
                     std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                     std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                     std::cout << std::endl;
@@ -631,8 +631,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             kernelRunTimeConfigurations.medianOfMediansStepOneLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "Median of medians first step (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << " ";
-                std::cout << kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << "Median of medians first step (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
                 std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                 std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
@@ -650,8 +650,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             kernelRunTimeConfigurations.medianOfMediansStepOneLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "Median of medians first step (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << " ";
-                std::cout << kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << "Median of medians first step (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
                 std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                 std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
@@ -674,8 +674,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
                 kernelRunTimeConfigurations.medianOfMediansStepOneLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
                 if (options.debug)
                 {
-                    std::cout << "Median of medians first step (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << " ";
-                    std::cout << kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << "Median of medians first step (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
                     std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                     std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                     std::cout << std::endl;
@@ -693,8 +693,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
                 kernelRunTimeConfigurations.medianOfMediansStepOneLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
                 if (options.debug)
                 {
-                    std::cout << "Median of medians first step (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << " ";
-                    std::cout << kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << "Median of medians first step (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
                     std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                     std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                     std::cout << std::endl;
@@ -716,8 +716,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             kernelRunTimeConfigurations.medianOfMediansStepTwoLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "Median of medians second step (" + std::to_string(observation.getNrSamplesPerBatch() / options.medianStepSize) + ")" << " ";
-                std::cout << kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << "Median of medians second step (" + std::to_string(observation.getNrSamplesPerBatch() / options.medianStepSize) + ")" << std::endl;
+                std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
                 std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                 std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
@@ -735,8 +735,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             kernelRunTimeConfigurations.medianOfMediansStepTwoLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "Median of medians second step (" + std::to_string(observation.getNrSamplesPerBatch() / options.medianStepSize) + ")" << " ";
-                std::cout << kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / options.medianStepSize)->print() << std::endl;
+                std::cout << "Median of medians second step (" + std::to_string(observation.getNrSamplesPerBatch() / options.medianStepSize) + ")" << std::endl;
+                std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / options.medianStepSize)->print() << std::endl;
                 std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                 std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
@@ -759,8 +759,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
                 kernelRunTimeConfigurations.medianOfMediansStepTwoLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
                 if (options.debug)
                 {
-                    std::cout << "Median of medians second step (" + std::to_string(observation.getNrSamplesPerBatch() / *step / options.medianStepSize) + ")" << " ";
-                    std::cout << kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step / options.medianStepSize)->print() << std::endl;
+                    std::cout << "Median of medians second step (" + std::to_string(observation.getNrSamplesPerBatch() / *step / options.medianStepSize) + ")" << std::endl;
+                    std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step / options.medianStepSize)->print() << std::endl;
                     std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                     std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                     std::cout << std::endl;
@@ -778,8 +778,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
                 kernelRunTimeConfigurations.medianOfMediansStepTwoLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
                 if (options.debug)
                 {
-                    std::cout << "Median of medians second step (" + std::to_string(observation.getNrSamplesPerBatch() / *step / options.medianStepSize) + ")" << " ";
-                    std::cout << kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step / options.medianStepSize)->print() << std::endl;
+                    std::cout << "Median of medians second step (" + std::to_string(observation.getNrSamplesPerBatch() / *step / options.medianStepSize) + ")" << std::endl;
+                    std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step / options.medianStepSize)->print() << std::endl;
                     std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                     std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                     std::cout << std::endl;
@@ -801,8 +801,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << " ";
-                std::cout << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
                 std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                 std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
@@ -820,8 +820,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << " ";
-                std::cout << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
+                std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch()) + ")" << std::endl;
+                std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->print() << std::endl;
                 std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                 std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
@@ -844,8 +844,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
                 kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
                 if (options.debug)
                 {
-                    std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << " ";
-                    std::cout << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
                     std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                     std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                     std::cout << std::endl;
@@ -863,8 +863,8 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
                 kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
                 if (options.debug)
                 {
-                    std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << " ";
-                    std::cout << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
+                    std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / *step) + ")" << std::endl;
+                    std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / *step)->print() << std::endl;
                     std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                     std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                     std::cout << std::endl;
