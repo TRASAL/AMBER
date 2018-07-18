@@ -311,33 +311,60 @@ void generateDedispersionOpenCLRunTimeConfigurations(const AstroData::Observatio
                                                      const HostMemory &hostMemory,
                                                      KernelRunTimeConfigurations &kernelRunTimeConfigurations)
 {
+    unsigned int global[3] = {0, 0, 0};
+    unsigned int local[3] = {0, 0, 0};
+
     if (!options.subbandDedispersion)
     {
-        kernelRunTimeConfigurations.dedispersionSingleStepGlobal = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0()), observation.getNrDMs() / kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1(), observation.getNrSynthesizedBeams());
-        kernelRunTimeConfigurations.dedispersionSingleStepLocal = cl::NDRange(kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0(), kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD1(), 1);
+        global[0] = isa::utils::pad(observation.getNrSamplesPerBatch() / kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0());
+        global[1] = observation.getNrDMs() / kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1();
+        global[2] = observation.getNrSynthesizedBeams();
+        kernelRunTimeConfigurations.dedispersionSingleStepGlobal = cl::NDRange(global[0], global[1], global[2]);
+        local[0] = kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0();
+        local[1] = kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD1();
+        local[2] = 1;
+        kernelRunTimeConfigurations.dedispersionSingleStepLocal = cl::NDRange(local[0], local[1], local[2]);
         if (options.debug)
         {
-            std::cout << "DedispersionSingleStep" << std::endl;
+            std::cout << "DedispersionSingleStep" << " ";
             std::cout << kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->print() << std::endl;
+            std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+            std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
             std::cout << std::endl;
         }
     }
     else
     {
-        kernelRunTimeConfigurations.dedispersionStepOneGlobal = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch(true) / kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrItemsD0(), kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD0()), observation.getNrDMs(true) / kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrItemsD1(), observation.getNrBeams() * observation.getNrSubbands());
-        kernelRunTimeConfigurations.dedispersionStepOneLocal = cl::NDRange(kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD0(), kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD1(), 1);
+        global[0] = isa::utils::pad(observation.getNrSamplesPerBatch(true) / kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrItemsD0(), kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD0());
+        global[1] = observation.getNrDMs(true) / kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrItemsD1();
+        global[2] = observation.getNrBeams() * observation.getNrSubbands();
+        kernelRunTimeConfigurations.dedispersionStepOneGlobal = cl::NDRange(global[0], global[1], global[2]);
+        local[0] = kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD0();
+        local[1] = kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD1();
+        local[2] = 1;
+        kernelRunTimeConfigurations.dedispersionStepOneLocal = cl::NDRange(local[0], local[1], local[2]);
         if (options.debug)
         {
-            std::cout << "DedispersionStepOne" << std::endl;
+            std::cout << "DedispersionStepOne" << " ";
             std::cout << kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->print() << std::endl;
+            std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+            std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
             std::cout << std::endl;
         }
-        kernelRunTimeConfigurations.dedispersionStepTwoGlobal = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch(true) / kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0()), observation.getNrDMs() / kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1(), observation.getNrSynthesizedBeams() * observation.getNrDMs(true));
-        kernelRunTimeConfigurations.dedispersionStepTwoLocal = cl::NDRange(kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0(), kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD1(), 1);
+        global[0] = isa::utils::pad(observation.getNrSamplesPerBatch(true) / kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0());
+        global[1] = observation.getNrDMs() / kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1();
+        global[2] = observation.getNrSynthesizedBeams() * observation.getNrDMs(true);
+        kernelRunTimeConfigurations.dedispersionStepTwoGlobal = cl::NDRange(global[0], global[1], global[2]);
+        local[0] = kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0();
+        local[1] = kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD1();
+        local[2] = 1;
+        kernelRunTimeConfigurations.dedispersionStepTwoLocal = cl::NDRange(local[0], local[1], local[2]);
         if (options.debug)
         {
-            std::cout << "DedispersionStepTwo" << std::endl;
+            std::cout << "DedispersionStepTwo" << " ";
             std::cout << kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->print() << std::endl;
+            std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+            std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
             std::cout << std::endl;
         }
     }
@@ -352,6 +379,9 @@ void generateIntegrationOpenCLRunTimeConfigurations(const AstroData::Observation
                                                     const HostMemory &hostMemory,
                                                     KernelRunTimeConfigurations &kernelRunTimeConfigurations)
 {
+    unsigned int global[3] = {0, 0, 0};
+    unsigned int local[3] = {0, 0, 0};
+
     kernelRunTimeConfigurations.integrationGlobal.resize(hostMemory.integrationSteps.size());
     kernelRunTimeConfigurations.integrationLocal.resize(hostMemory.integrationSteps.size());
     for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
@@ -361,23 +391,39 @@ void generateIntegrationOpenCLRunTimeConfigurations(const AstroData::Observation
         std::advance(step, stepNumber);
         if (!options.subbandDedispersion)
         {
-            kernelRunTimeConfigurations.integrationGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(*step)->getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / *step) / kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(*step)->getNrItemsD0()), observation.getNrDMs(), observation.getNrSynthesizedBeams());
-            kernelRunTimeConfigurations.integrationLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(*step)->getNrThreadsD0(), 1, 1);
+            global[0] = kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(*step)->getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / *step) / kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(*step)->getNrItemsD0());
+            global[1] = observation.getNrDMs();
+            global[2] = observation.getNrSynthesizedBeams();
+            kernelRunTimeConfigurations.integrationGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
+            local[0] = kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(*step)->getNrThreadsD0();
+            local[1] = 1;
+            local[2] = 1;
+            kernelRunTimeConfigurations.integrationLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "integration (" + std::to_string(*step) + ")" << std::endl;
+                std::cout << "Integration (" + std::to_string(*step) + ")" << " ";
                 std::cout << kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(*step)->print() << std::endl;
+                std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
             }
         }
         else
         {
-            kernelRunTimeConfigurations.integrationGlobal.at(stepNumber) = cl::NDRange(kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / *step) / kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrItemsD0()), observation.getNrDMs(true) * observation.getNrDMs(), observation.getNrSynthesizedBeams());
-            kernelRunTimeConfigurations.integrationLocal.at(stepNumber) = cl::NDRange(kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrThreadsD0(), 1, 1);
+            global[0] = kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / *step) / kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrItemsD0());
+            global[1] = observation.getNrDMs(true) * observation.getNrDMs();
+            global[2] = observation.getNrSynthesizedBeams();
+            kernelRunTimeConfigurations.integrationGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
+            local[0] = kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrThreadsD0();
+            local[1] = 1;
+            local[2] = 1;
+            kernelRunTimeConfigurations.integrationLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
             if (options.debug)
             {
-                std::cout << "integration (" + std::to_string(*step) + ")" << std::endl;
+                std::cout << "Integration (" + std::to_string(*step) + ")" << " ";
                 std::cout << kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->print() << std::endl;
+                std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                 std::cout << std::endl;
             }
         }
