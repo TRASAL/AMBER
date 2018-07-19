@@ -412,12 +412,6 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                     openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepOne[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepOneGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.medianOfMediansStepOneLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
                     syncPoint.wait();
                     timers.medianOfMediansStepOne.stop();
-                    // Median of medians second step
-                    timers.medianOfMediansStepTwo.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.medianOfMediansStepTwo.stop();
-                    // Trasfer of medians of medians to host
                     if (options.dataDump)
                     {
                         try
@@ -432,6 +426,12 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                             errorDetected = true;
                         }
                     }
+                    // Median of medians second step
+                    timers.medianOfMediansStepTwo.start();
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
+                    syncPoint.wait();
+                    timers.medianOfMediansStepTwo.stop();
+                    // Trasfer of medians of medians to host
                     timers.outputCopy.start();
                     openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.medianOfMedians.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMedians.data()), nullptr, &syncPoint);
                     syncPoint.wait();
