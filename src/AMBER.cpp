@@ -54,6 +54,20 @@ int main(int argc, char *argv[])
     // Load or generate input data
     try
     {
+        hostMemory.input.resize(observation.getNrBeams());
+        if (dataOptions.dataLOFAR || dataOptions.dataSIGPROC || dataOptions.dataPSRDADA)
+        {
+            loadInput(observation, deviceOptions, dataOptions, hostMemory, timers);
+        }
+        else
+        {
+            for (unsigned int beam = 0; beam < observation.getNrBeams(); beam++)
+            {
+                // TODO: if there are multiple synthesized beams, the generated data should take this into account
+                hostMemory.input.at(beam) = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
+                AstroData::generateSinglePulse(generatorOptions.width, generatorOptions.DM, observation, deviceOptions.padding.at(deviceOptions.deviceName), *(hostMemory.input.at(beam)), inputBits, generatorOptions.random);
+            }
+        }
         try
         {
             hostMemory.zappedChannels.resize(observation.getNrChannels(deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
@@ -72,20 +86,6 @@ int main(int argc, char *argv[])
         {
             std::cerr << err.what() << std::endl;
             return 1;
-        }
-        hostMemory.input.resize(observation.getNrBeams());
-        if (dataOptions.dataLOFAR || dataOptions.dataSIGPROC || dataOptions.dataPSRDADA)
-        {
-            loadInput(observation, deviceOptions, dataOptions, hostMemory, timers);
-        }
-        else
-        {
-            for (unsigned int beam = 0; beam < observation.getNrBeams(); beam++)
-            {
-                // TODO: if there are multiple synthesized beams, the generated data should take this into account
-                hostMemory.input.at(beam) = new std::vector<std::vector<inputDataType> *>(observation.getNrBatches());
-                AstroData::generateSinglePulse(generatorOptions.width, generatorOptions.DM, observation, deviceOptions.padding.at(deviceOptions.deviceName), *(hostMemory.input.at(beam)), inputBits, generatorOptions.random);
-            }
         }
     }
     catch (std::exception &err)
