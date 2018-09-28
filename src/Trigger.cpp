@@ -106,7 +106,7 @@ void compact(const AstroData::Observation &observation, const TriggeredEvents &t
             CompactedEvent finalEvent;
             unsigned int window = 0;
 
-            while ((event->DM + window) == (event + window)->DM)
+            while ( (event->DM + window) == (event + window)->DM && ((event + window) != beamEvents->end()) )
             {
                 if ((event + window)->SNR > finalEvent.SNR)
                 {
