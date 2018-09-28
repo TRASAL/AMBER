@@ -46,7 +46,7 @@ void trigger(const Options &options, const unsigned int padding, const unsigned 
                 maxIndex = hostMemory.maxIndices.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm);
             }
 
-            if (maxSNR >= options.threshold)
+            if ( (std::isnormal(maxSNR)) && (maxSNR >= options.threshold) )
             {
                 TriggeredEvent event;
                 event.beam = beam;
