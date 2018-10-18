@@ -48,6 +48,14 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             // Default option right now is to use the standard mode.
             options.snrMode = SNRMode::Standard;
         }
+        try
+        {
+            options.downsamplingFactor = argumentList.getSwitchArgument<unsigned int>("-downsampling");
+        }
+        catch ( isa::utils::SwitchNotFound &err )
+        {
+            options.downsamplingFactor = 1;
+        }
         dataOptions.dataLOFAR = argumentList.getSwitch("-lofar");
 #ifndef HAVE_HDF5
         if (dataOptions.dataLOFAR)
@@ -204,7 +212,7 @@ void usage(const std::string &program)
 {
     std::cerr << program << " [-debug] [-print] [-data_dump] -opencl_platform ... -opencl_device ... -device_name ... [-sync]";
     std::cerr << "  -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ...";
-    std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad]";
+    std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad] [-downsampling ...]";
     std::cerr << " [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
 #ifdef HAVE_HDF5
     std::cerr << " [-lofar]";
