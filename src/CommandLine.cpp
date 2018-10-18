@@ -54,6 +54,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         }
         catch ( isa::utils::SwitchNotFound &err )
         {
+            // Default option is to not downsample input data.
             options.downsamplingFactor = 1;
         }
         dataOptions.dataLOFAR = argumentList.getSwitch("-lofar");
