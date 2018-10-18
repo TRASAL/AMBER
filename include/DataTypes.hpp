@@ -44,6 +44,11 @@ struct Options
      ** In this mode, all data are dumped to disk. Only intended for debug purpose.
      */
     bool dataDump = false;
+    /**
+     ** @brief Downsampling factor
+     ** Dispersed input data will be downsampled according to this factor. If equal to 1 downsampling does not take place.
+     */
+    unsigned int downsamplingFactor = 1;
 };
 
 struct DeviceOptions
