@@ -53,6 +53,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             try
             {
                 options.downsamplingFactor = argumentList.getSwitchArgument<unsigned int>("-downsampling");
+                Integration::readTunedIntegrationConf(kernelConfigurations.downsamplingParameters, argumentList.getSwitchArgument<std::string>("-downsampling_configuration"));
             }
             catch ( isa::utils::SwitchNotFound &err )
             {
@@ -230,6 +231,7 @@ void usage(const std::string &program)
 #endif // HAVE_PSRDADA
     std::cerr << std::endl;
     std::cerr << "\tData dump: -dump_prefix ..." << std::endl;
+    std::cerr << "\tDownsampling: -downsampling_configuration ..." << std::endl;
     std::cerr << "\tDedispersion: -dedispersion_file ..." << std::endl;
     std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_stepone_file ...";
     std::cerr << "-dedispersion_steptwo_file ... -subbands ... -subbanding_dms ... -subbanding_dm_first ...";
