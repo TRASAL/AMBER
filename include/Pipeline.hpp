@@ -63,3 +63,8 @@ int inputHandling(const unsigned int batch, const AstroData::Observation &observ
  * @return
  */
 int copyInputToDevice(const unsigned int batch, const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, HostMemory &hostMemory, const DeviceMemory &deviceMemory);
+
+/**
+ * @brief Dedisperse data.
+ */
+int dedispersion(const unsigned int batch, cl::Event &syncPoint, const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles);

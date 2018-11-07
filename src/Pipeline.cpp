@@ -98,7 +98,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
             // Not enough batches in the buffer to start the search
             continue;
         }
-
+        // Prepare data dump files
         if (options.dataDump)
         {
             if (options.subbandDedispersion)
@@ -121,190 +121,11 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                 hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Batch: " << batch << std::endl;
             }
         }
-        // Dedispersion
-        if (options.subbandDedispersion)
+        // Dedispersion step
+        status = dedispersion(batch, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles);
+        if (status != 0)
         {
-            if (options.splitBatchesDedispersion)
-            {
-                // TODO: implement or remove splitBatches mode
-            }
-            if (deviceOptions.synchronized)
-            {
-                try
-                {
-                    timers.dedispersionStepOne.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.dedispersionStepOne.stop();
-                }
-                catch (cl::Error &err)
-                {
-                    std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
-                    std::cerr << err.err() << std::endl;
-                    errorDetected = true;
-                }
-                try
-                {
-                    timers.dedispersionStepTwo.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.dedispersionStepTwo.stop();
-                }
-                catch (cl::Error &err)
-                {
-                    std::cerr << "Dedispersion Step Two error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
-                    std::cerr << err.err() << std::endl;
-                    errorDetected = true;
-                }
-            }
-            else
-            {
-                try
-                {
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, nullptr, nullptr);
-                }
-                catch (cl::Error &err)
-                {
-                    std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
-                    std::cerr << err.err() << std::endl;
-                    errorDetected = true;
-                }
-                try
-                {
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, nullptr, nullptr);
-                }
-                catch (cl::Error &err)
-                {
-                    std::cerr << "Dedispersion Step Two error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
-                    std::cerr << err.err() << std::endl;
-                    errorDetected = true;
-                }
-            }
-        }
-        else
-        {
-            try
-            {
-                if (options.splitBatchesDedispersion)
-                {
-                    // TODO: implement or remove splitBatches mode
-                }
-                if (deviceOptions.synchronized)
-                {
-                    timers.dedispersionSingleStep.start();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal, nullptr, &syncPoint);
-                    syncPoint.wait();
-                    timers.dedispersionSingleStep.stop();
-                }
-                else
-                {
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal);
-                }
-            }
-            catch (cl::Error &err)
-            {
-                std::cerr << "Dedispersion error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err();
-                std::cerr << std::endl;
-                errorDetected = true;
-            }
-        }
-        if (options.dataDump)
-        {
-            if (options.subbandDedispersion)
-            {
-                try
-                {
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.subbandedData, CL_TRUE, 0, hostMemory.subbandedData.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.subbandedData.data()), nullptr, &syncPoint);
-                    syncPoint.wait();
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0, hostMemory.dedispersedData.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.dedispersedData.data()), nullptr, &syncPoint);
-                    syncPoint.wait();
-                    for (unsigned int beam = 0; beam < observation.getNrBeams(); beam++)
-                    {
-                        hostMemoryDumpFiles.subbandedData << "# Beam: " << beam << std::endl;
-                        for (unsigned int dm = 0; dm < observation.getNrDMs(true); dm++)
-                        {
-                            hostMemoryDumpFiles.subbandedData << "# Subbanding DM: " << dm << std::endl;
-                            for (unsigned int subband = 0; subband < observation.getNrSubbands(); subband++)
-                            {
-                                hostMemoryDumpFiles.subbandedData << "# Subband: " << subband << std::endl;
-                                for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(true); sample++)
-                                {
-                                    hostMemoryDumpFiles.subbandedData << hostMemory.subbandedData
-                                                                             .at((beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) +
-                                                                                 (subband * observation.getNrSamplesPerBatch(true,
-                                                                                                                             deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) +
-                                                                                 sample)
-                                                                      << std::endl;
-                                }
-                                hostMemoryDumpFiles.subbandedData << std::endl
-                                                                  << std::endl;
-                            }
-                            hostMemoryDumpFiles.subbandedData << std::endl;
-                        }
-                        hostMemoryDumpFiles.subbandedData << std::endl;
-                    }
-                    for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
-                    {
-                        hostMemoryDumpFiles.dedispersedData << "# Synthesized Beam: " << sBeam << std::endl;
-                        for (unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++)
-                        {
-                            for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
-                            {
-                                hostMemoryDumpFiles.dedispersedData << "# DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
-                                for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++)
-                                {
-                                    hostMemoryDumpFiles.dedispersedData << hostMemory.dedispersedData
-                                                                               .at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) +
-                                                                                   (dm * observation.getNrSamplesPerBatch(false,
-                                                                                                                          deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) +
-                                                                                   sample)
-                                                                        << std::endl;
-                                }
-                                hostMemoryDumpFiles.dedispersedData << std::endl;
-                            }
-                            hostMemoryDumpFiles.dedispersedData << std::endl;
-                        }
-                        hostMemoryDumpFiles.dedispersedData << std::endl;
-                    }
-                }
-                catch (cl::Error &err)
-                {
-                    std::cerr << "Impossible to read deviceMemory.subbandedData and deviceMemory.dedispersedData: ";
-                    std::cerr << err.what() << " " << err.err() << std::endl;
-                    errorDetected = true;
-                }
-            }
-            else
-            {
-                try
-                {
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0, hostMemory.dedispersedData.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.dedispersedData.data()), nullptr, &syncPoint);
-                    syncPoint.wait();
-                    for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
-                    {
-                        hostMemoryDumpFiles.dedispersedData << "# Synthesized Beam: " << sBeam << std::endl;
-                        for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
-                        {
-                            hostMemoryDumpFiles.dedispersedData << "# DM: " << dm << std::endl;
-                            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++)
-                            {
-                                hostMemoryDumpFiles.dedispersedData << hostMemory.dedispersedData
-                                                                           .at((sBeam * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample)
-                                                                    << std::endl;
-                            }
-                            hostMemoryDumpFiles.dedispersedData << std::endl
-                                                                << std::endl;
-                        }
-                        hostMemoryDumpFiles.dedispersedData << std::endl;
-                    }
-                }
-                catch (cl::Error &err)
-                {
-                    std::cerr << "Impossible to read deviceMemory.dedispersedData: " << err.what() << " " << err.err();
-                    std::cerr << std::endl;
-                    errorDetected = true;
-                }
-            }
+            break;
         }
 
         // SNR of dedispersed data
@@ -1347,6 +1168,200 @@ int copyInputToDevice(const unsigned int batch, const OpenCLRunTime &openclRunTi
         std::cerr << "Input copy error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err();
         std::cerr << std::endl;
         throw std::exception();
+    }
+    return 0;
+}
+
+int dedispersion(const unsigned int batch, cl::Event &syncPoint, const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles)
+{
+    bool errorDetected = false;
+    if (options.subbandDedispersion)
+    {
+        if (options.splitBatchesDedispersion)
+        {
+            // TODO: implement or remove splitBatches mode
+        }
+        if (deviceOptions.synchronized)
+        {
+            try
+            {
+                timers.dedispersionStepOne.start();
+                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, nullptr, &syncPoint);
+                syncPoint.wait();
+                timers.dedispersionStepOne.stop();
+            }
+            catch (cl::Error &err)
+            {
+                std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
+                std::cerr << err.err() << std::endl;
+                errorDetected = true;
+            }
+            try
+            {
+                timers.dedispersionStepTwo.start();
+                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, nullptr, &syncPoint);
+                syncPoint.wait();
+                timers.dedispersionStepTwo.stop();
+            }
+            catch (cl::Error &err)
+            {
+                std::cerr << "Dedispersion Step Two error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
+                std::cerr << err.err() << std::endl;
+                errorDetected = true;
+            }
+        }
+        else
+        {
+            try
+            {
+                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, nullptr, nullptr);
+            }
+            catch (cl::Error &err)
+            {
+                std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
+                std::cerr << err.err() << std::endl;
+                errorDetected = true;
+            }
+            try
+            {
+                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, nullptr, nullptr);
+            }
+            catch (cl::Error &err)
+            {
+                std::cerr << "Dedispersion Step Two error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
+                std::cerr << err.err() << std::endl;
+                errorDetected = true;
+            }
+        }
+    }
+    else
+    {
+        try
+        {
+            if (options.splitBatchesDedispersion)
+            {
+                // TODO: implement or remove splitBatches mode
+            }
+            if (deviceOptions.synchronized)
+            {
+                timers.dedispersionSingleStep.start();
+                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal, nullptr, &syncPoint);
+                syncPoint.wait();
+                timers.dedispersionSingleStep.stop();
+            }
+            else
+            {
+                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal);
+            }
+        }
+        catch (cl::Error &err)
+        {
+            std::cerr << "Dedispersion error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err();
+            std::cerr << std::endl;
+            errorDetected = true;
+        }
+    }
+    if (options.dataDump)
+    {
+        if (options.subbandDedispersion)
+        {
+            try
+            {
+                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.subbandedData, CL_TRUE, 0, hostMemory.subbandedData.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.subbandedData.data()), nullptr, &syncPoint);
+                syncPoint.wait();
+                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0, hostMemory.dedispersedData.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.dedispersedData.data()), nullptr, &syncPoint);
+                syncPoint.wait();
+                for (unsigned int beam = 0; beam < observation.getNrBeams(); beam++)
+                {
+                    hostMemoryDumpFiles.subbandedData << "# Beam: " << beam << std::endl;
+                    for (unsigned int dm = 0; dm < observation.getNrDMs(true); dm++)
+                    {
+                        hostMemoryDumpFiles.subbandedData << "# Subbanding DM: " << dm << std::endl;
+                        for (unsigned int subband = 0; subband < observation.getNrSubbands(); subband++)
+                        {
+                            hostMemoryDumpFiles.subbandedData << "# Subband: " << subband << std::endl;
+                            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(true); sample++)
+                            {
+                                hostMemoryDumpFiles.subbandedData << hostMemory.subbandedData
+                                                                            .at((beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) +
+                                                                                (subband * observation.getNrSamplesPerBatch(true,
+                                                                                                                            deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) +
+                                                                                sample)
+                                                                    << std::endl;
+                            }
+                            hostMemoryDumpFiles.subbandedData << std::endl
+                                                                << std::endl;
+                        }
+                        hostMemoryDumpFiles.subbandedData << std::endl;
+                    }
+                    hostMemoryDumpFiles.subbandedData << std::endl;
+                }
+                for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
+                {
+                    hostMemoryDumpFiles.dedispersedData << "# Synthesized Beam: " << sBeam << std::endl;
+                    for (unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++)
+                    {
+                        for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
+                        {
+                            hostMemoryDumpFiles.dedispersedData << "# DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
+                            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++)
+                            {
+                                hostMemoryDumpFiles.dedispersedData << hostMemory.dedispersedData
+                                                                            .at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) +
+                                                                                (dm * observation.getNrSamplesPerBatch(false,
+                                                                                                                        deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) +
+                                                                                sample)
+                                                                    << std::endl;
+                            }
+                            hostMemoryDumpFiles.dedispersedData << std::endl;
+                        }
+                        hostMemoryDumpFiles.dedispersedData << std::endl;
+                    }
+                    hostMemoryDumpFiles.dedispersedData << std::endl;
+                }
+            }
+            catch (cl::Error &err)
+            {
+                std::cerr << "Impossible to read deviceMemory.subbandedData and deviceMemory.dedispersedData: ";
+                std::cerr << err.what() << " " << err.err() << std::endl;
+                errorDetected = true;
+            }
+        }
+        else
+        {
+            try
+            {
+                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0, hostMemory.dedispersedData.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.dedispersedData.data()), nullptr, &syncPoint);
+                syncPoint.wait();
+                for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
+                {
+                    hostMemoryDumpFiles.dedispersedData << "# Synthesized Beam: " << sBeam << std::endl;
+                    for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
+                    {
+                        hostMemoryDumpFiles.dedispersedData << "# DM: " << dm << std::endl;
+                        for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++)
+                        {
+                            hostMemoryDumpFiles.dedispersedData << hostMemory.dedispersedData
+                                                                        .at((sBeam * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample)
+                                                                << std::endl;
+                        }
+                        hostMemoryDumpFiles.dedispersedData << std::endl
+                                                            << std::endl;
+                    }
+                    hostMemoryDumpFiles.dedispersedData << std::endl;
+                }
+            }
+            catch (cl::Error &err)
+            {
+                std::cerr << "Impossible to read deviceMemory.dedispersedData: " << err.what() << " " << err.err();
+                std::cerr << std::endl;
+                errorDetected = true;
+            }
+        }
+    }
+    if ( errorDetected )
+    {
+        return 1;
     }
     return 0;
 }
