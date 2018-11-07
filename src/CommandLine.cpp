@@ -48,13 +48,20 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             // Default option right now is to use the standard mode.
             options.snrMode = SNRMode::Standard;
         }
-        try
+        if ( inputBits >= 8 )
         {
-            options.downsamplingFactor = argumentList.getSwitchArgument<unsigned int>("-downsampling");
+            try
+            {
+                options.downsamplingFactor = argumentList.getSwitchArgument<unsigned int>("-downsampling");
+            }
+            catch ( isa::utils::SwitchNotFound &err )
+            {
+                // Default option is to not downsample input data.
+                options.downsamplingFactor = 1;
+            }
         }
-        catch ( isa::utils::SwitchNotFound &err )
+        else
         {
-            // Default option is to not downsample input data.
             options.downsamplingFactor = 1;
         }
         dataOptions.dataLOFAR = argumentList.getSwitch("-lofar");
