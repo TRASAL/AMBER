@@ -65,6 +65,11 @@ int inputHandling(const unsigned int batch, const AstroData::Observation &observ
 int copyInputToDevice(const unsigned int batch, const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, HostMemory &hostMemory, const DeviceMemory &deviceMemory);
 
 /**
+ * @brief Downsampling input data in the time dimension.
+ */
+int downsampling();
+
+/**
  * @brief Dedispersion step.
  * 
  * @param batch

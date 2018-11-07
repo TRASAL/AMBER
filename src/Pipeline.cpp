@@ -72,6 +72,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
     {
         outputTrigger << "# beam batch sample integration_step time DM SNR" << std::endl;
     }
+    // Main search loop
     for (unsigned int batch = 0; batch < observation.getNrBatches(); batch++)
     {
         TriggeredEvents triggeredEvents(observation.getNrSynthesizedBeams());
@@ -121,6 +122,17 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                 hostMemoryDumpFiles.medianOfMediansStepOneData << "# Batch: " << batch << std::endl;
                 hostMemoryDumpFiles.medianOfMediansData << "# Batch: " << batch << std::endl;
                 hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Batch: " << batch << std::endl;
+            }
+        }
+        // Optional downsampling before dedispersion
+        if ( options.downsamplingFactor > 1 )
+        {
+            // Downsampling before dedispersion
+            status = downsampling();
+            if (status != 0)
+            {
+                clean(options, hostMemoryDumpFiles, outputTrigger);
+                break;
             }
         }
         // Dedispersion step
@@ -567,6 +579,45 @@ int copyInputToDevice(const unsigned int batch, const OpenCLRunTime &openclRunTi
     {
         std::cerr << "Input copy error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err();
         std::cerr << std::endl;
+        return -1;
+    }
+    return 0;
+}
+
+int downsampling(const unsigned int batch, cl::Event &syncPoint, const OpenCLRunTime &openclRunTime, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations)
+{
+    bool errorDetected = false;
+    if (deviceOptions.synchronized)
+    {
+        try
+        {
+            timers.downsampling.start();
+            openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.downsampling), cl::NullRange, kernelRunTimeConfigurations.downsamplingGlobal, kernelRunTimeConfigurations.downsamplingLocal, nullptr, &syncPoint);
+            syncPoint.wait();
+            timers.dedispersionStepOne.stop();
+        }
+        catch (cl::Error &err)
+        {
+            std::cerr << "Downsampling error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
+            std::cerr << err.err() << std::endl;
+            errorDetected = true;
+        }
+    }
+    else
+    {
+        try
+        {
+            openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.downsampling), cl::NullRange, kernelRunTimeConfigurations.downsamplingGlobal, kernelRunTimeConfigurations.downsamplingLocal, nullptr, nullptr);
+        }
+        catch (cl::Error &err)
+        {
+            std::cerr << "Downsampling error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
+            std::cerr << err.err() << std::endl;
+            errorDetected = true;
+        }
+    }
+    if ( errorDetected )
+    {
         return -1;
     }
     return 0;
