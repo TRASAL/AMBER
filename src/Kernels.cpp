@@ -16,6 +16,17 @@
 #include <Kernels.hpp>
 
 /**
+ * @brief Generate the downsampling OpenCL kernel.
+ */
+void generateDownsamplingOpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
+{
+    std::string *code = Integration::getIntegrationBeforeDedispersionInPlaceOpenCL<inputDataType>(*(kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(options.downsamplingFactor)), observation, inputDataName, options.downsamplingFactor, deviceOptions.padding.at(deviceOptions.deviceName));
+    kernels.downsampling = isa::OpenCL::compile("integration" + std::to_string(options.downsamplingFactor), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID));
+    kernels.downsampling->setArg(0, deviceMemory.dispersedData);
+    delete code;
+}
+
+/**
  * @brief Generate the dedispersion OpenCL kernels.
  */
 void generateDedispersionOpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation,
@@ -289,17 +300,34 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
 /**
  * @brief Generate all OpenCL kernels.
  */
-void generateOpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation,
-                           const Options &options, const DeviceOptions &deviceOptions,
-                           const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory,
-                           const DeviceMemory &deviceMemory, Kernels &kernels)
+void generateOpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
 {
-    generateDedispersionOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations,
-                                      hostMemory, deviceMemory, kernels);
-    generateIntegrationOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory,
-                                     deviceMemory, kernels);
-    generateSNROpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory,
-                             deviceMemory, kernels);
+    generateDownsamplingOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
+    generateDedispersionOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
+    generateIntegrationOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
+    generateSNROpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
+}
+
+void generateDownsamplingOpenCLRunTimeConfigurations(const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, KernelRunTimeConfigurations &kernelRunTimeConfigurations)
+{
+    unsigned int global[3] = {0, 0, 0};
+    unsigned int local[3] = {0, 0, 0};
+    global[0] = kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(options.downsamplingFactor)->getNrThreadsD0();
+    global[1] = observation.getNrChannels();
+    global[2] = observation.getNrBeams();
+    kernelRunTimeConfigurations.downsamplingGlobal = cl::NDRange(global[0], global[1], global[2]);
+    local[0] = kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(options.downsamplingFactor)->getNrThreadsD0();
+    local[1] = 1;
+    local[2] = 1;
+    kernelRunTimeConfigurations.downsamplingLocal = cl::NDRange(local[0], local[1], local[2]);
+    if (options.debug)
+    {
+        std::cout << "Downsampling (" + std::to_string(options.downsamplingFactor) + ")" << std::endl;
+        std::cout << "\tConfiguration: " << kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(options.downsamplingFactor)->print() << std::endl;
+        std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+        std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+        std::cout << std::endl;
+    }
 }
 
 /**
@@ -877,16 +905,10 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
 /**
  * @brief Generate OpenCL run-time configurations for all kernels.
  */
-void generateOpenCLRunTimeConfigurations(const AstroData::Observation &observation, const Options &options,
-                                         const DeviceOptions &deviceOptions,
-                                         const KernelConfigurations &kernelConfigurations,
-                                         const HostMemory &hostMemory,
-                                         KernelRunTimeConfigurations &kernelRunTimeConfigurations)
+void generateOpenCLRunTimeConfigurations(const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, KernelRunTimeConfigurations &kernelRunTimeConfigurations)
 {
-    generateDedispersionOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory,
-                                                    kernelRunTimeConfigurations);
-    generateIntegrationOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory,
-                                                   kernelRunTimeConfigurations);
-    generateSNROpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory,
-                                           kernelRunTimeConfigurations);
+    generateDownsamplingOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
+    generateDedispersionOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
+    generateIntegrationOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
+    generateSNROpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
 }
