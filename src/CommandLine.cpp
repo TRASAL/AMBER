@@ -53,7 +53,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             try
             {
                 options.downsamplingFactor = argumentList.getSwitchArgument<unsigned int>("-downsampling");
-                Integration::readTunedIntegrationConf(kernelConfigurations.downsamplingParameters, argumentList.getSwitchArgument<std::string>("-downsampling_configuration"));
+                Integration::readTunedIntegrationBeforeDedispersionConf(kernelConfigurations.downsamplingParameters, argumentList.getSwitchArgument<std::string>("-downsampling_configuration"));
             }
             catch ( isa::utils::SwitchNotFound &err )
             {

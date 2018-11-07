@@ -240,7 +240,7 @@ struct DeviceMemory
 struct KernelConfigurations
 {
     // Configuration of downsampling kernel
-    Integration::tunedIntegrationConf downsamplingParameters;
+    Integration::tunedIntegrationBeforeDedispersionConf downsamplingParameters;
     // Configuration of single step dedispersion kernel
     Dedispersion::tunedDedispersionConf dedispersionSingleStepParameters;
     // Configuration of subband dedispersion kernel, step one
