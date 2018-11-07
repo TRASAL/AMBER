@@ -65,6 +65,68 @@ int inputHandling(const unsigned int batch, const AstroData::Observation &observ
 int copyInputToDevice(const unsigned int batch, const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, HostMemory &hostMemory, const DeviceMemory &deviceMemory);
 
 /**
- * @brief Dedisperse data.
+ * @brief Dedispersion step.
+ * 
+ * @param batch
+ * @param syncPoint
+ * @param openclRunTime
+ * @param observation
+ * @param options
+ * @param deviceOptions
+ * @param timers
+ * @param kernels
+ * @param kernelRunTimeConfigurations
+ * @param hostMemory
+ * @param deviceMemory
+ * @param hostMemoryDumpFiles
  */
 int dedispersion(const unsigned int batch, cl::Event &syncPoint, const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles);
+
+/**
+ * @brief Compute the SNR of dedispersed time series.
+ * 
+ * @param batch
+ * @param syncPoint
+ * @param openclRunTime
+ * @param observation
+ * @param options
+ * @param deviceOptions
+ * @param timers
+ * @param kernels
+ * @param kernelRunTimeConfigurations
+ * @param hostMemory
+ * @param deviceMemory
+ * @param hostMemoryDumpFiles
+ * @param triggeredEvents
+ */
+int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, TriggeredEvents &triggeredEvents);
+
+/**
+ * @brief Search dedispersed time series for pulses of different widths.
+ * 
+ * @param batch
+ * @param stepNumber
+ * @param step
+ * @param syncPoint
+ * @param openclRunTime
+ * @param observation
+ * @param options
+ * @param deviceOptions
+ * @param timers
+ * @param kernels
+ * @param kernelRunTimeConfigurations
+ * @param hostMemory
+ * @param deviceMemory
+ * @param hostMemoryDumpFiles
+ * @param triggeredEvents
+ */
+int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, const unsigned int step, cl::Event &syncPoint, const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, TriggeredEvents &triggeredEvents);
+
+/**
+ * @brief Close output files and buffers.
+ * 
+ * @param options
+ * @param hostMemoryDumpFiles
+ * @param outputTrigger
+ */
+void clean(const Options &options, HostMemoryDumpFiles &hostMemoryDumpFiles, std::ofstream &outputTrigger);
