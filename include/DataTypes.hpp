@@ -239,6 +239,8 @@ struct DeviceMemory
 
 struct KernelConfigurations
 {
+    // Configuration of downsampling kernel
+    Integration::tunedIntegrationConf downsamplingParameters;
     // Configuration of single step dedispersion kernel
     Dedispersion::tunedDedispersionConf dedispersionSingleStepParameters;
     // Configuration of subband dedispersion kernel, step one
@@ -261,6 +263,8 @@ struct KernelConfigurations
 
 struct Kernels
 {
+    // Downsampling kernel
+    cl::Kernel *downsampling = nullptr;
     // Single step dedispersion kernel
     cl::Kernel *dedispersionSingleStep = nullptr;
     // Step one subbanding dedispersion kernel
@@ -283,6 +287,10 @@ struct Kernels
 
 struct KernelRunTimeConfigurations
 {
+    // Global NDRange for downsampling
+    cl::NDRange downsamplingGlobal;
+    // Local NDRange for downsampling
+    cl::NDRange downsamplingLocal;
     // Global NDrange for single step dedispersion
     cl::NDRange dedispersionSingleStepGlobal;
     // Local NDRange for single step dedispersion
@@ -327,6 +335,8 @@ struct Timers
     isa::utils::Timer search;
     isa::utils::Timer inputHandling;
     isa::utils::Timer inputCopy;
+    // Timer for downsampling
+    isa::utils::Timer downsampling;
     isa::utils::Timer dedispersionSingleStep;
     isa::utils::Timer dedispersionStepOne;
     isa::utils::Timer dedispersionStepTwo;
