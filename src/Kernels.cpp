@@ -20,7 +20,15 @@
  */
 void generateDownsamplingOpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
 {
-    std::string *code = Integration::getIntegrationBeforeDedispersionInPlaceOpenCL<inputDataType>(*(kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(observation.getDownsampling())), observation, inputDataName, observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName));
+    std::string *code = nullptr;
+    if ( options.subbandDedispersion )
+    {
+        code = Integration::getIntegrationBeforeDedispersionInPlaceOpenCL<inputDataType>(*(kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(true))->at(observation.getDownsampling())), observation, inputDataName, observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName));
+    }
+    else
+    {
+        code = Integration::getIntegrationBeforeDedispersionInPlaceOpenCL<inputDataType>(*(kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch())->at(observation.getDownsampling())), observation, inputDataName, observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName));
+    }
     kernels.downsampling = isa::OpenCL::compile("integration" + std::to_string(observation.getDownsampling()), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID));
     kernels.downsampling->setArg(0, deviceMemory.dispersedData);
     delete code;
@@ -315,18 +323,39 @@ void generateDownsamplingOpenCLRunTimeConfigurations(const AstroData::Observatio
 {
     unsigned int global[3] = {0, 0, 0};
     unsigned int local[3] = {0, 0, 0};
-    global[0] = kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(observation.getDownsampling())->getNrThreadsD0();
+    if ( options.subbandDedispersion )
+    {
+        global[0] = kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(true))->at(observation.getDownsampling())->getNrThreadsD0();
+    }
+    else
+    {
+        global[0] = kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch())->at(observation.getDownsampling())->getNrThreadsD0();
+    }
     global[1] = observation.getNrChannels();
     global[2] = observation.getNrBeams();
     kernelRunTimeConfigurations.downsamplingGlobal = cl::NDRange(global[0], global[1], global[2]);
-    local[0] = kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(observation.getDownsampling())->getNrThreadsD0();
+    if ( options.subbandDedispersion )
+    {
+        local[0] = kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(true))->at(observation.getDownsampling())->getNrThreadsD0();
+    }
+    else
+    {
+        local[0] = kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch())->at(observation.getDownsampling())->getNrThreadsD0();
+    }
     local[1] = 1;
     local[2] = 1;
     kernelRunTimeConfigurations.downsamplingLocal = cl::NDRange(local[0], local[1], local[2]);
     if (options.debug)
     {
         std::cout << "Downsampling (" + std::to_string(observation.getDownsampling()) + ")" << std::endl;
-        std::cout << "\tConfiguration: " << kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(observation.getDownsampling())->print() << std::endl;
+        if ( options.subbandDedispersion )
+        {
+            std::cout << "\tConfiguration: " << kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(true))->at(observation.getDownsampling())->print() << std::endl;
+        }
+        else
+        {
+            std::cout << "\tConfiguration: " << kernelConfigurations.downsamplingParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch())->at(observation.getDownsampling())->print() << std::endl;
+        }
         std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
         std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
         std::cout << std::endl;
