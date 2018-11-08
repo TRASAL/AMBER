@@ -54,7 +54,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             if ( options.downsampling )
             {
                 observation.setDownsampling(argumentList.getSwitchArgument<unsigned int>("-downsampling_factor"));
-                Integration::readTunedIntegrationBeforeDedispersionConf(kernelConfigurations.downsamplingParameters, argumentList.getSwitchArgument<std::string>("-downsampling_configuration"));
+                Integration::readTunedIntegrationConf(kernelConfigurations.downsamplingParameters, argumentList.getSwitchArgument<std::string>("-downsampling_configuration"));
             }
         }
         dataOptions.dataLOFAR = argumentList.getSwitch("-lofar");
