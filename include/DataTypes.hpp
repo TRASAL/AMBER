@@ -45,10 +45,9 @@ struct Options
      */
     bool dataDump = false;
     /**
-     ** @brief Downsampling factor
-     ** Dispersed input data will be downsampled according to this factor. If equal to 1 downsampling does not take place.
+     ** @brief Enable downsampling before dedispersion.
      */
-    unsigned int downsamplingFactor = 1;
+    bool downsampling = false;
 };
 
 struct DeviceOptions

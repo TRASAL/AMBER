@@ -50,20 +50,12 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         }
         if ( inputBits >= 8 )
         {
-            try
+            options.downsampling = argumentList.getSwitch("-downsampling");
+            if ( options.downsampling )
             {
-                options.downsamplingFactor = argumentList.getSwitchArgument<unsigned int>("-downsampling");
+                observation.setDownsampling(argumentList.getSwitchArgument<unsigned int>("-downsampling_factor"));
                 Integration::readTunedIntegrationBeforeDedispersionConf(kernelConfigurations.downsamplingParameters, argumentList.getSwitchArgument<std::string>("-downsampling_configuration"));
             }
-            catch ( isa::utils::SwitchNotFound &err )
-            {
-                // Default option is to not downsample input data.
-                options.downsamplingFactor = 1;
-            }
-        }
-        else
-        {
-            options.downsamplingFactor = 1;
         }
         dataOptions.dataLOFAR = argumentList.getSwitch("-lofar");
 #ifndef HAVE_HDF5
@@ -221,7 +213,7 @@ void usage(const std::string &program)
 {
     std::cerr << program << " [-debug] [-print] [-data_dump] -opencl_platform ... -opencl_device ... -device_name ... [-sync]";
     std::cerr << "  -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ...";
-    std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad] [-downsampling ...]";
+    std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad] [-downsampling]";
     std::cerr << " [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
 #ifdef HAVE_HDF5
     std::cerr << " [-lofar]";
@@ -231,7 +223,7 @@ void usage(const std::string &program)
 #endif // HAVE_PSRDADA
     std::cerr << std::endl;
     std::cerr << "\tData dump: -dump_prefix ..." << std::endl;
-    std::cerr << "\tDownsampling: -downsampling_configuration ..." << std::endl;
+    std::cerr << "\tDownsampling: -downsampling_factor ... -downsampling_configuration ..." << std::endl;
     std::cerr << "\tDedispersion: -dedispersion_file ..." << std::endl;
     std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_stepone_file ...";
     std::cerr << "-dedispersion_steptwo_file ... -subbands ... -subbanding_dms ... -subbanding_dm_first ...";

@@ -66,8 +66,16 @@ int copyInputToDevice(const unsigned int batch, const OpenCLRunTime &openclRunTi
 
 /**
  * @brief Downsampling input data in the time dimension.
+ * 
+ * @param batch
+ * @param syncPoint
+ * @param openclRunTime
+ * @param deviceOptions
+ * @param timers
+ * @param kernels
+ * @param kernelRunTimeConfigurations
  */
-int downsampling();
+int downsampling(const unsigned int batch, cl::Event &syncPoint, const OpenCLRunTime &openclRunTime, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations);
 
 /**
  * @brief Dedispersion step.

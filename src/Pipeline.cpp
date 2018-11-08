@@ -125,10 +125,10 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
             }
         }
         // Optional downsampling before dedispersion
-        if ( options.downsamplingFactor > 1 )
+        if ( options.downsampling )
         {
             // Downsampling before dedispersion
-            status = downsampling();
+            status = downsampling(batch, syncPoint, openclRunTime, deviceOptions, timers, kernels, kernelRunTimeConfigurations);
             if (status != 0)
             {
                 clean(options, hostMemoryDumpFiles, outputTrigger);
