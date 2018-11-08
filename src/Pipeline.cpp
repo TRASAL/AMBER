@@ -60,7 +60,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
     if (!outputTrigger)
     {
         std::cerr << "Impossible to open " + dataOptions.outputFile + "." << std::endl;
-        clean(options, hostMemoryDumpFiles, outputTrigger);
+        clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
         throw std::exception();
     }
     if (options.compactResults)
@@ -87,13 +87,13 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
         else if (status == -1)
         {
             // Not enough batches remaining, exit the main loop.
-            clean(options, hostMemoryDumpFiles, outputTrigger);
+            clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
             break;
         }
         status = copyInputToDevice(batch, openclRunTime, observation, options, deviceOptions, timers, hostMemory, deviceMemory);
         if (status != 0)
         {
-            clean(options, hostMemoryDumpFiles, outputTrigger);
+            clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
             break;
         }
         if (options.splitBatchesDedispersion && (batch < observation.getNrDelayBatches()))
@@ -131,7 +131,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
             status = downsampling(batch, syncPoint, openclRunTime, deviceOptions, timers, kernels, kernelRunTimeConfigurations);
             if (status != 0)
             {
-                clean(options, hostMemoryDumpFiles, outputTrigger);
+                clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
                 break;
             }
         }
@@ -139,14 +139,14 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
         status = dedispersion(batch, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles);
         if (status != 0)
         {
-            clean(options, hostMemoryDumpFiles, outputTrigger);
+            clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
             break;
         }
         // SNR of dedispersed data
         status = dedispersionSNR(batch, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles, triggeredEvents);
         if (status != 0)
         {
-            clean(options, hostMemoryDumpFiles, outputTrigger);
+            clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
             break;
         }
         // Search for pulses of different widths
@@ -158,7 +158,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
             status = pulseWidthSearch(batch, stepNumber, *step, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles, triggeredEvents);
             if (status != 0)
             {
-                clean(options, hostMemoryDumpFiles, outputTrigger);
+                clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
                 break;
             }
         }
@@ -271,7 +271,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
         timers.trigger.stop();
     }
     // Close all open files and buffers.
-    clean(options, hostMemoryDumpFiles, outputTrigger);
+    clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
     timers.search.stop();
 }
 
@@ -1404,7 +1404,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
     return 0;
 }
 
-void clean(const Options &options, HostMemoryDumpFiles &hostMemoryDumpFiles, std::ofstream &outputTrigger)
+void clean(const Options &options, const DataOptions &dataOptions, HostMemory &hostMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, std::ofstream &outputTrigger)
 {
     outputTrigger.close();
 #ifdef HAVE_PSRDADA

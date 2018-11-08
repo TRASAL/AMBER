@@ -138,7 +138,9 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
  * @brief Close output files and buffers.
  * 
  * @param options
+ * @param dataOptions
+ * @param hostMemory
  * @param hostMemoryDumpFiles
  * @param outputTrigger
  */
-void clean(const Options &options, HostMemoryDumpFiles &hostMemoryDumpFiles, std::ofstream &outputTrigger);
+void clean(const Options &options, const DataOptions &dataOptions, HostMemory &hostMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, std::ofstream &outputTrigger);
