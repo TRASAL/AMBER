@@ -104,7 +104,13 @@ int main(int argc, char *argv[])
         std::cout << "Beams: " << observation.getNrBeams() << std::endl;
         std::cout << "Synthesized Beams: " << observation.getNrSynthesizedBeams() << std::endl;
         std::cout << "Batches: " << observation.getNrBatches() << std::endl;
-        std::cout << "Samples: " << observation.getNrSamplesPerBatch() << std::endl;
+        std::cout << "Samples per Batch: " << observation.getNrSamplesPerBatch() << std::endl;
+        std::cout << "Samples per Dispersed Batch: " << observation.getNrSamplesPerDispersedBatch() << std::endl;
+        if ( options.subbandDedispersion )
+        {
+            std::cout << "Samples per Subband: " << observation.getNrSamplesPerBatch(true) << std::endl;
+            std::cout << "Samples per Dispersed Batch: " << observation.getNrSamplesPerDispersedBatch(true) << std::endl;
+        }
         std::cout << "Sampling time: " << observation.getSamplingTime() << std::endl;
         if ( options.downsampling )
         {
