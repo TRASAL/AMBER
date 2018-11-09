@@ -363,7 +363,7 @@ void generateDedispersionOpenCLRunTimeConfigurations(const AstroData::Observatio
 
     if (!options.subbandDedispersion)
     {
-        global[0] = isa::utils::pad(observation.getNrSamplesPerBatch() / kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0());
+        global[0] = isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0());
         global[1] = observation.getNrDMs() / kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1();
         global[2] = observation.getNrSynthesizedBeams();
         kernelRunTimeConfigurations.dedispersionSingleStepGlobal = cl::NDRange(global[0], global[1], global[2]);
@@ -382,7 +382,7 @@ void generateDedispersionOpenCLRunTimeConfigurations(const AstroData::Observatio
     }
     else
     {
-        global[0] = isa::utils::pad(observation.getNrSamplesPerBatch(true) / kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrItemsD0(), kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD0());
+        global[0] = isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling() / kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrItemsD0(), kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrThreadsD0());
         global[1] = observation.getNrDMs(true) / kernelConfigurations.dedispersionStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true))->getNrItemsD1();
         global[2] = observation.getNrBeams() * observation.getNrSubbands();
         kernelRunTimeConfigurations.dedispersionStepOneGlobal = cl::NDRange(global[0], global[1], global[2]);
@@ -398,7 +398,7 @@ void generateDedispersionOpenCLRunTimeConfigurations(const AstroData::Observatio
             std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
             std::cout << std::endl;
         }
-        global[0] = isa::utils::pad(observation.getNrSamplesPerBatch(true) / kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0());
+        global[0] = isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0());
         global[1] = observation.getNrDMs() / kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1();
         global[2] = observation.getNrSynthesizedBeams() * observation.getNrDMs(true);
         kernelRunTimeConfigurations.dedispersionStepTwoGlobal = cl::NDRange(global[0], global[1], global[2]);
