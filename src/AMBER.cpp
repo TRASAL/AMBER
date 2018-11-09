@@ -106,6 +106,10 @@ int main(int argc, char *argv[])
         std::cout << "Batches: " << observation.getNrBatches() << std::endl;
         std::cout << "Samples: " << observation.getNrSamplesPerBatch() << std::endl;
         std::cout << "Sampling time: " << observation.getSamplingTime() << std::endl;
+        if ( options.downsampling )
+        {
+            std::cout << "Downsampling factor: " << observation.getDownsampling() << std::endl;
+        }
         std::cout << "Frequency range: " << observation.getMinFreq() << " MHz, " << observation.getMaxFreq() << " MHz";
         std::cout << std::endl;
         std::cout << "Subbands: " << observation.getNrSubbands() << " (" << observation.getSubbandBandwidth() << " MHz)";
