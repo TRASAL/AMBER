@@ -93,7 +93,21 @@ int main(int argc, char *argv[])
         std::cerr << err.what() << std::endl;
         return 1;
     }
-
+    // Computing shifts for dedispersion
+    if ( options.subbandDedispersion )
+    {
+        hostMemory.shiftsStepOne = Dedispersion::getShifts(observation, deviceOptions.padding.at(deviceOptions.deviceName));
+        hostMemory.shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, deviceOptions.padding.at(deviceOptions.deviceName));
+        observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(hostMemory.shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
+        observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch(true) + static_cast<unsigned int>(hostMemory.shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))), true);
+        observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch(true)) / observation.getNrSamplesPerBatch())), true);
+    }
+    else
+    {
+        hostMemory.shiftsSingleStep = Dedispersion::getShifts(observation, deviceOptions.padding.at(deviceOptions.deviceName));
+        observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(hostMemory.shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
+        observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch()) / observation.getNrSamplesPerBatch())));
+    }
     // Print message with observation and search information
     if (options.print)
     {

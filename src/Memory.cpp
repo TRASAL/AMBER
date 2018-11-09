@@ -64,9 +64,6 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
 {
     if (!options.subbandDedispersion)
     {
-        hostMemory.shiftsSingleStep = Dedispersion::getShifts(observation, deviceOptions.padding.at(deviceOptions.deviceName));
-        observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(hostMemory.shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
-        observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch()) / observation.getNrSamplesPerBatch())));
         if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
         {
             hostMemory.inputStream.resize(observation.getNrDelayBatches());
@@ -118,11 +115,6 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
     }
     else
     {
-        hostMemory.shiftsStepOne = Dedispersion::getShifts(observation, deviceOptions.padding.at(deviceOptions.deviceName));
-        hostMemory.shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, deviceOptions.padding.at(deviceOptions.deviceName));
-        observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(hostMemory.shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
-        observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch(true) + static_cast<unsigned int>(hostMemory.shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))), true);
-        observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch(true)) / observation.getNrSamplesPerBatch())), true);
         if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
         {
             hostMemory.inputStream.resize(observation.getNrDelayBatches(true));
