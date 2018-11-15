@@ -255,13 +255,13 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                         if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
                         {
                             outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " " << integration;
-                            outputTrigger << " " << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event.sample * integration)) * observation.getSamplingTime() << " ";
+                            outputTrigger << " " << (((batch - delay) * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * observation.getSamplingTime() << " ";
                             outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.SNR << std::endl;
                         }
                         else
                         {
                             outputTrigger << event.beam << " " << batch << " " << event.sample << " " << integration << " ";
-                            outputTrigger << ((batch * observation.getNrSamplesPerBatch()) + (event.sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
+                            outputTrigger << ((batch * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
                             outputTrigger << event.SNR << std::endl;
                         }
                     }
