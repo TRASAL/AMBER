@@ -94,7 +94,6 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
                 hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)));
             }
         }
-        hostMemory.beamMapping.resize(observation.getNrSynthesizedBeams() * observation.getNrChannels(deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
         hostMemory.dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
         if (hostMemory.integrationSteps.size() > 0)
         {
@@ -145,7 +144,7 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
                 hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)));
             }
         }
-        hostMemory.beamMapping.resize(observation.getNrSynthesizedBeams() * observation.getNrSubbands(deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
+        
         hostMemory.subbandedData.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
         hostMemory.dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
         if (hostMemory.integrationSteps.size() > 0)
@@ -165,7 +164,6 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
             hostMemory.medianOfMediansAbsoluteDeviation.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
         }
     }
-    AstroData::generateBeamMapping(observation, hostMemory.beamMapping, deviceOptions.padding.at(deviceOptions.deviceName), options.subbandDedispersion);
 }
 
 void allocateDeviceMemory(const AstroData::Observation &observation, const OpenCLRunTime &openclRunTime, const Options &options, const DeviceOptions &deviceOptions, const HostMemory &hostMemory, DeviceMemory &deviceMemory)
