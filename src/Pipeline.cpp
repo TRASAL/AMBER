@@ -167,106 +167,12 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
         if (options.compactResults)
         {
             compact(observation, triggeredEvents, compactedEvents);
-            for (auto &compactedEvent : compactedEvents)
-            {
-                for (auto &event : compactedEvent)
-                {
-                    unsigned int integration = 0;
-                    float firstDM;
-                    unsigned int delay = 0;
-
-                    if (event.integration == 0)
-                    {
-                        integration = 1;
-                    }
-                    else
-                    {
-                        integration = event.integration;
-                    }
-                    if (options.subbandDedispersion)
-                    {
-                        if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
-                        {
-                            delay = observation.getNrDelayBatches(true) - 1;
-                        }
-                        firstDM = observation.getFirstDM(true);
-                    }
-                    else
-                    {
-                        if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
-                        {
-                            delay = observation.getNrDelayBatches() - 1;
-                        }
-                        firstDM = observation.getFirstDM();
-                    }
-                    if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
-                    {
-                        outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " " << integration;
-                        outputTrigger << " " << event.compactedIntegration << " ";
-                        outputTrigger << (((batch - delay) * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
-                        outputTrigger << event.compactedDMs << " " << event.SNR << std::endl;
-                    }
-                    else
-                    {
-                        outputTrigger << event.beam << " " << batch << " " << event.sample << " " << integration << " ";
-                        outputTrigger << event.compactedIntegration << " " << ((batch * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * observation.getSamplingTime() << " ";
-                        outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.compactedDMs << " ";
-                        outputTrigger << event.SNR << std::endl;
-                    }
-                }
-            }
         }
-        else
+        status = printResults(batch, observation, options, dataOptions, timers, triggeredEvents, compactedEvents, outputTrigger);
+        if (status != 0)
         {
-            for (auto &triggeredEvent : triggeredEvents)
-            {
-                for (auto &dmEvents : triggeredEvent)
-                {
-                    for (auto &event : dmEvents.second)
-                    {
-                        unsigned int integration = 0;
-                        float firstDM;
-                        unsigned int delay = 0;
-
-                        if (event.integration == 0)
-                        {
-                            integration = 1;
-                        }
-                        else
-                        {
-                            integration = event.integration;
-                        }
-                        if (options.subbandDedispersion)
-                        {
-                            if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
-                            {
-                                delay = observation.getNrDelayBatches(true) - 1;
-                            }
-                            firstDM = observation.getFirstDM(true);
-                        }
-                        else
-                        {
-                            if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
-                            {
-                                delay = observation.getNrDelayBatches() - 1;
-                            }
-                            firstDM = observation.getFirstDM();
-                        }
-                        if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
-                        {
-                            outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " " << integration;
-                            outputTrigger << " " << (((batch - delay) * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * observation.getSamplingTime() << " ";
-                            outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.SNR << std::endl;
-                        }
-                        else
-                        {
-                            outputTrigger << event.beam << " " << batch << " " << event.sample << " " << integration << " ";
-                            outputTrigger << ((batch * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
-                            outputTrigger << event.SNR << std::endl;
-                        }
-                    }
-                }
-            }
+            clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
+            break;
         }
         timers.trigger.stop();
     }
@@ -943,7 +849,7 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
                 syncPoint.wait();
                 timers.medianOfMediansStepTwo.stop();
-                // Trasfer of medians of medians to host
+                // Transfer of medians of medians to host
                 timers.outputCopy.start();
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.medianOfMedians.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMedians.data()), nullptr, &syncPoint);
                 syncPoint.wait();
@@ -1151,7 +1057,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber], nullptr, &syncPoint);
                 syncPoint.wait();
                 timers.medianOfMediansStepTwo.stop();
-                // Trasfer of medians of medians to host
+                // Transfer of medians of medians to host
                 timers.outputCopy.start();
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.medianOfMedians.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMedians.data()), nullptr, &syncPoint);
                 syncPoint.wait();
@@ -1397,6 +1303,121 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
             }
         }
     }
+    if ( errorDetected )
+    {
+        return -1;
+    }
+    return 0;
+}
+
+int printResults(const unsigned int batch, const AstroData::Observation &observation, const Options &options, const DataOptions &dataOptions, Timers &timers, TriggeredEvents &triggeredEvents, CompactedEvents &compactedEvents, std::ofstream &outputTrigger)
+{
+    bool errorDetected = false;
+    timers.trigger.start();
+    if (options.compactResults)
+    {
+        for (auto &compactedEvent : compactedEvents)
+        {
+            for (auto &event : compactedEvent)
+            {
+                unsigned int integration = 0;
+                float firstDM;
+                unsigned int delay = 0;
+
+                if (event.integration == 0)
+                {
+                    integration = 1;
+                }
+                else
+                {
+                    integration = event.integration;
+                }
+                if (options.subbandDedispersion)
+                {
+                    if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
+                    {
+                        delay = observation.getNrDelayBatches(true) - 1;
+                    }
+                    firstDM = observation.getFirstDM(true);
+                }
+                else
+                {
+                    if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
+                    {
+                        delay = observation.getNrDelayBatches() - 1;
+                    }
+                    firstDM = observation.getFirstDM();
+                }
+                if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
+                {
+                    outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " " << integration;
+                    outputTrigger << " " << event.compactedIntegration << " ";
+                    outputTrigger << (((batch - delay) * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
+                    outputTrigger << event.compactedDMs << " " << event.SNR << std::endl;
+                }
+                else
+                {
+                    outputTrigger << event.beam << " " << batch << " " << event.sample << " " << integration << " ";
+                    outputTrigger << event.compactedIntegration << " " << ((batch * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * observation.getSamplingTime() << " ";
+                    outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.compactedDMs << " ";
+                    outputTrigger << event.SNR << std::endl;
+                }
+            }
+        }
+    }
+    else
+    {
+        for (auto &triggeredEvent : triggeredEvents)
+        {
+            for (auto &dmEvents : triggeredEvent)
+            {
+                for (auto &event : dmEvents.second)
+                {
+                    unsigned int integration = 0;
+                    float firstDM;
+                    unsigned int delay = 0;
+
+                    if (event.integration == 0)
+                    {
+                        integration = 1;
+                    }
+                    else
+                    {
+                        integration = event.integration;
+                    }
+                    if (options.subbandDedispersion)
+                    {
+                        if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
+                        {
+                            delay = observation.getNrDelayBatches(true) - 1;
+                        }
+                        firstDM = observation.getFirstDM(true);
+                    }
+                    else
+                    {
+                        if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
+                        {
+                            delay = observation.getNrDelayBatches() - 1;
+                        }
+                        firstDM = observation.getFirstDM();
+                    }
+                    if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
+                    {
+                        outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " " << integration;
+                        outputTrigger << " " << (((batch - delay) * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * observation.getSamplingTime() << " ";
+                        outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.SNR << std::endl;
+                    }
+                    else
+                    {
+                        outputTrigger << event.beam << " " << batch << " " << event.sample << " " << integration << " ";
+                        outputTrigger << ((batch * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
+                        outputTrigger << event.SNR << std::endl;
+                    }
+                }
+            }
+        }
+    }
+    timers.trigger.stop();
     if ( errorDetected )
     {
         return -1;

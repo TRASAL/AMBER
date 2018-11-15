@@ -135,6 +135,20 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
 int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, const unsigned int step, cl::Event &syncPoint, const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, TriggeredEvents &triggeredEvents);
 
 /**
+ * @brief Write the results to a trigger file.
+ * 
+ * @param batch
+ * @param observation
+ * @param options
+ * @param dataOptions
+ * @param timers
+ * @param triggeredEvents
+ * @param compactedEvents
+ * @param outputTrigger
+ */
+int printResults(const unsigned int batch, const AstroData::Observation &observation, const Options &options, const DataOptions &dataOptions, Timers &timers, TriggeredEvents &triggeredEvents, CompactedEvents &compactedEvents, std::ofstream &outputTrigger);
+
+/**
  * @brief Close output files and buffers.
  * 
  * @param options
