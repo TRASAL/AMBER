@@ -188,6 +188,40 @@ int main(int argc, char *argv[])
         std::cerr << "Memory error: " << err.what() << " " << err.err() << std::endl;
         return 1;
     }
+    if ( options.debug )
+    {
+        std::uint64_t hostMemorySize = 0;
+        hostMemorySize += hostMemory.zappedChannels.size() * sizeof(unsigned int);
+        hostMemorySize += hostMemory.beamMapping.size() * sizeof(unsigned int);
+        hostMemorySize += hostMemory.dispersedData.size() * sizeof(inputDataType);
+        hostMemorySize += hostMemory.subbandedData.size() * sizeof(outputDataType);
+        hostMemorySize += hostMemory.dedispersedData.size() * sizeof(outputDataType);
+        hostMemorySize += hostMemory.integratedData.size() * sizeof(outputDataType);
+        if ( options.snrMode == SNRMode::Standard )
+        {
+            hostMemorySize += hostMemory.snrData.size() * sizeof(float);
+            hostMemorySize += hostMemory.snrSamples.size() * sizeof(unsigned int);
+        }
+        else if ( options.snrMode == SNRMode::Momad )
+        {
+            hostMemorySize += hostMemory.maxValues.size() * sizeof(outputDataType);
+            hostMemorySize += hostMemory.maxIndices.size() * sizeof(unsigned int);
+            hostMemorySize += hostMemory.medianOfMediansStepOne.size() * sizeof(outputDataType);
+            hostMemorySize += hostMemory.medianOfMedians.size() * sizeof(outputDataType);
+            hostMemorySize += hostMemory.medianOfMediansAbsoluteDeviation.size() * sizeof(outputDataType);
+        }
+        if ( options.subbandDedispersion )
+        {
+            hostMemorySize += hostMemory.shiftsStepOne->size() * sizeof(float);
+            hostMemorySize += hostMemory.shiftsStepTwo->size() * sizeof(float);
+        }
+        else
+        {
+            hostMemorySize += hostMemory.shiftsSingleStep->size() * sizeof(float);
+        }
+        std::cout << "Allocated memory: " << isa::utils::giga(hostMemorySize) << " GB" << std::endl;
+        std::cout << std::endl;
+    }
 
     // Generate OpenCL kernels
     try
