@@ -206,6 +206,7 @@ int main(int argc, char *argv[])
         {
             hostMemorySize += hostMemory.maxValues.size() * sizeof(outputDataType);
             hostMemorySize += hostMemory.maxIndices.size() * sizeof(unsigned int);
+            hostMemorySize += hostMemory.stdevs.size() * sizeof(outputDataType);
             hostMemorySize += hostMemory.medianOfMediansStepOne.size() * sizeof(outputDataType);
             hostMemorySize += hostMemory.medianOfMedians.size() * sizeof(outputDataType);
             hostMemorySize += hostMemory.medianOfMediansAbsoluteDeviation.size() * sizeof(outputDataType);

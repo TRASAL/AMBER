@@ -180,6 +180,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
             kernels.max.at(stepNumber)->setArg(0, deviceMemory.integratedData);
             kernels.max.at(stepNumber)->setArg(1, deviceMemory.maxValues);
             kernels.max.at(stepNumber)->setArg(2, deviceMemory.maxIndices);
+            kernels.max.at(stepNumber)->setArg(3, deviceMemory.stdevs);
             delete code;
         }
         if (options.subbandDedispersion)
@@ -194,7 +195,10 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
         kernels.max.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.dedispersedData);
         kernels.max.at(hostMemory.integrationSteps.size())->setArg(1, deviceMemory.maxValues);
         kernels.max.at(hostMemory.integrationSteps.size())->setArg(2, deviceMemory.maxIndices);
+        kernels.max.at(hostMemory.integrationSteps.size())->setArg(3, deviceMemory.stdevs);
         delete code;
+
+
         // Median of medians first step kernel
         kernels.medianOfMediansStepOne.reserve(hostMemory.integrationSteps.size() + 1);
         for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)

@@ -42,7 +42,8 @@ void trigger(const Options &options, const unsigned int padding, const unsigned 
             }
             else if (options.snrMode == SNRMode::Momad)
             {
-                maxSNR = (hostMemory.maxValues.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) - hostMemory.medianOfMedians.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm)) / (hostMemory.medianOfMediansAbsoluteDeviation.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) * 1.48);
+                //maxSNR = (hostMemory.maxValues.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) - hostMemory.medianOfMedians.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm)) / (hostMemory.medianOfMediansAbsoluteDeviation.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) * 1.48);
+                maxSNR = (hostMemory.maxValues.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) - hostMemory.medianOfMedians.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm)) / hostMemory.stdevs.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm);
                 maxIndex = hostMemory.maxIndices.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm);
             }
 

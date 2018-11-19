@@ -50,6 +50,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
         {
             hostMemoryDumpFiles.maxValuesData.open(hostMemoryDumpFiles.dumpFilesPrefix + "maxValuesData.dump");
             hostMemoryDumpFiles.maxIndicesData.open(hostMemoryDumpFiles.dumpFilesPrefix + "maxIndicesData.dump");
+            hostMemoryDumpFiles.stdevsData.open(hostMemoryDumpFiles.dumpFilesPrefix + "stdevsData.dump");
             hostMemoryDumpFiles.medianOfMediansStepOneData.open(hostMemoryDumpFiles.dumpFilesPrefix + "medianOfMediansStepOneData.dump");
             hostMemoryDumpFiles.medianOfMediansData.open(hostMemoryDumpFiles.dumpFilesPrefix + "medianOfMediansData.dump");
             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData.open(hostMemoryDumpFiles.dumpFilesPrefix + "medianOfMediansAbsoluteDeviation.dump");
@@ -119,6 +120,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
             {
                 hostMemoryDumpFiles.maxValuesData << "# Batch: " << batch << std::endl;
                 hostMemoryDumpFiles.maxIndicesData << "# Batch: " << batch << std::endl;
+                hostMemoryDumpFiles.stdevsData << "# Batch: " << batch << std::endl;
                 hostMemoryDumpFiles.medianOfMediansStepOneData << "# Batch: " << batch << std::endl;
                 hostMemoryDumpFiles.medianOfMediansData << "# Batch: " << batch << std::endl;
                 hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Batch: " << batch << std::endl;
@@ -824,6 +826,8 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                 syncPoint.wait();
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxIndices, CL_TRUE, 0, hostMemory.maxIndices.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.maxIndices.data()), nullptr, &syncPoint);
                 syncPoint.wait();
+                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.stdevs, CL_TRUE, 0, hostMemory.stdevs.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.stdevs.data()), nullptr, &syncPoint);
+                syncPoint.wait();
                 timers.outputCopy.stop();
                 // Median of medians first step
                 timers.medianOfMediansStepOne.start();
@@ -875,6 +879,7 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.max[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.maxGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.maxLocal[hostMemory.integrationSteps.size()]);
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxValues, CL_FALSE, 0, hostMemory.maxValues.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.maxValues.data()));
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxIndices, CL_FALSE, 0, hostMemory.maxIndices.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.maxIndices.data()));
+                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.stdevs, CL_FALSE, 0, hostMemory.stdevs.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.stdevs.data()));
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepOne[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepOneGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.medianOfMediansStepOneLocal[hostMemory.integrationSteps.size()]);
                 if (options.dataDump)
                 {
@@ -915,6 +920,7 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                 {
                     hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.stdevsData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Synthesized Beam: " << sBeam << std::endl;
@@ -926,6 +932,8 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                             hostMemoryDumpFiles.maxValuesData << std::endl;
                             hostMemoryDumpFiles.maxIndicesData << hostMemory.maxIndices.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int))) + (subbandingDM * observation.getNrDMs()) + dm);
                             hostMemoryDumpFiles.maxIndicesData << std::endl;
+                            hostMemoryDumpFiles.stdevsData << hostMemory.stdevs.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
+                            hostMemoryDumpFiles.stdevsData << std::endl;
                             hostMemoryDumpFiles.medianOfMediansData << hostMemory.medianOfMedians.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
                             hostMemoryDumpFiles.medianOfMediansData << std::endl;
                             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
@@ -964,6 +972,8 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                         hostMemoryDumpFiles.maxValuesData << std::endl;
                         hostMemoryDumpFiles.maxIndicesData << hostMemory.maxIndices.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
                         hostMemoryDumpFiles.maxIndicesData << std::endl;
+                        hostMemoryDumpFiles.stdevsData << hostMemory.stdevs.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
+                        hostMemoryDumpFiles.stdevsData << std::endl;
                         hostMemoryDumpFiles.medianOfMediansData << hostMemory.medianOfMedians.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
                         hostMemoryDumpFiles.medianOfMediansData << std::endl;
                         hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
@@ -1031,6 +1041,8 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxValues, CL_TRUE, 0, hostMemory.maxValues.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.maxValues.data()), nullptr, &syncPoint);
                 syncPoint.wait();
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxIndices, CL_TRUE, 0, hostMemory.maxIndices.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.maxIndices.data()), nullptr, &syncPoint);
+                syncPoint.wait();
+                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.stdevs, CL_TRUE, 0, hostMemory.stdevs.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.stdevs.data()), nullptr, &syncPoint);
                 syncPoint.wait();
                 timers.outputCopy.stop();
                 // Median of medians first step
@@ -1195,6 +1207,8 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                             hostMemoryDumpFiles.maxValuesData << std::endl;
                             hostMemoryDumpFiles.maxIndicesData << hostMemory.maxIndices.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int))) + (subbandingDM * observation.getNrDMs()) + dm);
                             hostMemoryDumpFiles.maxIndicesData << std::endl;
+                            hostMemoryDumpFiles.stdevsData << hostMemory.stdevs.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
+                            hostMemoryDumpFiles.stdevsData << std::endl;
                             hostMemoryDumpFiles.medianOfMediansData << hostMemory.medianOfMedians.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
                             hostMemoryDumpFiles.medianOfMediansData << std::endl;
                             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
@@ -1222,6 +1236,8 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                                                         << std::endl;
                     hostMemoryDumpFiles.maxIndicesData << std::endl
                                                         << std::endl;
+                    hostMemoryDumpFiles.stdevsData << std::endl
+                                                      << std::endl;
                     hostMemoryDumpFiles.medianOfMediansData << std::endl
                                                             << std::endl;
                     hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl
@@ -1243,6 +1259,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                 {
                     hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.stdevsData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Synthesized Beam: " << sBeam << std::endl;
@@ -1269,6 +1286,8 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                         hostMemoryDumpFiles.maxValuesData << std::endl;
                         hostMemoryDumpFiles.maxIndicesData << hostMemory.maxIndices.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
                         hostMemoryDumpFiles.maxIndicesData << std::endl;
+                        hostMemoryDumpFiles.stdevsData << hostMemory.stdevs.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
+                        hostMemoryDumpFiles.stdevsData << std::endl;
                         hostMemoryDumpFiles.medianOfMediansData << hostMemory.medianOfMedians.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
                         hostMemoryDumpFiles.medianOfMediansData << std::endl;
                         hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
@@ -1295,6 +1314,8 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                                                         << std::endl;
                     hostMemoryDumpFiles.maxIndicesData << std::endl
                                                         << std::endl;
+                    hostMemoryDumpFiles.stdevsData << std::endl
+                                                      << std::endl;
                     hostMemoryDumpFiles.medianOfMediansData << std::endl
                                                             << std::endl;
                     hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl
@@ -1455,6 +1476,7 @@ void clean(const Options &options, const DataOptions &dataOptions, HostMemory &h
         {
             hostMemoryDumpFiles.maxValuesData.close();
             hostMemoryDumpFiles.maxIndicesData.close();
+            hostMemoryDumpFiles.stdevsData.close();
             hostMemoryDumpFiles.medianOfMediansStepOneData.close();
             hostMemoryDumpFiles.medianOfMediansData.close();
             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData.close();

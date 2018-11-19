@@ -134,6 +134,8 @@ struct HostMemory
     std::vector<outputDataType> maxValues;
     // Index of max sample (MOMAD MODE)
     std::vector<unsigned int> maxIndices;
+    // Value of standard deviation samples (MOMAD mode)
+    std::vector<outputDataType> stdevs;
     /**
      ** @brief Host storage for the first step of the median of medians; only used for debugging.
      */
@@ -189,6 +191,10 @@ struct HostMemoryDumpFiles
      */
     std::ofstream maxIndicesData;
     /**
+     ** @brief File where to dump standard deviation values (MOMAD mode) data.
+     */
+    std::ofstream stdevsData;
+    /**
      ** @brief File where to dump the first step of the median of medians (MOMAD mode) data.
      */
     std::ofstream medianOfMediansStepOneData;
@@ -230,6 +236,8 @@ struct DeviceMemory
     cl::Buffer maxValues;
     // Index of max sample (MOMAD mode)
     cl::Buffer maxIndices;
+    // Values of standard deviation
+    cl::Buffer stdevs;
     // Median of medians first step (MOMAD mode)
     cl::Buffer medianOfMediansStepOne;
     // Median of medians second step (MOMAD mode)

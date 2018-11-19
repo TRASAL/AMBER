@@ -108,6 +108,7 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
         {
             hostMemory.maxValues.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
             hostMemory.maxIndices.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
+            hostMemory.stdevs.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
             hostMemory.medianOfMedians.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
             hostMemory.medianOfMediansAbsoluteDeviation.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
         }
@@ -160,6 +161,7 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
         {
             hostMemory.maxValues.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
             hostMemory.maxIndices.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
+            hostMemory.stdevs.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
             hostMemory.medianOfMedians.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
             hostMemory.medianOfMediansAbsoluteDeviation.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
         }
@@ -200,6 +202,7 @@ void allocateDeviceMemory(const AstroData::Observation &observation, const OpenC
     {
         deviceMemory.maxValues = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.maxValues.size() * sizeof(outputDataType), 0, 0);
         deviceMemory.maxIndices = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.maxIndices.size() * sizeof(unsigned int), 0, 0);
+        deviceMemory.stdevs = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.stdevs.size() * sizeof(outputDataType), 0, 0);
         if (!options.subbandDedispersion)
         {
             deviceMemory.medianOfMediansStepOne = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType), 0, 0);
