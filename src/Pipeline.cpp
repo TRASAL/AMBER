@@ -500,7 +500,7 @@ int downsampling(const unsigned int batch, cl::Event &syncPoint, const OpenCLRun
             timers.downsampling.start();
             openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.downsampling), cl::NullRange, kernelRunTimeConfigurations.downsamplingGlobal, kernelRunTimeConfigurations.downsamplingLocal, nullptr, &syncPoint);
             syncPoint.wait();
-            timers.dedispersionStepOne.stop();
+            timers.downsampling.stop();
         }
         catch (cl::Error &err)
         {
