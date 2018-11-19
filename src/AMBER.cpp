@@ -94,19 +94,29 @@ int main(int argc, char *argv[])
         return 1;
     }
     // Computing dedispersion shifts and mapping of synthesized beams
+    // Values need to be divisible by the downsampling factor
     if ( options.subbandDedispersion )
     {
         hostMemory.shiftsStepOne = Dedispersion::getShifts(observation, deviceOptions.padding.at(deviceOptions.deviceName));
         hostMemory.shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, deviceOptions.padding.at(deviceOptions.deviceName));
-        observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(hostMemory.shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
-        observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch(true) + static_cast<unsigned int>(hostMemory.shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))), true);
+        observation.setNrSamplesPerBatch(static_cast<unsigned int>(std::ceil(observation.getNrSamplesPerBatch() + (hostMemory.shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))))), true);
+        observation.setNrSamplesPerDispersedBatch(static_cast<unsigned int>(std::ceil(observation.getNrSamplesPerBatch(true) + (hostMemory.shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))))), true);
+        if ( options.downsampling )
+        {
+            observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch(true, observation.getDownsampling()), true);
+            observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerDispersedBatch(true, observation.getDownsampling()), true);
+        }
         observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch(true)) / observation.getNrSamplesPerBatch())), true);
         hostMemory.beamMapping.resize(observation.getNrSynthesizedBeams() * observation.getNrSubbands(deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
     }
     else
     {
         hostMemory.shiftsSingleStep = Dedispersion::getShifts(observation, deviceOptions.padding.at(deviceOptions.deviceName));
-        observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch() + static_cast<unsigned int>(hostMemory.shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
+        observation.setNrSamplesPerDispersedBatch(static_cast<unsigned int>(std::ceil(observation.getNrSamplesPerBatch() + (hostMemory.shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))))));
+        if ( options.downsampling )
+        {
+            observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerDispersedBatch(false, observation.getDownsampling()));
+        }
         observation.setNrDelayBatches(static_cast<unsigned int>(std::ceil(static_cast<double>(observation.getNrSamplesPerDispersedBatch()) / observation.getNrSamplesPerBatch())));
         hostMemory.beamMapping.resize(observation.getNrSynthesizedBeams() * observation.getNrChannels(deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
     }
