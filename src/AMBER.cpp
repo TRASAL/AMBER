@@ -263,6 +263,12 @@ int main(int argc, char *argv[])
     outputStats << "# inputCopyTotal inputCopyAvg err" << std::endl;
     outputStats << timers.inputCopy.getTotalTime() << " " << timers.inputCopy.getAverageTime() << " ";
     outputStats << timers.inputCopy.getStandardDeviation() << std::endl;
+    if ( options.downsampling )
+    {
+        outputStats << "# downsamplingTotal downsamplingAvg err" << std::endl;
+        outputStats << timers.downsampling.getTotalTime() << " " << timers.downsampling.getAverageTime() << " ";
+        outputStats << timers.downsampling.getStandardDeviation() << std::endl;
+    }
     if (!options.subbandDedispersion)
     {
         outputStats << "# dedispersionSingleStepTotal dedispersionSingleStepAvg err" << std::endl;
