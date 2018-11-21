@@ -687,14 +687,12 @@ int dedispersion(const unsigned int batch, cl::Event &syncPoint, const OpenCLRun
                     for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
                     {
                         hostMemoryDumpFiles.dedispersedData << "# DM: " << dm << std::endl;
-                        for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++)
+                        for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / observation.getDownsampling(); sample++)
                         {
-                            hostMemoryDumpFiles.dedispersedData << hostMemory.dedispersedData
-                                                                        .at((sBeam * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample)
-                                                                << std::endl;
+                            hostMemoryDumpFiles.dedispersedData << hostMemory.dedispersedData.at((sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample);
+                            hostMemoryDumpFiles.dedispersedData << std::endl;
                         }
-                        hostMemoryDumpFiles.dedispersedData << std::endl
-                                                            << std::endl;
+                        hostMemoryDumpFiles.dedispersedData << std::endl << std::endl;
                     }
                     hostMemoryDumpFiles.dedispersedData << std::endl;
                 }
