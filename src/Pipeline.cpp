@@ -644,9 +644,7 @@ int dedispersion(const unsigned int batch, cl::Event &syncPoint, const OpenCLRun
                             }
                             hostMemoryDumpFiles.subbandedData << std::endl << std::endl;
                         }
-                        hostMemoryDumpFiles.subbandedData << std::endl;
                     }
-                    hostMemoryDumpFiles.subbandedData << std::endl;
                 }
                 for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
                 {
@@ -663,9 +661,7 @@ int dedispersion(const unsigned int batch, cl::Event &syncPoint, const OpenCLRun
                             }
                             hostMemoryDumpFiles.dedispersedData << std::endl << std::endl;
                         }
-                        hostMemoryDumpFiles.dedispersedData << std::endl;
                     }
-                    hostMemoryDumpFiles.dedispersedData << std::endl;
                 }
             }
             catch (cl::Error &err)
@@ -694,7 +690,6 @@ int dedispersion(const unsigned int batch, cl::Event &syncPoint, const OpenCLRun
                         }
                         hostMemoryDumpFiles.dedispersedData << std::endl << std::endl;
                     }
-                    hostMemoryDumpFiles.dedispersedData << std::endl;
                 }
             }
             catch (cl::Error &err)
