@@ -161,6 +161,10 @@ struct HostMemoryDumpFiles
      */
     std::string dumpFilesPrefix{};
     /**
+     ** @brief File where to dump downsampled data.
+     */
+    std::ofstream downsampledData;
+    /**
      ** @brief File where to dump subbanded data.
      */
     std::ofstream subbandedData;

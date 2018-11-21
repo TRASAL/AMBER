@@ -24,6 +24,10 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
 
     if (options.dataDump)
     {
+        if ( options.downsampling )
+        {
+            hostMemoryDumpFiles.downsampledData.open(hostMemoryDumpFiles.dumpFilesPrefix + "downsampledData.dump");
+        }
         if (options.subbandDedispersion)
         {
             hostMemoryDumpFiles.subbandedData.open(hostMemoryDumpFiles.dumpFilesPrefix + "subbandedData.dump");
@@ -104,6 +108,10 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
         // Prepare data dump files
         if (options.dataDump)
         {
+            if ( options.downsampling )
+            {
+                hostMemoryDumpFiles.downsampledData << "# Batch: " << batch << std::endl;
+            }
             if (options.subbandDedispersion)
             {
                 hostMemoryDumpFiles.subbandedData << "# Batch: " << batch << std::endl;
@@ -128,7 +136,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
         if ( options.downsampling )
         {
             // Downsampling before dedispersion
-            status = downsampling(batch, syncPoint, openclRunTime, deviceOptions, timers, kernels, kernelRunTimeConfigurations);
+            status = downsampling(batch, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles);
             if (status != 0)
             {
                 clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
@@ -490,7 +498,7 @@ int copyInputToDevice(const unsigned int batch, const OpenCLRunTime &openclRunTi
     return 0;
 }
 
-int downsampling(const unsigned int batch, cl::Event &syncPoint, const OpenCLRunTime &openclRunTime, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations)
+int downsampling(const unsigned int batch, cl::Event &syncPoint, const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles)
 {
     bool errorDetected = false;
     if (deviceOptions.synchronized)
@@ -519,6 +527,45 @@ int downsampling(const unsigned int batch, cl::Event &syncPoint, const OpenCLRun
         {
             std::cerr << "Downsampling error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
             std::cerr << err.err() << std::endl;
+            errorDetected = true;
+        }
+    }
+    if ( options.dataDump )
+    {
+        try
+        {
+            openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.dispersedData, CL_TRUE, 0, hostMemory.dispersedData.size() * sizeof(inputDataType), reinterpret_cast<void *>(hostMemory.dispersedData.data()), nullptr, &syncPoint);
+            syncPoint.wait();
+            for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ )
+            {
+                hostMemoryDumpFiles.downsampledData << "# Beam: " << beam << std::endl;
+                for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ )
+                {
+                    hostMemoryDumpFiles.downsampledData << "# Channel: " << channel << std::endl;
+                    if ( options.subbandDedispersion )
+                    {
+                        for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch(true) / observation.getDownsampling(); sample++ )
+                        {
+                            hostMemoryDumpFiles.downsampledData << hostMemory.dispersedData.at((beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + sample);
+                            hostMemoryDumpFiles.downsampledData << std::endl;
+                        }
+                    }
+                    else
+                    {
+                        for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch() / observation.getDownsampling(); sample++ )
+                        {
+                            hostMemoryDumpFiles.downsampledData << hostMemory.dispersedData.at((beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + sample);
+                            hostMemoryDumpFiles.downsampledData << std::endl;
+                        }
+                    }
+                    hostMemoryDumpFiles.downsampledData << std::endl << std::endl;
+                }
+            }
+        }
+        catch (cl::Error &err)
+        {
+            std::cerr << "Impossible to read deviceMemory.dispersedData: ";
+            std::cerr << err.what() << " " << err.err() << std::endl;
             errorDetected = true;
         }
     }
@@ -1396,6 +1443,10 @@ void clean(const Options &options, const DataOptions &dataOptions, HostMemory &h
 #endif // HAVE_PSRDADA
     if (options.dataDump)
     {
+        if ( options.downsampling )
+        {
+            hostMemoryDumpFiles.downsampledData.close();
+        }
         if (options.subbandDedispersion)
         {
             hostMemoryDumpFiles.subbandedData.close();

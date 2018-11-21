@@ -69,12 +69,17 @@ int copyInputToDevice(const unsigned int batch, const OpenCLRunTime &openclRunTi
  * @param batch
  * @param syncPoint
  * @param openclRunTime
+ * @param observation
+ * @param options
  * @param deviceOptions
  * @param timers
  * @param kernels
  * @param kernelRunTimeConfigurations
+ * @param hostMemory
+ * @param deviceMemory
+ * @param hostMemoryDumpFiles
  */
-int downsampling(const unsigned int batch, cl::Event &syncPoint, const OpenCLRunTime &openclRunTime, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations);
+int downsampling(const unsigned int batch, cl::Event &syncPoint, const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles);
 
 /**
  * @brief Dedispersion step.
