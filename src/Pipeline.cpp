@@ -637,17 +637,12 @@ int dedispersion(const unsigned int batch, cl::Event &syncPoint, const OpenCLRun
                         for (unsigned int subband = 0; subband < observation.getNrSubbands(); subband++)
                         {
                             hostMemoryDumpFiles.subbandedData << "# Subband: " << subband << std::endl;
-                            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(true); sample++)
+                            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(true) / observation.getDownsampling(); sample++)
                             {
-                                hostMemoryDumpFiles.subbandedData << hostMemory.subbandedData
-                                                                            .at((beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) +
-                                                                                (subband * observation.getNrSamplesPerBatch(true,
-                                                                                                                            deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) +
-                                                                                sample)
-                                                                    << std::endl;
+                                hostMemoryDumpFiles.subbandedData << hostMemory.subbandedData.at((beam * observation.getNrDMs(true) * observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subband * isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample);
+                                hostMemoryDumpFiles.subbandedData << std::endl;
                             }
-                            hostMemoryDumpFiles.subbandedData << std::endl
-                                                                << std::endl;
+                            hostMemoryDumpFiles.subbandedData << std::endl << std::endl;
                         }
                         hostMemoryDumpFiles.subbandedData << std::endl;
                     }
@@ -661,14 +656,10 @@ int dedispersion(const unsigned int batch, cl::Event &syncPoint, const OpenCLRun
                         for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
                         {
                             hostMemoryDumpFiles.dedispersedData << "# DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
-                            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++)
+                            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / observation.getDownsampling(); sample++)
                             {
-                                hostMemoryDumpFiles.dedispersedData << hostMemory.dedispersedData
-                                                                            .at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) +
-                                                                                (dm * observation.getNrSamplesPerBatch(false,
-                                                                                                                        deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) +
-                                                                                sample)
-                                                                    << std::endl;
+                                hostMemoryDumpFiles.dedispersedData << hostMemory.dedispersedData.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample);
+                                hostMemoryDumpFiles.dedispersedData << std::endl;
                             }
                             hostMemoryDumpFiles.dedispersedData << std::endl;
                         }
@@ -931,12 +922,12 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
                             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl;
                             hostMemoryDumpFiles.medianOfMediansStepOneData << "# DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
-                            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / options.medianStepSize; sample++)
+                            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize; sample++)
                             {
-                                hostMemoryDumpFiles.medianOfMediansStepOneData << hostMemory.medianOfMediansStepOne.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (((subbandingDM * observation.getNrDMs()) + dm) * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << std::endl;
+                                hostMemoryDumpFiles.medianOfMediansStepOneData << hostMemory.medianOfMediansStepOne.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (((subbandingDM * observation.getNrDMs()) + dm) * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample);
+                                hostMemoryDumpFiles.medianOfMediansStepOneData << std::endl;
                             }
-                            hostMemoryDumpFiles.medianOfMediansStepOneData << std::endl
-                                                                            << std::endl;
+                            hostMemoryDumpFiles.medianOfMediansStepOneData << std::endl << std::endl;
                         }
                     }
                     hostMemoryDumpFiles.maxValuesData << std::endl
@@ -1176,12 +1167,11 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                     for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
                     {
                         hostMemoryDumpFiles.integratedData << "# DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
-                        for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / step; sample++)
+                        for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / observation.getDownsampling() / step; sample++)
                         {
-                            hostMemoryDumpFiles.integratedData << hostMemory.integratedData.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << std::endl;
+                            hostMemoryDumpFiles.integratedData << hostMemory.integratedData.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << std::endl;
                         }
-                        hostMemoryDumpFiles.integratedData << std::endl
-                                                            << std::endl;
+                        hostMemoryDumpFiles.integratedData << std::endl << std::endl;
                         if (options.snrMode == SNRMode::Standard)
                         {
                             hostMemoryDumpFiles.snrData << hostMemory.snrData.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
@@ -1200,12 +1190,11 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
                             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl;
                             hostMemoryDumpFiles.medianOfMediansStepOneData << "# DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
-                            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / step / options.medianStepSize; sample++)
+                            for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / observation.getDownsampling() / step / options.medianStepSize; sample++)
                             {
-                                hostMemoryDumpFiles.medianOfMediansStepOneData << hostMemory.medianOfMediansStepOne.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (((subbandingDM * observation.getNrDMs()) + dm) * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << std::endl;
+                                hostMemoryDumpFiles.medianOfMediansStepOneData << hostMemory.medianOfMediansStepOne.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (((subbandingDM * observation.getNrDMs()) + dm) * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << std::endl;
                             }
-                            hostMemoryDumpFiles.medianOfMediansStepOneData << std::endl
-                                                                            << std::endl;
+                            hostMemoryDumpFiles.medianOfMediansStepOneData << std::endl << std::endl;
                         }
                     }
                 }
@@ -1250,9 +1239,9 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                 for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
                 {
                     hostMemoryDumpFiles.integratedData << "# DM: " << dm << std::endl;
-                    for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / step; sample++)
+                    for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / observation.getDownsampling() / step; sample++)
                     {
-                        std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << std::endl;
+                        std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << std::endl;
                     }
                     hostMemoryDumpFiles.integratedData << std::endl
                                                         << std::endl;
@@ -1274,31 +1263,24 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                         hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
                         hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl;
                         hostMemoryDumpFiles.medianOfMediansStepOneData << "# DM: " << dm << std::endl;
-                        for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / options.medianStepSize; sample++)
+                        for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize; sample++)
                         {
-                            hostMemoryDumpFiles.medianOfMediansStepOneData << hostMemory.medianOfMediansStepOne.at((sBeam * observation.getNrDMs()) * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + ((dm * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << std::endl;
+                            hostMemoryDumpFiles.medianOfMediansStepOneData << hostMemory.medianOfMediansStepOne.at((sBeam * observation.getNrDMs()) * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + ((dm * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << std::endl;
                         }
-                        hostMemoryDumpFiles.medianOfMediansStepOneData << std::endl
-                                                                        << std::endl;
+                        hostMemoryDumpFiles.medianOfMediansStepOneData << std::endl << std::endl;
                     }
                 }
                 if (options.snrMode == SNRMode::Standard)
                 {
-                    hostMemoryDumpFiles.snrData << std::endl
-                                                << std::endl;
-                    hostMemoryDumpFiles.snrSamplesData << std::endl
-                                                        << std::endl;
+                    hostMemoryDumpFiles.snrData << std::endl << std::endl;
+                    hostMemoryDumpFiles.snrSamplesData << std::endl << std::endl;
                 }
                 else if (options.snrMode == SNRMode::Momad)
                 {
-                    hostMemoryDumpFiles.maxValuesData << std::endl
-                                                        << std::endl;
-                    hostMemoryDumpFiles.maxIndicesData << std::endl
-                                                        << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansData << std::endl
-                                                            << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl
-                                                                                << std::endl;
+                    hostMemoryDumpFiles.maxValuesData << std::endl << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << std::endl << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << std::endl << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl << std::endl;
                 }
             }
         }
