@@ -661,7 +661,7 @@ int dedispersion(const unsigned int batch, cl::Event &syncPoint, const OpenCLRun
                                 hostMemoryDumpFiles.dedispersedData << hostMemory.dedispersedData.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample);
                                 hostMemoryDumpFiles.dedispersedData << std::endl;
                             }
-                            hostMemoryDumpFiles.dedispersedData << std::endl;
+                            hostMemoryDumpFiles.dedispersedData << std::endl << std::endl;
                         }
                         hostMemoryDumpFiles.dedispersedData << std::endl;
                     }
