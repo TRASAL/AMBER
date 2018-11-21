@@ -762,10 +762,8 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                             hostMemoryDumpFiles.snrSamplesData << std::endl;
                         }
                     }
-                    hostMemoryDumpFiles.snrData << std::endl
-                                                << std::endl;
-                    hostMemoryDumpFiles.snrSamplesData << std::endl
-                                                        << std::endl;
+                    hostMemoryDumpFiles.snrData << std::endl << std::endl;
+                    hostMemoryDumpFiles.snrSamplesData << std::endl << std::endl;
                 }
             }
             else
@@ -781,10 +779,8 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                         hostMemoryDumpFiles.snrSamplesData << hostMemory.snrSamples.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int))) + dm);
                         hostMemoryDumpFiles.snrSamplesData << std::endl;
                     }
-                    hostMemoryDumpFiles.snrData << std::endl
-                                                << std::endl;
-                    hostMemoryDumpFiles.snrSamplesData << std::endl
-                                                        << std::endl;
+                    hostMemoryDumpFiles.snrData << std::endl << std::endl;
+                    hostMemoryDumpFiles.snrSamplesData << std::endl << std::endl;
                 }
             }
             hostMemoryDumpFiles.snrData << std::endl;
@@ -923,14 +919,10 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                             hostMemoryDumpFiles.medianOfMediansStepOneData << std::endl << std::endl;
                         }
                     }
-                    hostMemoryDumpFiles.maxValuesData << std::endl
-                                                        << std::endl;
-                    hostMemoryDumpFiles.maxIndicesData << std::endl
-                                                        << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansData << std::endl
-                                                            << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl
-                                                                                << std::endl;
+                    hostMemoryDumpFiles.maxValuesData << std::endl << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << std::endl << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << std::endl << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl << std::endl;
                 }
             }
             else
@@ -957,17 +949,12 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                         {
                             hostMemoryDumpFiles.medianOfMediansStepOneData << hostMemory.medianOfMediansStepOne.at((sBeam * observation.getNrDMs()) * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + ((dm * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << std::endl;
                         }
-                        hostMemoryDumpFiles.medianOfMediansStepOneData << std::endl
-                                                                        << std::endl;
+                        hostMemoryDumpFiles.medianOfMediansStepOneData << std::endl << std::endl;
                     }
-                    hostMemoryDumpFiles.maxValuesData << std::endl
-                                                        << std::endl;
-                    hostMemoryDumpFiles.maxIndicesData << std::endl
-                                                        << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansData << std::endl
-                                                            << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl
-                                                                                << std::endl;
+                    hostMemoryDumpFiles.maxValuesData << std::endl << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << std::endl << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << std::endl << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl << std::endl;
                 }
             }
         }
@@ -1193,21 +1180,15 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                 }
                 if (options.snrMode == SNRMode::Standard)
                 {
-                    hostMemoryDumpFiles.snrData << std::endl
-                                                << std::endl;
-                    hostMemoryDumpFiles.snrSamplesData << std::endl
-                                                        << std::endl;
+                    hostMemoryDumpFiles.snrData << std::endl << std::endl;
+                    hostMemoryDumpFiles.snrSamplesData << std::endl << std::endl;
                 }
                 else if (options.snrMode == SNRMode::Momad)
                 {
-                    hostMemoryDumpFiles.maxValuesData << std::endl
-                                                        << std::endl;
-                    hostMemoryDumpFiles.maxIndicesData << std::endl
-                                                        << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansData << std::endl
-                                                            << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl
-                                                                                << std::endl;
+                    hostMemoryDumpFiles.maxValuesData << std::endl << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << std::endl << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << std::endl << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl << std::endl;
                 }
             }
         }
