@@ -133,12 +133,14 @@ int main(int argc, char *argv[])
         std::cout << "Batches: " << observation.getNrBatches() << std::endl;
         if ( options.subbandDedispersion )
         {
+            std::cout << "Max Delay (in Batches): " << observation.getNrDelayBatches(true) << std::endl;
             std::cout << "Samples per Batch: " << observation.getNrSamplesPerBatch() << std::endl;
             std::cout << "Samples per Subband: " << observation.getNrSamplesPerBatch(true) << std::endl;
             std::cout << "Samples per Dispersed Batch: " << observation.getNrSamplesPerDispersedBatch(true) << std::endl;
         }
         else
         {
+            std::cout << "Max Delay (in Batches): " << observation.getNrDelayBatches() << std::endl;
             std::cout << "Samples per Batch: " << observation.getNrSamplesPerBatch() << std::endl;
             std::cout << "Samples per Dispersed Batch: " << observation.getNrSamplesPerDispersedBatch() << std::endl;
         }
