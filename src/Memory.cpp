@@ -87,7 +87,7 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
         {
             if (inputBits >= 8)
             {
-                hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName)));
+                hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), deviceOptions.padding.at(deviceOptions.deviceName)));
             }
             else
             {
@@ -137,7 +137,7 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
         {
             if (inputBits >= 8)
             {
-                hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)));
+                hostMemory.dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType)));
             }
             else
             {
