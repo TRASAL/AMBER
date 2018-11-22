@@ -546,7 +546,7 @@ int downsampling(const unsigned int batch, cl::Event &syncPoint, const OpenCLRun
                     {
                         for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch(true) / observation.getDownsampling(); sample++ )
                         {
-                            hostMemoryDumpFiles.downsampledData << hostMemory.dispersedData.at((beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + sample);
+                            hostMemoryDumpFiles.downsampledData << static_cast<double>(hostMemory.dispersedData.at((beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + sample));
                             hostMemoryDumpFiles.downsampledData << std::endl;
                         }
                     }
@@ -554,7 +554,7 @@ int downsampling(const unsigned int batch, cl::Event &syncPoint, const OpenCLRun
                     {
                         for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch() / observation.getDownsampling(); sample++ )
                         {
-                            hostMemoryDumpFiles.downsampledData << hostMemory.dispersedData.at((beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + sample);
+                        hostMemoryDumpFiles.downsampledData << static_cast<double>(hostMemory.dispersedData.at((beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(inputDataType))) + sample));
                             hostMemoryDumpFiles.downsampledData << std::endl;
                         }
                     }
