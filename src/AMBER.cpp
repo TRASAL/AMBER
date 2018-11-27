@@ -134,17 +134,18 @@ int main(int argc, char *argv[])
         if ( options.subbandDedispersion )
         {
             std::cout << "Max Delay (in Batches): " << observation.getNrDelayBatches(true) << std::endl;
-            std::cout << "Samples per Batch: " << observation.getNrSamplesPerBatch() << std::endl;
-            std::cout << "Samples per Subband: " << observation.getNrSamplesPerBatch(true) << std::endl;
-            std::cout << "Samples per Dispersed Batch: " << observation.getNrSamplesPerDispersedBatch(true) << std::endl;
+            std::cout << "Samples per Batch (input): " << observation.getNrSamplesPerBatch() << std::endl;
+            std::cout << "Samples per Dispersed Batch: " << observation.getNrSamplesPerDispersedBatch(true) / observation.getDownsampling() << std::endl;
+            std::cout << "Samples per Batch (subband): " << observation.getNrSamplesPerBatch(true) / observation.getDownsampling() << std::endl;
+            std::cout << "Samples per Batch (dedispersed): " << observation.getNrSamplesPerBatch() / observation.getDownsampling() << std::endl;
         }
         else
         {
             std::cout << "Max Delay (in Batches): " << observation.getNrDelayBatches() << std::endl;
-            std::cout << "Samples per Batch: " << observation.getNrSamplesPerBatch() << std::endl;
-            std::cout << "Samples per Dispersed Batch: " << observation.getNrSamplesPerDispersedBatch() << std::endl;
+            std::cout << "Samples per Batch (input): " << observation.getNrSamplesPerBatch() << std::endl;
+            std::cout << "Samples per Dispersed Batch: " << observation.getNrSamplesPerDispersedBatch() / observation.getDownsampling() << std::endl;
         }
-        std::cout << "Sampling time: " << observation.getSamplingTime() << std::endl;
+        std::cout << "Sampling time: " << observation.getSamplingTime() * observation.getDownsampling() << std::endl;
         if ( options.downsampling )
         {
             std::cout << "Downsampling factor: " << observation.getDownsampling() << std::endl;
