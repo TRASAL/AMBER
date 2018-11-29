@@ -34,6 +34,7 @@ void trigger(const Options &options, const unsigned int padding, const unsigned 
         {
             unsigned int maxIndex = 0;
             outputDataType maxSNR = 0;
+            outputDataType maxSNR_mad = 0;
 
             if (options.snrMode == SNRMode::Standard)
             {
@@ -42,15 +43,18 @@ void trigger(const Options &options, const unsigned int padding, const unsigned 
             }
             else if (options.snrMode == SNRMode::Momad)
             {
-                //maxSNR = (hostMemory.maxValues.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) - hostMemory.medianOfMedians.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm)) / (hostMemory.medianOfMediansAbsoluteDeviation.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) * 1.48);
+                maxSNR_mad = (hostMemory.maxValues.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) - hostMemory.medianOfMedians.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm)) / (hostMemory.medianOfMediansAbsoluteDeviation.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) * 1.48);
                 maxSNR = (hostMemory.maxValues.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) - hostMemory.medianOfMedians.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm)) / hostMemory.stdevs.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm);
                 maxIndex = hostMemory.maxIndices.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm);
-
-                std::cout<<"stdev: "<<hostMemory.stdevs.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm)<<"\tmad: "<<(hostMemory.medianOfMediansAbsoluteDeviation.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) * 1.48)<<std::endl;
             }
 
             if ( (std::isnormal(maxSNR)) && (maxSNR >= options.threshold) )
             {
+                // std::cout<<"\n\n=TRIGGER=" << "\tSNR_mad: "<< maxSNR_mad << "\tSNR_stdev: " << maxSNR << "\tDM: " << dm << "\tthreshold: " << options.threshold <<  std::endl;
+                // std::cout<<"integration: " << integration << "\tstdev: "<<hostMemory.stdevs.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm)<<"\tmad*1.48: "<<(hostMemory.medianOfMediansAbsoluteDeviation.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) * 1.48)<<std::endl;
+                // std::cout << std::endl;
+
+
                 TriggeredEvent event;
                 event.beam = beam;
                 event.sample = maxIndex;
