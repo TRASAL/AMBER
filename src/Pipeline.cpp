@@ -1332,13 +1332,13 @@ int printResults(const unsigned int batch, const AstroData::Observation &observa
                 {
                     outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " " << integration;
                     outputTrigger << " " << event.compactedIntegration << " ";
-                    outputTrigger << (((batch - delay) * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * (observation.getSamplingTime() * observation.getDownsampling()) << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
+                    outputTrigger << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event.sample * observation.getDownsampling() * integration)) * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
                     outputTrigger << event.compactedDMs << " " << event.SNR << std::endl;
                 }
                 else
                 {
                     outputTrigger << event.beam << " " << batch << " " << event.sample << " " << integration << " ";
-                    outputTrigger << event.compactedIntegration << " " << ((batch * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * (observation.getSamplingTime() * observation.getDownsampling()) << " ";
+                    outputTrigger << event.compactedIntegration << " " << ((batch * observation.getNrSamplesPerBatch()) + (event.sample * observation.getDownsampling() * integration)) * observation.getSamplingTime() << " ";
                     outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.compactedDMs << " ";
                     outputTrigger << event.SNR << std::endl;
                 }
