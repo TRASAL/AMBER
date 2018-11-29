@@ -38,12 +38,12 @@ void trigger(const Options &options, const unsigned int padding, const unsigned 
             if (options.snrMode == SNRMode::Standard)
             {
                 maxSNR = hostMemory.snrData.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm);
-                maxIndex = hostMemory.snrSamples.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm);
+                maxIndex = hostMemory.snrSamples.at((beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm);
             }
             else if (options.snrMode == SNRMode::Momad)
             {
                 maxSNR = (hostMemory.maxValues.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) - hostMemory.medianOfMedians.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm)) / (hostMemory.medianOfMediansAbsoluteDeviation.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) * 1.48);
-                maxIndex = hostMemory.maxIndices.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm);
+                maxIndex = hostMemory.maxIndices.at((beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm);
             }
 
             if ( (std::isnormal(maxSNR)) && (maxSNR >= options.threshold) )
