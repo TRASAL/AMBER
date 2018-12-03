@@ -27,7 +27,6 @@ void trigger(const Options &options, const unsigned int padding, const unsigned 
     {
         nrDMs = observation.getNrDMs();
     }
-#pragma omp parallel for
     for (unsigned int beam = 0; beam < observation.getNrSynthesizedBeams(); beam++)
     {
         for (unsigned int dm = 0; dm < nrDMs; dm++)
