@@ -69,12 +69,12 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
     }
     if (options.compactResults)
     {
-        outputTrigger << "# beam batch sample integration_step compacted_integration_steps time DM compacted_DMs SNR";
+        outputTrigger << "# beam_id batch_id sample_id integration_step compacted_integration_steps time DM_id DM compacted_DMs SNR";
         outputTrigger << std::endl;
     }
     else
     {
-        outputTrigger << "# beam batch sample integration_step time DM SNR" << std::endl;
+        outputTrigger << "# beam_id batch_id sample_id integration_step time DM_id DM SNR" << std::endl;
     }
     // Main search loop
     for (unsigned int batch = 0; batch < observation.getNrBatches(); batch++)
@@ -1330,16 +1330,18 @@ int printResults(const unsigned int batch, const AstroData::Observation &observa
                 }
                 if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
                 {
-                    outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " " << integration;
-                    outputTrigger << " " << event.compactedIntegration << " ";
-                    outputTrigger << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event.sample * observation.getDownsampling() * integration)) * observation.getSamplingTime() << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
+                    outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " ";
+                    outputTrigger << integration << " " << event.compactedIntegration << " ";
+                    outputTrigger << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event.sample * observation.getDownsampling() * integration)) * observation.getSamplingTime() << " ";
+                    outputTrigger << event.DM << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
                     outputTrigger << event.compactedDMs << " " << event.SNR << std::endl;
                 }
                 else
                 {
-                    outputTrigger << event.beam << " " << batch << " " << event.sample << " " << integration << " ";
-                    outputTrigger << event.compactedIntegration << " " << ((batch * observation.getNrSamplesPerBatch()) + (event.sample * observation.getDownsampling() * integration)) * observation.getSamplingTime() << " ";
-                    outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.compactedDMs << " ";
+                    outputTrigger << event.beam << " " << batch << " " << event.sample << " ";
+                    outputTrigger << integration << " " <<  event.compactedIntegration << " ";
+                    outputTrigger << ((batch * observation.getNrSamplesPerBatch()) + (event.sample * observation.getDownsampling() * integration)) * observation.getSamplingTime() << " ";
+                    outputTrigger << event.DM << " " << firstDM + (event.DM * observation.getDMStep()) << " " << event.compactedDMs << " ";
                     outputTrigger << event.SNR << std::endl;
                 }
             }
@@ -1385,13 +1387,13 @@ int printResults(const unsigned int batch, const AstroData::Observation &observa
                     {
                         outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " " << integration;
                         outputTrigger << " " << (((batch - delay) * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * (observation.getSamplingTime() * observation.getDownsampling()) << " ";
-                        outputTrigger << firstDM + (event.DM * observation.getDMStep()) << " " << event.SNR << std::endl;
+                        outputTrigger << event.DM << " " << firstDM + (event.DM * observation.getDMStep()) << " " << event.SNR << std::endl;
                     }
                     else
                     {
                         outputTrigger << event.beam << " " << batch << " " << event.sample << " " << integration << " ";
-                        outputTrigger << ((batch * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * (observation.getSamplingTime() * observation.getDownsampling()) << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
-                        outputTrigger << event.SNR << std::endl;
+                        outputTrigger << ((batch * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * integration)) * (observation.getSamplingTime() * observation.getDownsampling()) << " ";
+                        outputTrigger << event.DM << " " << firstDM + (event.DM * observation.getDMStep()) << " " << event.SNR << std::endl;
                     }
                 }
             }
