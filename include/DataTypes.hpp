@@ -359,7 +359,7 @@ struct TriggeredEvent
     unsigned int beam = 0;
     unsigned int sample = 0;
     unsigned int integration = 0;
-    float DM = 0.0f;
+    unsigned int DM = 0;
     float SNR = 0.0f;
 };
 
