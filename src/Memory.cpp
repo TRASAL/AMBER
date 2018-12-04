@@ -185,7 +185,14 @@ void allocateDeviceMemory(const AstroData::Observation &observation, const OpenC
     openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.zappedChannels, CL_FALSE, 0, hostMemory.zappedChannels.size() * sizeof(unsigned int), reinterpret_cast<const void *>(hostMemory.zappedChannels.data()));
     deviceMemory.beamMapping = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.beamMapping.size() * sizeof(unsigned int), 0, 0);
     openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.beamMapping, CL_FALSE, 0, hostMemory.beamMapping.size() * sizeof(unsigned int), reinterpret_cast<const void *>(hostMemory.beamMapping.data()));
-    deviceMemory.dispersedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.dispersedData.size() * sizeof(inputDataType), 0, 0);
+    if ( options.downsampling )
+    {
+        deviceMemory.dispersedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.dispersedData.size() * sizeof(inputDataType), 0, 0);
+    }
+    else
+    {
+        deviceMemory.dispersedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.dispersedData.size() * sizeof(inputDataType), 0, 0);
+    }
     deviceMemory.dedispersedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.dedispersedData.size() * sizeof(outputDataType), 0, 0);
     if (hostMemory.integrationSteps.size() > 0)
     {
