@@ -1386,13 +1386,13 @@ int printResults(const unsigned int batch, const AstroData::Observation &observa
                     if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
                     {
                         outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " " << integration;
-                        outputTrigger << " " << (((batch - delay) * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * observation.getDownsampling() * integration)) * observation.getSamplingTime() << " ";
+                        outputTrigger << " " << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event.sample * observation.getDownsampling() * integration)) * observation.getSamplingTime() << " ";
                         outputTrigger << event.DM << " " << firstDM + (event.DM * observation.getDMStep()) << " " << event.SNR << std::endl;
                     }
                     else
                     {
                         outputTrigger << event.beam << " " << batch << " " << event.sample << " " << integration << " ";
-                        outputTrigger << ((batch * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) + (event.sample * observation.getDownsampling() * integration)) * observation.getSamplingTime() << " ";
+                        outputTrigger << ((batch * observation.getNrSamplesPerBatch()) + (event.sample * observation.getDownsampling() * integration)) * observation.getSamplingTime() << " ";
                         outputTrigger << event.DM << " " << firstDM + (event.DM * observation.getDMStep()) << " " << event.SNR << std::endl;
                     }
                 }
