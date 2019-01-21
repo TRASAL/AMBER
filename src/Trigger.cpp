@@ -66,7 +66,7 @@ void trigger(const Options &options, const unsigned int padding, const unsigned 
                 sig_thresh:3.75 correction:1.001
                 sig_thresh:4.00 correction:1.001
                 */
-                maxSNR = (hostMemory.maxValues.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) - hostMemory.medianOfMedians.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm)) / (1.0f*hostMemory.stdevs.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm));
+                maxSNR = (hostMemory.maxValues.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) - hostMemory.medianOfMedians.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm)) / (1.014f*hostMemory.stdevs.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm));
                 maxIndex = hostMemory.maxIndices.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm);
 
                 //std::cout << integration << "," << hostMemory.stdevs.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) << "," << hostMemory.maxValues.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) << std::endl;
