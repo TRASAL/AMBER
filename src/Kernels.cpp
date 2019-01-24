@@ -159,42 +159,84 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
         kernels.snr.at(hostMemory.integrationSteps.size())->setArg(2, deviceMemory.snrSamples);
         delete code;
     }
-    else if (options.snrMode == SNRMode::Momad)
+    else if (options.snrMode == SNRMode::Momad || options.snrMode == SNRMode::MomSigmaCut)
     {
-        // Max kernel
-        kernels.max.reserve(hostMemory.integrationSteps.size() + 1);
-        for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+        if (options.snrMode == SNRMode::Momad)
         {
-            auto step = hostMemory.integrationSteps.begin();
+          // Max kernel
+          kernels.max.reserve(hostMemory.integrationSteps.size() + 1);
+          for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+          {
+              auto step = hostMemory.integrationSteps.begin();
 
-            std::advance(step, stepNumber);
-            if (options.subbandDedispersion)
-            {
-                code = SNR::getMaxOpenCL<outputDataType>(*(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling() * *step, deviceOptions.padding.at(deviceOptions.deviceName));
-            }
-            else
-            {
-                code = SNR::getMaxOpenCL<outputDataType>(*(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling() * *step, deviceOptions.padding.at(deviceOptions.deviceName));
-            }
-            kernels.max.push_back(isa::OpenCL::compile("getMax_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
-            kernels.max.at(stepNumber)->setArg(0, deviceMemory.integratedData);
-            kernels.max.at(stepNumber)->setArg(1, deviceMemory.maxValues);
-            kernels.max.at(stepNumber)->setArg(2, deviceMemory.maxIndices);
-            delete code;
+              std::advance(step, stepNumber);
+              if (options.subbandDedispersion)
+              {
+                  code = SNR::getMaxOpenCL<outputDataType>(*(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling() * *step, deviceOptions.padding.at(deviceOptions.deviceName));
+              }
+              else
+              {
+                  code = SNR::getMaxOpenCL<outputDataType>(*(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling() * *step, deviceOptions.padding.at(deviceOptions.deviceName));
+              }
+              kernels.max.push_back(isa::OpenCL::compile("getMax_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
+              kernels.max.at(stepNumber)->setArg(0, deviceMemory.integratedData);
+              kernels.max.at(stepNumber)->setArg(1, deviceMemory.maxValues);
+              kernels.max.at(stepNumber)->setArg(2, deviceMemory.maxIndices);
+              delete code;
+          }
+          if (options.subbandDedispersion)
+          {
+              code = SNR::getMaxOpenCL<outputDataType>(*(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName));
+          }
+          else
+          {
+              code = SNR::getMaxOpenCL<outputDataType>(*(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName));
+          }
+          kernels.max.push_back(isa::OpenCL::compile("getMax_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
+          kernels.max.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.dedispersedData);
+          kernels.max.at(hostMemory.integrationSteps.size())->setArg(1, deviceMemory.maxValues);
+          kernels.max.at(hostMemory.integrationSteps.size())->setArg(2, deviceMemory.maxIndices);
+          delete code;
         }
-        if (options.subbandDedispersion)
+        else if (options.snrMode == SNRMode::MomSigmaCut)
         {
-            code = SNR::getMaxOpenCL<outputDataType>(*(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName));
+          // Max and standard deviation kernel
+          kernels.maxStdSigmaCut.reserve(hostMemory.integrationSteps.size() + 1);
+          for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+          {
+              auto step = hostMemory.integrationSteps.begin();
+
+              std::advance(step, stepNumber);
+              if (options.subbandDedispersion)
+              {
+                  code = SNR::getMaxStdSigmaCutOpenCL<outputDataType>(*(kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling() * *step, deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
+              }
+              else
+              {
+                  code = SNR::getMaxStdSigmaCutOpenCL<outputDataType>(*(kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling() * *step, deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
+              }
+              kernels.maxStdSigmaCut.push_back(isa::OpenCL::compile("getMaxStdSigmaCut_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
+              kernels.maxStdSigmaCut.at(stepNumber)->setArg(0, deviceMemory.integratedData);
+              kernels.maxStdSigmaCut.at(stepNumber)->setArg(1, deviceMemory.maxValues);
+              kernels.maxStdSigmaCut.at(stepNumber)->setArg(2, deviceMemory.maxIndices);
+              kernels.maxStdSigmaCut.at(stepNumber)->setArg(3, deviceMemory.stdevs);
+              delete code;
+          }
+          if (options.subbandDedispersion)
+          {
+              code = SNR::getMaxStdSigmaCutOpenCL<outputDataType>(*(kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
+          }
+          else
+          {
+              code = SNR::getMaxStdSigmaCutOpenCL<outputDataType>(*(kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
+          }
+          kernels.maxStdSigmaCut.push_back(isa::OpenCL::compile("getMaxStdSigmaCut_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
+          kernels.maxStdSigmaCut.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.dedispersedData);
+          kernels.maxStdSigmaCut.at(hostMemory.integrationSteps.size())->setArg(1, deviceMemory.maxValues);
+          kernels.maxStdSigmaCut.at(hostMemory.integrationSteps.size())->setArg(2, deviceMemory.maxIndices);
+          kernels.maxStdSigmaCut.at(hostMemory.integrationSteps.size())->setArg(3, deviceMemory.stdevs);
+          delete code;
         }
-        else
-        {
-            code = SNR::getMaxOpenCL<outputDataType>(*(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName));
-        }
-        kernels.max.push_back(isa::OpenCL::compile("getMax_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
-        kernels.max.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.dedispersedData);
-        kernels.max.at(hostMemory.integrationSteps.size())->setArg(1, deviceMemory.maxValues);
-        kernels.max.at(hostMemory.integrationSteps.size())->setArg(2, deviceMemory.maxIndices);
-        delete code;
         // Median of medians first step kernel
         kernels.medianOfMediansStepOne.reserve(hostMemory.integrationSteps.size() + 1);
         for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
@@ -259,40 +301,43 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
         kernels.medianOfMediansStepTwo.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.medianOfMediansStepOne);
         kernels.medianOfMediansStepTwo.at(hostMemory.integrationSteps.size())->setArg(1, deviceMemory.medianOfMediansStepTwo);
         delete code;
-        // Median of medians absolute deviation kernel
-        kernels.medianOfMediansAbsoluteDeviation.reserve(hostMemory.integrationSteps.size() + 1);
-        for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+        if ( options.snrMode == SNRMode::Momad)
         {
-            auto step = hostMemory.integrationSteps.begin();
+          // Median of medians absolute deviation kernel
+          kernels.medianOfMediansAbsoluteDeviation.reserve(hostMemory.integrationSteps.size() + 1);
+          for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+          {
+              auto step = hostMemory.integrationSteps.begin();
 
-            std::advance(step, stepNumber);
-            if (options.subbandDedispersion)
-            {
-                code = SNR::getMedianOfMediansAbsoluteDeviationOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling() * *step, options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
-            }
-            else
-            {
-                code = SNR::getMedianOfMediansAbsoluteDeviationOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling() * *step, options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
-            }
-            kernels.medianOfMediansAbsoluteDeviation.push_back(isa::OpenCL::compile("medianOfMediansAbsoluteDeviation_DMsSamples_" + std::to_string(options.medianStepSize), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
-            kernels.medianOfMediansAbsoluteDeviation.at(stepNumber)->setArg(0, deviceMemory.medianOfMediansStepTwo);
-            kernels.medianOfMediansAbsoluteDeviation.at(stepNumber)->setArg(1, deviceMemory.integratedData);
-            kernels.medianOfMediansAbsoluteDeviation.at(stepNumber)->setArg(2, deviceMemory.medianOfMediansStepOne);
-            delete code;
+              std::advance(step, stepNumber);
+              if (options.subbandDedispersion)
+              {
+                  code = SNR::getMedianOfMediansAbsoluteDeviationOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling() * *step, options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
+              }
+              else
+              {
+                  code = SNR::getMedianOfMediansAbsoluteDeviationOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling() * *step, options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
+              }
+              kernels.medianOfMediansAbsoluteDeviation.push_back(isa::OpenCL::compile("medianOfMediansAbsoluteDeviation_DMsSamples_" + std::to_string(options.medianStepSize), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
+              kernels.medianOfMediansAbsoluteDeviation.at(stepNumber)->setArg(0, deviceMemory.medianOfMediansStepTwo);
+              kernels.medianOfMediansAbsoluteDeviation.at(stepNumber)->setArg(1, deviceMemory.integratedData);
+              kernels.medianOfMediansAbsoluteDeviation.at(stepNumber)->setArg(2, deviceMemory.medianOfMediansStepOne);
+              delete code;
+          }
+          if (options.subbandDedispersion)
+          {
+              code = SNR::getMedianOfMediansAbsoluteDeviationOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling(), options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
+          }
+          else
+          {
+              code = SNR::getMedianOfMediansAbsoluteDeviationOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling(), options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
+          }
+          kernels.medianOfMediansAbsoluteDeviation.push_back(isa::OpenCL::compile("medianOfMediansAbsoluteDeviation_DMsSamples_" + std::to_string(options.medianStepSize), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
+          kernels.medianOfMediansAbsoluteDeviation.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.medianOfMediansStepTwo);
+          kernels.medianOfMediansAbsoluteDeviation.at(hostMemory.integrationSteps.size())->setArg(1, deviceMemory.dedispersedData);
+          kernels.medianOfMediansAbsoluteDeviation.at(hostMemory.integrationSteps.size())->setArg(2, deviceMemory.medianOfMediansStepOne);
+          delete code;
         }
-        if (options.subbandDedispersion)
-        {
-            code = SNR::getMedianOfMediansAbsoluteDeviationOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling(), options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
-        }
-        else
-        {
-            code = SNR::getMedianOfMediansAbsoluteDeviationOpenCL<outputDataType>(*(kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling(), options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName));
-        }
-        kernels.medianOfMediansAbsoluteDeviation.push_back(isa::OpenCL::compile("medianOfMediansAbsoluteDeviation_DMsSamples_" + std::to_string(options.medianStepSize), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
-        kernels.medianOfMediansAbsoluteDeviation.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.medianOfMediansStepTwo);
-        kernels.medianOfMediansAbsoluteDeviation.at(hostMemory.integrationSteps.size())->setArg(1, deviceMemory.dedispersedData);
-        kernels.medianOfMediansAbsoluteDeviation.at(hostMemory.integrationSteps.size())->setArg(2, deviceMemory.medianOfMediansStepOne);
-        delete code;
     }
 }
 
@@ -568,92 +613,183 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             }
         }
     }
-    else if (options.snrMode == SNRMode::Momad)
+    else if (options.snrMode == SNRMode::Momad || options.snrMode == SNRMode::MomSigmaCut)
     {
-        // Max kernel
-        kernelRunTimeConfigurations.maxGlobal.resize(hostMemory.integrationSteps.size() + 1);
-        kernelRunTimeConfigurations.maxLocal.resize(hostMemory.integrationSteps.size() + 1);
-        if (!options.subbandDedispersion)
+        if (options.snrMode == SNRMode::Momad)
         {
-            global[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
-            global[1] = observation.getNrDMs();
-            global[2] = observation.getNrSynthesizedBeams();
-            kernelRunTimeConfigurations.maxGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
-            local[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
-            local[1] = 1;
-            local[2] = 1;
-            kernelRunTimeConfigurations.maxLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
-            if (options.debug)
-            {
-                std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()) + ")" << std::endl;
-                std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->print() << std::endl;
-                std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
-                std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
-                std::cout << std::endl;
-            }
-        }
-        else
-        {
-            global[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
-            global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-            global[2] = observation.getNrSynthesizedBeams();
-            kernelRunTimeConfigurations.maxGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
-            local[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
-            local[1] = 1;
-            local[2] = 1;
-            kernelRunTimeConfigurations.maxLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
-            if (options.debug)
-            {
-                std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()) + ")" << std::endl;
-                std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->print() << std::endl;
-                std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
-                std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
-                std::cout << std::endl;
-            }
-        }
-        for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
-        {
-            auto step = hostMemory.integrationSteps.begin();
+          // Max kernel
+          kernelRunTimeConfigurations.maxGlobal.resize(hostMemory.integrationSteps.size() + 1);
+          kernelRunTimeConfigurations.maxLocal.resize(hostMemory.integrationSteps.size() + 1);
+          if (!options.subbandDedispersion)
+          {
+              global[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
+              global[1] = observation.getNrDMs();
+              global[2] = observation.getNrSynthesizedBeams();
+              kernelRunTimeConfigurations.maxGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
+              local[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
+              local[1] = 1;
+              local[2] = 1;
+              kernelRunTimeConfigurations.maxLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
+              if (options.debug)
+              {
+                  std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()) + ")" << std::endl;
+                  std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->print() << std::endl;
+                  std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                  std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+                  std::cout << std::endl;
+              }
+          }
+          else
+          {
+              global[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
+              global[1] = observation.getNrDMs(true) * observation.getNrDMs();
+              global[2] = observation.getNrSynthesizedBeams();
+              kernelRunTimeConfigurations.maxGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
+              local[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
+              local[1] = 1;
+              local[2] = 1;
+              kernelRunTimeConfigurations.maxLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
+              if (options.debug)
+              {
+                  std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()) + ")" << std::endl;
+                  std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->print() << std::endl;
+                  std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                  std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+                  std::cout << std::endl;
+              }
+          }
+          for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+          {
+              auto step = hostMemory.integrationSteps.begin();
 
-            std::advance(step, stepNumber);
-            if (!options.subbandDedispersion)
-            {
-                global[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
-                global[1] = observation.getNrDMs();
-                global[2] = observation.getNrSynthesizedBeams();
-                kernelRunTimeConfigurations.maxGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
-                local[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
-                local[1] = 1;
-                local[2] = 1;
-                kernelRunTimeConfigurations.maxLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
-                if (options.debug)
-                {
-                    std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step) + ")" << std::endl;
-                    std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->print() << std::endl;
-                    std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
-                    std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
-                    std::cout << std::endl;
-                }
-            }
-            else
-            {
-                global[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
-                global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-                global[2] = observation.getNrSynthesizedBeams();
-                kernelRunTimeConfigurations.maxGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
-                local[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
-                local[1] = 1;
-                local[2] = 1;
-                kernelRunTimeConfigurations.maxLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
-                if (options.debug)
-                {
-                    std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step) + ")" << std::endl;
-                    std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->print() << std::endl;
-                    std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
-                    std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
-                    std::cout << std::endl;
-                }
-            }
+              std::advance(step, stepNumber);
+              if (!options.subbandDedispersion)
+              {
+                  global[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
+                  global[1] = observation.getNrDMs();
+                  global[2] = observation.getNrSynthesizedBeams();
+                  kernelRunTimeConfigurations.maxGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
+                  local[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
+                  local[1] = 1;
+                  local[2] = 1;
+                  kernelRunTimeConfigurations.maxLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
+                  if (options.debug)
+                  {
+                      std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step) + ")" << std::endl;
+                      std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->print() << std::endl;
+                      std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                      std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+                      std::cout << std::endl;
+                  }
+              }
+              else
+              {
+                  global[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
+                  global[1] = observation.getNrDMs(true) * observation.getNrDMs();
+                  global[2] = observation.getNrSynthesizedBeams();
+                  kernelRunTimeConfigurations.maxGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
+                  local[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
+                  local[1] = 1;
+                  local[2] = 1;
+                  kernelRunTimeConfigurations.maxLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
+                  if (options.debug)
+                  {
+                      std::cout << "Max (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step) + ")" << std::endl;
+                      std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->print() << std::endl;
+                      std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                      std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+                      std::cout << std::endl;
+                  }
+              }
+          }
+        }
+        else if (options.snrMode == SNRMode::MomSigmaCut)
+        {
+          // Max and standard deviation kernel
+          kernelRunTimeConfigurations.maxStdSigmaCutGlobal.resize(hostMemory.integrationSteps.size() + 1);
+          kernelRunTimeConfigurations.maxStdSigmaCutLocal.resize(hostMemory.integrationSteps.size() + 1);
+          if (!options.subbandDedispersion)
+          {
+              global[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
+              global[1] = observation.getNrDMs();
+              global[2] = observation.getNrSynthesizedBeams();
+              kernelRunTimeConfigurations.maxStdSigmaCutGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
+              local[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
+              local[1] = 1;
+              local[2] = 1;
+              kernelRunTimeConfigurations.maxStdSigmaCutLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
+              if (options.debug)
+              {
+                  std::cout << "MaxStdSigmaCut (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()) + ")" << std::endl;
+                  std::cout << "\tConfiguration: " << kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->print() << std::endl;
+                  std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                  std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+                  std::cout << std::endl;
+              }
+          }
+          else
+          {
+              global[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
+              global[1] = observation.getNrDMs(true) * observation.getNrDMs();
+              global[2] = observation.getNrSynthesizedBeams();
+              kernelRunTimeConfigurations.maxStdSigmaCutGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
+              local[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
+              local[1] = 1;
+              local[2] = 1;
+              kernelRunTimeConfigurations.maxStdSigmaCutLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
+              if (options.debug)
+              {
+                  std::cout << "MaxStdSigmaCut (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()) + ")" << std::endl;
+                  std::cout << "\tConfiguration: " << kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->print() << std::endl;
+                  std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                  std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+                  std::cout << std::endl;
+              }
+          }
+          for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+          {
+              auto step = hostMemory.integrationSteps.begin();
+
+              std::advance(step, stepNumber);
+              if (!options.subbandDedispersion)
+              {
+                  global[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
+                  global[1] = observation.getNrDMs();
+                  global[2] = observation.getNrSynthesizedBeams();
+                  kernelRunTimeConfigurations.maxStdSigmaCutGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
+                  local[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
+                  local[1] = 1;
+                  local[2] = 1;
+                  kernelRunTimeConfigurations.maxStdSigmaCutLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
+                  if (options.debug)
+                  {
+                      std::cout << "MaxStdSigmaCut (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step) + ")" << std::endl;
+                      std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->print() << std::endl;
+                      std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                      std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+                      std::cout << std::endl;
+                  }
+              }
+              else
+              {
+                  global[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
+                  global[1] = observation.getNrDMs(true) * observation.getNrDMs();
+                  global[2] = observation.getNrSynthesizedBeams();
+                  kernelRunTimeConfigurations.maxStdSigmaCutGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
+                  local[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
+                  local[1] = 1;
+                  local[2] = 1;
+                  kernelRunTimeConfigurations.maxStdSigmaCutLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
+                  if (options.debug)
+                  {
+                      std::cout << "MaxStdSigmaCut (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step) + ")" << std::endl;
+                      std::cout << "\tConfiguration: " << kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->print() << std::endl;
+                      std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                      std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+                      std::cout << std::endl;
+                  }
+              }
+          }
         }
         // Median of medians first step kernel
         kernelRunTimeConfigurations.medianOfMediansStepOneGlobal.resize(hostMemory.integrationSteps.size() + 1);
@@ -825,89 +961,92 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
                 }
             }
         }
-        // Median of medians absolute deviation kernel
-        kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.resize(hostMemory.integrationSteps.size() + 1);
-        kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.resize(hostMemory.integrationSteps.size() + 1);
-        if (!options.subbandDedispersion)
+        if (options.snrMode == SNRMode::Momad)
         {
-            global[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize);
-            global[1] = observation.getNrDMs();
-            global[2] = observation.getNrSynthesizedBeams();
-            kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
-            local[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
-            local[1] = 1;
-            local[2] = 1;
-            kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
-            if (options.debug)
-            {
-                std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()) + ")" << std::endl;
-                std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->print() << std::endl;
-                std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
-                std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
-                std::cout << std::endl;
-            }
-        }
-        else
-        {
-            global[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize);
-            global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-            global[2] = observation.getNrSynthesizedBeams();
-            kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
-            local[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
-            local[1] = 1;
-            local[2] = 1;
-            kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
-            if (options.debug)
-            {
-                std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()) + ")" << std::endl;
-                std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->print() << std::endl;
-                std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
-                std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
-                std::cout << std::endl;
-            }
-        }
-        for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
-        {
-            auto step = hostMemory.integrationSteps.begin();
+          // Median of medians absolute deviation kernel
+          kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.resize(hostMemory.integrationSteps.size() + 1);
+          kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.resize(hostMemory.integrationSteps.size() + 1);
+          if (!options.subbandDedispersion)
+          {
+              global[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize);
+              global[1] = observation.getNrDMs();
+              global[2] = observation.getNrSynthesizedBeams();
+              kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
+              local[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
+              local[1] = 1;
+              local[2] = 1;
+              kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
+              if (options.debug)
+              {
+                  std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()) + ")" << std::endl;
+                  std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->print() << std::endl;
+                  std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                  std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+                  std::cout << std::endl;
+              }
+          }
+          else
+          {
+              global[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize);
+              global[1] = observation.getNrDMs(true) * observation.getNrDMs();
+              global[2] = observation.getNrSynthesizedBeams();
+              kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
+              local[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
+              local[1] = 1;
+              local[2] = 1;
+              kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(hostMemory.integrationSteps.size()) = cl::NDRange(local[0], local[1], local[2]);
+              if (options.debug)
+              {
+                  std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()) + ")" << std::endl;
+                  std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->print() << std::endl;
+                  std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                  std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+                  std::cout << std::endl;
+              }
+          }
+          for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+          {
+              auto step = hostMemory.integrationSteps.begin();
 
-            std::advance(step, stepNumber);
-            if (!options.subbandDedispersion)
-            {
-                global[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step / options.medianStepSize);
-                global[1] = observation.getNrDMs();
-                global[2] = observation.getNrSynthesizedBeams();
-                kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
-                local[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
-                local[1] = 1;
-                local[2] = 1;
-                kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
-                if (options.debug)
-                {
-                    std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step) + ")" << std::endl;
-                    std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->print() << std::endl;
-                    std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
-                    std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
-                    std::cout << std::endl;
-                }
-            }
-            else
-            {
-                global[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step / options.medianStepSize);
-                global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-                global[2] = observation.getNrSynthesizedBeams();
-                kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
-                local[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
-                local[1] = 1;
-                local[2] = 1;
-                kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
-                if (options.debug)
-                {
-                    std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step) + ")" << std::endl;
-                    std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->print() << std::endl;
-                    std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
-                    std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
-                    std::cout << std::endl;
-                }
+              std::advance(step, stepNumber);
+              if (!options.subbandDedispersion)
+              {
+                  global[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step / options.medianStepSize);
+                  global[1] = observation.getNrDMs();
+                  global[2] = observation.getNrSynthesizedBeams();
+                  kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
+                  local[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
+                  local[1] = 1;
+                  local[2] = 1;
+                  kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
+                  if (options.debug)
+                  {
+                      std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step) + ")" << std::endl;
+                      std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->print() << std::endl;
+                      std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                      std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+                      std::cout << std::endl;
+                  }
+              }
+              else
+              {
+                  global[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step / options.medianStepSize);
+                  global[1] = observation.getNrDMs(true) * observation.getNrDMs();
+                  global[2] = observation.getNrSynthesizedBeams();
+                  kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
+                  local[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
+                  local[1] = 1;
+                  local[2] = 1;
+                  kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal.at(stepNumber) = cl::NDRange(local[0], local[1], local[2]);
+                  if (options.debug)
+                  {
+                      std::cout << "Median of medians absolute deviation (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step) + ")" << std::endl;
+                      std::cout << "\tConfiguration: " << kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->print() << std::endl;
+                      std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+                      std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+                      std::cout << std::endl;
+                  }
+              }
             }
         }
     }

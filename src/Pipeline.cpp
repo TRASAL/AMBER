@@ -31,14 +31,14 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
         if (options.subbandDedispersion)
         {
             hostMemoryDumpFiles.subbandedData.open(hostMemoryDumpFiles.dumpFilesPrefix + "subbandedData.dump");
-            if (options.snrMode == SNRMode::Momad)
+            if (options.snrMode == SNRMode::Momad || options.snrMode == SNRMode::MomSigmaCut)
             {
                 hostMemory.medianOfMediansStepOne.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
             }
         }
         else
         {
-            if (options.snrMode == SNRMode::Momad)
+            if (options.snrMode == SNRMode::Momad || options.snrMode == SNRMode::MomSigmaCut)
             {
                 hostMemory.medianOfMediansStepOne.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
             }
@@ -53,10 +53,18 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
         else if (options.snrMode == SNRMode::Momad)
         {
             hostMemoryDumpFiles.maxValuesData.open(hostMemoryDumpFiles.dumpFilesPrefix + "maxValuesData.dump");
-            hostMemoryDumpFiles.maxIndicesData.open(hostMemoryDumpFiles.dumpFilesPrefix + "maxIndicesData.dump");
+            hostMemoryDumpFiles.maxIndicesData.open(hostMemoryDumpFiles.dumpFilesPrefix + "maxIndicesData.dump");`
             hostMemoryDumpFiles.medianOfMediansStepOneData.open(hostMemoryDumpFiles.dumpFilesPrefix + "medianOfMediansStepOneData.dump");
             hostMemoryDumpFiles.medianOfMediansData.open(hostMemoryDumpFiles.dumpFilesPrefix + "medianOfMediansData.dump");
             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData.open(hostMemoryDumpFiles.dumpFilesPrefix + "medianOfMediansAbsoluteDeviation.dump");
+        }
+        else if (options.snrMode == SNRMode::MomSigmaCut)
+        {
+            hostMemoryDumpFiles.maxValuesData.open(hostMemoryDumpFiles.dumpFilesPrefix + "maxValuesData.dump");
+            hostMemoryDumpFiles.maxIndicesData.open(hostMemoryDumpFiles.dumpFilesPrefix + "maxIndicesData.dump");
+            hostMemoryDumpFiles.stdevsData.open(hostMemoryDumpFiles.dumpFilesPrefix + "stdevsData.dump");
+            hostMemoryDumpFiles.medianOfMediansStepOneData.open(hostMemoryDumpFiles.dumpFilesPrefix + "medianOfMediansStepOneData.dump");
+            hostMemoryDumpFiles.medianOfMediansData.open(hostMemoryDumpFiles.dumpFilesPrefix + "medianOfMediansData.dump");
         }
     }
     timers.search.start();
@@ -130,6 +138,14 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                 hostMemoryDumpFiles.medianOfMediansStepOneData << "# Batch: " << batch << std::endl;
                 hostMemoryDumpFiles.medianOfMediansData << "# Batch: " << batch << std::endl;
                 hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Batch: " << batch << std::endl;
+            }
+            else if (options.snrMode == SNRMode::MomSigmaCut)
+            {
+                hostMemoryDumpFiles.maxValuesData << "# Batch: " << batch << std::endl;
+                hostMemoryDumpFiles.maxIndicesData << "# Batch: " << batch << std::endl;
+                hostMemoryDumpFiles.stdevsData << "# Batch: " << batch << std::endl;
+                hostMemoryDumpFiles.medianOfMediansStepOneData << "# Batch: " << batch << std::endl;
+                hostMemoryDumpFiles.medianOfMediansData << "# Batch: " << batch << std::endl;
             }
         }
         // Optional downsampling before dedispersion
@@ -811,23 +827,39 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
             hostMemoryDumpFiles.snrSamplesData << std::endl;
         }
     }
-    else if (options.snrMode == SNRMode::Momad)
+    else if (options.snrMode == SNRMode::Momad || options.snrMode == SNRMode::MomSigmaCut)
     {
         try
         {
             if (deviceOptions.synchronized)
             {
-                // Max
-                timers.max.start();
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.max[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.maxGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.maxLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
-                syncPoint.wait();
-                timers.max.stop();
+                if (options.snrMode == SNRMode::Momad)
+                {
+                  // Max
+                  timers.max.start();
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.max[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.maxGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.maxLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
+                  syncPoint.wait();
+                  timers.max.stop();
+                }
+                else if (options.snrMode == SNRMode::MomSigmaCut)
+                {
+                  // Max
+                  timers.max.start();
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.getMaxStdSigmaCut[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.maxStdSigmaCutGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.maxStdSigmaCutLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
+                  syncPoint.wait();
+                  timers.max.stop();
+                }
                 // Transfer of max values to host
                 timers.outputCopy.start();
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxValues, CL_TRUE, 0, hostMemory.maxValues.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.maxValues.data()), nullptr, &syncPoint);
                 syncPoint.wait();
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxIndices, CL_TRUE, 0, hostMemory.maxIndices.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.maxIndices.data()), nullptr, &syncPoint);
                 syncPoint.wait();
+                if (options.snrMode == SNRMode::MomSigmaCut)
+                {
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.stdevs, CL_TRUE, 0, hostMemory.stdevs.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.stdevs.data()), nullptr, &syncPoint);
+                  syncPoint.wait();
+                }
                 timers.outputCopy.stop();
                 // Median of medians first step
                 timers.medianOfMediansStepOne.start();
@@ -858,27 +890,31 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.medianOfMedians.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMedians.data()), nullptr, &syncPoint);
                 syncPoint.wait();
                 timers.outputCopy.stop();
-                // Median of medians absolute deviation first step
-                timers.medianOfMediansAbsoluteDeviationStepOne.start();
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansAbsoluteDeviation[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
-                syncPoint.wait();
-                timers.medianOfMediansAbsoluteDeviationStepOne.stop();
-                // Median of medians absolute deviation second step
-                timers.medianOfMediansAbsoluteDeviationStepTwo.start();
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
-                syncPoint.wait();
-                timers.medianOfMediansAbsoluteDeviationStepTwo.stop();
-                // Transfers of median of medians absolute deviation to host
-                timers.outputCopy.start();
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.medianOfMediansAbsoluteDeviation.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMediansAbsoluteDeviation.data()), nullptr, &syncPoint);
-                syncPoint.wait();
-                timers.outputCopy.stop();
+                if (options.snrMode == SNRMode::Momad)
+                {
+                  // Median of medians absolute deviation first step
+                  timers.medianOfMediansAbsoluteDeviationStepOne.start();
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansAbsoluteDeviation[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
+                  syncPoint.wait();
+                  timers.medianOfMediansAbsoluteDeviationStepOne.stop();
+                  // Median of medians absolute deviation second step
+                  timers.medianOfMediansAbsoluteDeviationStepTwo.start();
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
+                  syncPoint.wait();
+                  timers.medianOfMediansAbsoluteDeviationStepTwo.stop();
+                  // Transfers of median of medians absolute deviation to host
+                  timers.outputCopy.start();
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.medianOfMediansAbsoluteDeviation.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMediansAbsoluteDeviation.data()), nullptr, &syncPoint);
+                  syncPoint.wait();
+                  timers.outputCopy.stop();
+                }
             }
             else
             {
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.max[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.maxGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.maxLocal[hostMemory.integrationSteps.size()]);
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxValues, CL_FALSE, 0, hostMemory.maxValues.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.maxValues.data()));
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxIndices, CL_FALSE, 0, hostMemory.maxIndices.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.maxIndices.data()));
+                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.stdevs, CL_FALSE, 0, hostMemory.stdevs.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.stdevs.data()));
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepOne[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepOneGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.medianOfMediansStepOneLocal[hostMemory.integrationSteps.size()]);
                 if (options.dataDump)
                 {
@@ -919,6 +955,7 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                 {
                     hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.stdevsData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Synthesized Beam: " << sBeam << std::endl;
@@ -930,6 +967,8 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                             hostMemoryDumpFiles.maxValuesData << std::endl;
                             hostMemoryDumpFiles.maxIndicesData << hostMemory.maxIndices.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int))) + (subbandingDM * observation.getNrDMs()) + dm);
                             hostMemoryDumpFiles.maxIndicesData << std::endl;
+                            hostMemoryDumpFiles.stdevsData << hostMemory.stdevs.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
+                            hostMemoryDumpFiles.stdevsData << std::endl;
                             hostMemoryDumpFiles.medianOfMediansData << hostMemory.medianOfMedians.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
                             hostMemoryDumpFiles.medianOfMediansData << std::endl;
                             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
@@ -964,6 +1003,8 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                         hostMemoryDumpFiles.maxValuesData << std::endl;
                         hostMemoryDumpFiles.maxIndicesData << hostMemory.maxIndices.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
                         hostMemoryDumpFiles.maxIndicesData << std::endl;
+                        hostMemoryDumpFiles.stdevsData << hostMemory.stdevs.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
+                        hostMemoryDumpFiles.stdevsData << std::endl;
                         hostMemoryDumpFiles.medianOfMediansData << hostMemory.medianOfMedians.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
                         hostMemoryDumpFiles.medianOfMediansData << std::endl;
                         hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
@@ -1014,19 +1055,35 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                 syncPoint.wait();
                 timers.outputCopy.stop();
             }
-            else if (options.snrMode == SNRMode::Momad)
+            else if (options.snrMode == SNRMode::Momad || options.snrMode == SNRMode::MomSigmaCut)
             {
-                // Max
-                timers.max.start();
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.max[stepNumber], cl::NullRange, kernelRunTimeConfigurations.maxGlobal[stepNumber], kernelRunTimeConfigurations.maxLocal[stepNumber], nullptr, &syncPoint);
-                syncPoint.wait();
-                timers.max.stop();
+                if (options.snrMode == SNRMode::Momad)
+                {
+                  // Max
+                  timers.max.start();
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.max[stepNumber], cl::NullRange, kernelRunTimeConfigurations.maxGlobal[stepNumber], kernelRunTimeConfigurations.maxLocal[stepNumber], nullptr, &syncPoint);
+                  syncPoint.wait();
+                  timers.max.stop();
+                }
+                else if (options.snrMode == SNRMode::MomSigmaCut)
+                {
+                  // Max
+                  timers.max.start();
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.maxStdSigmaCut[stepNumber], cl::NullRange, kernelRunTimeConfigurations.maxStdSigmaCutGlobal[stepNumber], kernelRunTimeConfigurations.maxStdSigmaCutLocal[stepNumber], nullptr, &syncPoint);
+                  syncPoint.wait();
+                  timers.max.stop();
+                }
                 // Transfer of max values to host
                 timers.outputCopy.start();
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxValues, CL_TRUE, 0, hostMemory.maxValues.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.maxValues.data()), nullptr, &syncPoint);
                 syncPoint.wait();
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxIndices, CL_TRUE, 0, hostMemory.maxIndices.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.maxIndices.data()), nullptr, &syncPoint);
                 syncPoint.wait();
+                if (options.snrMode == SNRMode::MomSigmaCut)
+                {
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.stdevs, CL_TRUE, 0, hostMemory.stdevs.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.stdevs.data()), nullptr, &syncPoint);
+                  syncPoint.wait();
+                }
                 timers.outputCopy.stop();
                 // Median of medians first step
                 timers.medianOfMediansStepOne.start();
@@ -1057,21 +1114,24 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.medianOfMedians.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMedians.data()), nullptr, &syncPoint);
                 syncPoint.wait();
                 timers.outputCopy.stop();
-                // Median of medians absolute deviation first step
-                timers.medianOfMediansAbsoluteDeviationStepOne.start();
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansAbsoluteDeviation[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal[stepNumber], nullptr, &syncPoint);
-                syncPoint.wait();
-                timers.medianOfMediansAbsoluteDeviationStepOne.stop();
-                // Median of medians absolute deviation second step
-                timers.medianOfMediansAbsoluteDeviationStepTwo.start();
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber], nullptr, &syncPoint);
-                syncPoint.wait();
-                timers.medianOfMediansAbsoluteDeviationStepTwo.stop();
-                // Transfers of median of medians absolute deviation to host
-                timers.outputCopy.start();
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.medianOfMediansAbsoluteDeviation.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMediansAbsoluteDeviation.data()), nullptr, &syncPoint);
-                syncPoint.wait();
-                timers.outputCopy.stop();
+                if (options.snrMode == SNRMode::MomSigmaCut)
+                {
+                  // Median of medians absolute deviation first step
+                  timers.medianOfMediansAbsoluteDeviationStepOne.start();
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansAbsoluteDeviation[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal[stepNumber], nullptr, &syncPoint);
+                  syncPoint.wait();
+                  timers.medianOfMediansAbsoluteDeviationStepOne.stop();
+                  // Median of medians absolute deviation second step
+                  timers.medianOfMediansAbsoluteDeviationStepTwo.start();
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber], nullptr, &syncPoint);
+                  syncPoint.wait();
+                  timers.medianOfMediansAbsoluteDeviationStepTwo.stop();
+                  // Transfers of median of medians absolute deviation to host
+                  timers.outputCopy.start();
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.medianOfMediansAbsoluteDeviation.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMediansAbsoluteDeviation.data()), nullptr, &syncPoint);
+                  syncPoint.wait();
+                  timers.outputCopy.stop();
+                }
             }
         }
         else
@@ -1083,11 +1143,24 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast<void *>(hostMemory.snrData.data()));
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.snrSamples, CL_FALSE, 0, hostMemory.snrSamples.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.snrSamples.data()));
             }
-            else if (options.snrMode == SNRMode::Momad)
+            else if (options.snrMode == SNRMode::Momad || options.snrMode == SNRMode::MomSigmaCut)
             {
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.max[stepNumber], cl::NullRange, kernelRunTimeConfigurations.maxGlobal[stepNumber], kernelRunTimeConfigurations.maxLocal[stepNumber]);
+                if (options.snrMode == SNRMode::Momad)
+                {
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.max[stepNumber], cl::NullRange,
+                    kernelRunTimeConfigurations.maxGlobal[stepNumber], kernelRunTimeConfigurations.maxLocal[stepNumber]);
+                }
+                else if (options.snrMode == SNRMode::MomSigmaCut)
+                {
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.maxStdSigmaCut[stepNumber], cl::NullRange,
+                    kernelRunTimeConfigurations.maxStdSigmaCutGlobal[stepNumber], kernelRunTimeConfigurations.maxStdSigmaCutLocal[stepNumber]);
+                }
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxValues, CL_FALSE, 0, hostMemory.maxValues.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.maxValues.data()));
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.maxIndices, CL_FALSE, 0, hostMemory.maxIndices.size() * sizeof(unsigned int), reinterpret_cast<void *>(hostMemory.maxIndices.data()));
+                if (options.snrMode == SNRMode::MomSigmaCut)
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.stdevs, CL_FALSE, 0, hostMemory.stdevs.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.stdevs.data()));
+                }
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepOne[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepOneGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepOneLocal[stepNumber]);
                 if (options.dataDump)
                 {
@@ -1105,9 +1178,12 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                 }
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber]);
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_FALSE, 0, hostMemory.medianOfMedians.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMedians.data()));
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansAbsoluteDeviation[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal[stepNumber]);
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber]);
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_FALSE, 0, hostMemory.medianOfMediansAbsoluteDeviation.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMediansAbsoluteDeviation.data()));
+                if (options.snrMode == SNRMode::Momad)
+                {
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansAbsoluteDeviation[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationLocal[stepNumber]);
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.medianOfMediansStepTwo[stepNumber], cl::NullRange, kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal[stepNumber], kernelRunTimeConfigurations.medianOfMediansStepTwoLocal[stepNumber]);
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_FALSE, 0, hostMemory.medianOfMediansAbsoluteDeviation.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMediansAbsoluteDeviation.data()));
+                }
             }
             openclRunTime.queues->at(deviceOptions.deviceID).at(0).finish();
         }
@@ -1148,6 +1224,14 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
             hostMemoryDumpFiles.medianOfMediansData << "# Integration: " << step << std::endl;
             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Integration: " << step << std::endl;
         }
+        else if (options.snrMode == SNRMode::MomSigmaCut)
+        {
+            hostMemoryDumpFiles.maxValuesData << "# Integration: " << step << std::endl;
+            hostMemoryDumpFiles.maxIndicesData << "# Integration: " << step << std::endl;
+            hostMemoryDumpFiles.stdevsData << "# Integration: " << step << std::endl;
+            hostMemoryDumpFiles.medianOfMediansStepOneData << "# Integration: " << step << std::endl;
+            hostMemoryDumpFiles.medianOfMediansData << "# Integration: " << step << std::endl;
+        }
         if (options.subbandDedispersion)
         {
             for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
@@ -1166,6 +1250,14 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                     hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Synthesized Beam: " << sBeam << std::endl;
                 }
+                else if (options.snrMode == SNRMode::MomSigmaCut)
+                {
+                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.stdevsData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << sBeam << std::endl;
+                }
                 for (unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++)
                 {
                     for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
@@ -1183,16 +1275,24 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                             hostMemoryDumpFiles.snrSamplesData << hostMemory.snrSamples.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int))) + (subbandingDM * observation.getNrDMs()) + dm);
                             hostMemoryDumpFiles.snrSamplesData << std::endl;
                         }
-                        else if (options.snrMode == SNRMode::Momad)
+                        else if (options.snrMode == SNRMode::Momad || options.snrMode == SNRMode::MomSigmaCut)
                         {
                             hostMemoryDumpFiles.maxValuesData << hostMemory.maxValues.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
                             hostMemoryDumpFiles.maxValuesData << std::endl;
                             hostMemoryDumpFiles.maxIndicesData << hostMemory.maxIndices.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int))) + (subbandingDM * observation.getNrDMs()) + dm);
                             hostMemoryDumpFiles.maxIndicesData << std::endl;
+                            if (options.snrMode == SNRMode::MomSigmaCut)
+                            {
+                              hostMemoryDumpFiles.stdevsData << hostMemory.stdevs.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
+                              hostMemoryDumpFiles.stdevsData << std::endl;
+                            }
                             hostMemoryDumpFiles.medianOfMediansData << hostMemory.medianOfMedians.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
                             hostMemoryDumpFiles.medianOfMediansData << std::endl;
-                            hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
-                            hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl;
+                            if (options.snrMode == SNRMode::Momad)
+                            {
+                              hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
+                              hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl;
+                            }
                             hostMemoryDumpFiles.medianOfMediansStepOneData << "# DM: " << (subbandingDM * observation.getNrDMs()) + dm << std::endl;
                             for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / observation.getDownsampling() / step / options.medianStepSize; sample++)
                             {
@@ -1214,6 +1314,17 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                     hostMemoryDumpFiles.medianOfMediansData << std::endl << std::endl;
                     hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl << std::endl;
                 }
+                else if (options.snrMode == SNRMode::MomSigmaCut)
+                {
+                    hostMemoryDumpFiles.maxValuesData << std::endl
+                                                        << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << std::endl
+                                                        << std::endl;
+                    hostMemoryDumpFiles.stdevsData << std::endl
+                                                      << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << std::endl
+                                                            << std::endl;
+                }
             }
         }
         else
@@ -1234,6 +1345,14 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                     hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << sBeam << std::endl;
                     hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Synthesized Beam: " << sBeam << std::endl;
                 }
+                else if (options.snrMode == SNRMode::MomSigmaCut)
+                {
+                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.stdevsData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << sBeam << std::endl;
+                }
                 for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
                 {
                     hostMemoryDumpFiles.integratedData << "# DM: " << dm << std::endl;
@@ -1250,16 +1369,24 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                         hostMemoryDumpFiles.snrSamplesData << hostMemory.snrSamples.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int))) + dm);
                         hostMemoryDumpFiles.snrSamplesData << std::endl;
                     }
-                    else if (options.snrMode == SNRMode::Momad)
+                    else if (options.snrMode == SNRMode::Momad || options.snrMode == SNRMode::MomSigmaCut)
                     {
                         hostMemoryDumpFiles.maxValuesData << hostMemory.maxValues.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
                         hostMemoryDumpFiles.maxValuesData << std::endl;
                         hostMemoryDumpFiles.maxIndicesData << hostMemory.maxIndices.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
                         hostMemoryDumpFiles.maxIndicesData << std::endl;
+                        if (options.snrMode == SNRMode::MomSigmaCut)
+                        {
+                          hostMemoryDumpFiles.stdevsData << hostMemory.stdevs.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
+                          hostMemoryDumpFiles.stdevsData << std::endl;
+                        }
                         hostMemoryDumpFiles.medianOfMediansData << hostMemory.medianOfMedians.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
                         hostMemoryDumpFiles.medianOfMediansData << std::endl;
-                        hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
-                        hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl;
+                        if (options.snrMode == SNRMode::Momad)
+                        {
+                          hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << hostMemory.medianOfMediansAbsoluteDeviation.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
+                          hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl;
+                        }
                         hostMemoryDumpFiles.medianOfMediansStepOneData << "# DM: " << dm << std::endl;
                         for (unsigned int sample = 0; sample < observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize; sample++)
                         {
@@ -1279,6 +1406,17 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                     hostMemoryDumpFiles.maxIndicesData << std::endl << std::endl;
                     hostMemoryDumpFiles.medianOfMediansData << std::endl << std::endl;
                     hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << std::endl << std::endl;
+                }
+                else if (options.snrMode == SNRMode::MomSigmaCut)
+                {
+                    hostMemoryDumpFiles.maxValuesData << std::endl
+                                                        << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << std::endl
+                                                        << std::endl;
+                    hostMemoryDumpFiles.stdevsData << std::endl
+                                                      << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << std::endl
+                                                            << std::endl;
                 }
             }
         }
@@ -1444,6 +1582,14 @@ void clean(const Options &options, const DataOptions &dataOptions, HostMemory &h
             hostMemoryDumpFiles.medianOfMediansStepOneData.close();
             hostMemoryDumpFiles.medianOfMediansData.close();
             hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData.close();
+        }
+        else if (options.snrMode == SNRMode::MomSigmaCut)
+        {
+            hostMemoryDumpFiles.maxValuesData.close();
+            hostMemoryDumpFiles.maxIndicesData.close();
+            hostMemoryDumpFiles.stdevsData.close();
+            hostMemoryDumpFiles.medianOfMediansStepOneData.close();
+            hostMemoryDumpFiles.medianOfMediansData.close();
         }
     }
 }

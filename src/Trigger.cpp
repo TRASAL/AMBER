@@ -33,6 +33,7 @@ void trigger(const Options &options, const unsigned int padding, const unsigned 
         {
             unsigned int maxIndex = 0;
             outputDataType maxSNR = 0;
+            // outputDataType maxSNR_mad = 0;
 
             if (options.snrMode == SNRMode::Standard)
             {
@@ -43,6 +44,26 @@ void trigger(const Options &options, const unsigned int padding, const unsigned 
             {
                 maxSNR = (hostMemory.maxValues.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) - hostMemory.medianOfMedians.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm)) / (hostMemory.medianOfMediansAbsoluteDeviation.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) * 1.48);
                 maxIndex = hostMemory.maxIndices.at((beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm);
+            }
+            else if ( options.snrMode == SNRMode::MomSigmaCut )
+            {
+                /*
+                sig_thresh:1.00 correction:1.853
+                sig_thresh:1.25 correction:1.544
+                sig_thresh:1.50 correction:1.350
+                sig_thresh:1.75 correction:1.222
+                sig_thresh:2.00 correction:1.136
+                sig_thresh:2.25 correction:1.082
+                sig_thresh:2.50 correction:1.049
+                sig_thresh:2.75 correction:1.027
+                sig_thresh:3.00 correction:1.014
+                sig_thresh:3.25 correction:1.006
+                sig_thresh:3.50 correction:1.003
+                sig_thresh:3.75 correction:1.001
+                sig_thresh:4.00 correction:1.001
+                */
+                maxSNR = (hostMemory.maxValues.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm) - hostMemory.medianOfMedians.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm)) / (1.014f*hostMemory.stdevs.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm));
+                maxIndex = hostMemory.maxIndices.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm);
             }
 
             if ( (std::isnormal(maxSNR)) && (maxSNR >= options.threshold) )
