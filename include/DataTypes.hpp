@@ -43,7 +43,7 @@ struct Options
     /**
     ** @brief Sigma cut (MomSigmaCut)
     */
-    float sigmaCut=3.0f;
+    float nSigma = 3.0f;
     /**
      ** @brief Data dumping mode.
      ** In this mode, all data are dumped to disk. Only intended for debug purpose.
