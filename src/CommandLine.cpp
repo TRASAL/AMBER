@@ -45,7 +45,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         }
         else if ( argumentList.getSwitch("-snr_momad_sigmacut") )
         {
-            options.snrMode = SNRMode::MomadSigmaCut;
+            options.snrMode = SNRMode::MomSigmaCut;
         }
         else
         {
@@ -106,7 +106,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansStepTwoParameters, argumentList.getSwitchArgument<std::string>("-mom_steptwo_file"));
             SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters, argumentList.getSwitchArgument<std::string>("-momad_file"));
         }
-        else if (options.snrMode == SNRMode::MomadSigmaCut)
+        else if (options.snrMode == SNRMode::MomSigmaCut)
         {
             options.sigmaCut = argumentList.getSwitchArgument<float>("-nsigma");
             SNR::readTunedSNRConf(kernelConfigurations.maxParameters, argumentList.getSwitchArgument<std::string>("-max_file"));

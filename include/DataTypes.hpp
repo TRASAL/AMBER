@@ -19,7 +19,7 @@ typedef enum
 {
     Standard,
     Momad,
-    MomadSigmaCut
+    MomSigmaCut
 } SNRMode;
 
 struct Options
@@ -41,7 +41,7 @@ struct Options
     // Step size for median of medians (MOMAD mode)
     unsigned int medianStepSize = 5;
     /**
-    ** @brief Sigma cut (MomadSigmaCut)
+    ** @brief Sigma cut (MomSigmaCut)
     */
     float sigmaCut=3.0f;
     /**
