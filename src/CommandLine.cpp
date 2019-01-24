@@ -108,7 +108,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         }
         else if (options.snrMode == SNRMode::MomSigmaCut)
         {
-            options.sigmaCut = argumentList.getSwitchArgument<float>("-nsigma");
+            options.nSigma = argumentList.getSwitchArgument<float>("-nsigma");
             SNR::readTunedSNRConf(kernelConfigurations.maxParameters, argumentList.getSwitchArgument<std::string>("-max_file"));
             SNR::readTunedSNRConf(kernelConfigurations.maxStdSigmaCutParameters, argumentList.getSwitchArgument<std::string>("-max_std_file"));
             SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansStepOneParameters, argumentList.getSwitchArgument<std::string>("-mom_stepone_file"));
