@@ -139,7 +139,7 @@ struct HostMemory
     std::vector<outputDataType> maxValues;
     // Index of max sample (MOMAD MODE)
     std::vector<unsigned int> maxIndices;
-    // Value of standard deviation samples (MOMAD mode)
+    // Value of standard deviation samples (MomSigmaCut mode)
     std::vector<outputDataType> stdevs;
     /**
      ** @brief Host storage for the first step of the median of medians; only used for debugging.
@@ -196,7 +196,7 @@ struct HostMemoryDumpFiles
      */
     std::ofstream maxIndicesData;
     /**
-     ** @brief File where to dump standard deviation values (MOMAD mode) data.
+     ** @brief File where to dump standard deviation values (MomSigmaCut mode) data.
      */
     std::ofstream stdevsData;
     /**
@@ -271,6 +271,8 @@ struct KernelConfigurations
     SNR::tunedSNRConf medianOfMediansStepTwoParameters;
     // Configuration of median of medians absolute deviation (MOMAD mode)
     SNR::tunedSNRConf medianOfMediansAbsoluteDeviationParameters;
+    // Configuration of max and standard deviation kernel (MomSigmaCut mode)
+    SNR::tunedSNRConf maxStdSigmaCutParameters;
 };
 
 struct Kernels
@@ -295,6 +297,8 @@ struct Kernels
     std::vector<cl::Kernel *> medianOfMediansStepTwo;
     // Median of medians absolute deviation, one for the original data and one for each integration step (MOMAD mode)
     std::vector<cl::Kernel *> medianOfMediansAbsoluteDeviation;
+    // Max and standard deviation kernels, one for the original data and one for each integration step (MomSigmaCut mode)
+    std::vector<cl::Kernel *> maxStdSigmaCut;
 };
 
 struct KernelRunTimeConfigurations
@@ -339,6 +343,10 @@ struct KernelRunTimeConfigurations
     std::vector<cl::NDRange> medianOfMediansAbsoluteDeviationGlobal;
     // Local NDRange for median of medians absolute deviation (MOMAD mode)
     std::vector<cl::NDRange> medianOfMediansAbsoluteDeviationLocal;
+    // Global NDRange for max and standard deviation (MomSigmaCut mode)
+    std::vector<cl::NDRange> maxStdSigmaCutGlobal;
+    // Local NDRange for max and standard deviation (MomSigmaCut mode)
+    std::vector<cl::NDRange> maxStdSigmaCutLocal;
 };
 
 struct Timers

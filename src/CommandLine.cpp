@@ -110,6 +110,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         {
             options.sigmaCut = argumentList.getSwitchArgument<float>("-nsigma");
             SNR::readTunedSNRConf(kernelConfigurations.maxParameters, argumentList.getSwitchArgument<std::string>("-max_file"));
+            SNR::readTunedSNRConf(kernelConfigurations.maxStdSigmaCutParameters, argumentList.getSwitchArgument<std::string>("-max_std_file"));
             SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansStepOneParameters, argumentList.getSwitchArgument<std::string>("-mom_stepone_file"));
             SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansStepTwoParameters, argumentList.getSwitchArgument<std::string>("-mom_steptwo_file"));
         }
@@ -241,7 +242,7 @@ void usage(const std::string &program)
     std::cerr << "-subbanding_dm_step ..." << std::endl;
     std::cerr << "\tStandard SNR: -snr_file" << std::endl;
     std::cerr << "\tMOMAD SNR: -max_file ... -mom_stepone_file ... -mom_steptwo_file ... -momad_file ..." << std::endl;
-    std::cerr << "\tMOMAD Sigma Cut: -nsigma ... -max_file ... -mom_stepone_file ... -mom_steptwo_file ..." << std::endl;
+    std::cerr << "\tMOMAD Sigma Cut: -nsigma ... -max_file ... -max_std_file ... -mom_stepone_file ... -mom_steptwo_file ..." << std::endl;
 #ifdef HAVE_HDF5
     std::cerr << "\tLOFAR: -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -batches ..." << std::endl;
