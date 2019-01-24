@@ -845,7 +845,7 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                 {
                   // Max
                   timers.max.start();
-                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.getMaxStdSigmaCut[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.maxStdSigmaCutGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.maxStdSigmaCutLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
+                  openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.maxStdSigmaCut[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.maxStdSigmaCutGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.maxStdSigmaCutLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
                   syncPoint.wait();
                   timers.max.stop();
                 }
