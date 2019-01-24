@@ -43,6 +43,10 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         {
             options.snrMode = SNRMode::Momad;
         }
+        else if ( argumentList.getSwitch("-snr_momad_sigmacut") )
+        {
+            options.snrMode = SNRMode::MomadSigmaCut;
+        }
         else
         {
             // Default option right now is to use the standard mode.
@@ -101,6 +105,13 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansStepOneParameters, argumentList.getSwitchArgument<std::string>("-mom_stepone_file"));
             SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansStepTwoParameters, argumentList.getSwitchArgument<std::string>("-mom_steptwo_file"));
             SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansAbsoluteDeviationParameters, argumentList.getSwitchArgument<std::string>("-momad_file"));
+        }
+        else if (options.snrMode == SNRMode::MomadSigmaCut)
+        {
+            options.sigmaCut = argumentList.getSwitchArgument<float>("-nsigma");
+            SNR::readTunedSNRConf(kernelConfigurations.maxParameters, argumentList.getSwitchArgument<std::string>("-max_file"));
+            SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansStepOneParameters, argumentList.getSwitchArgument<std::string>("-mom_stepone_file"));
+            SNR::readTunedSNRConf(kernelConfigurations.medianOfMediansStepTwoParameters, argumentList.getSwitchArgument<std::string>("-mom_steptwo_file"));
         }
         if (dataOptions.dataLOFAR)
         {
@@ -213,7 +224,7 @@ void usage(const std::string &program)
 {
     std::cerr << program << " [-debug] [-print] [-data_dump] -opencl_platform ... -opencl_device ... -device_name ... [-sync]";
     std::cerr << "  -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ...";
-    std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad] [-downsampling]";
+    std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad | -snr_momad_sigmacut] [-downsampling]";
     std::cerr << " [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
 #ifdef HAVE_HDF5
     std::cerr << " [-lofar]";
@@ -230,6 +241,7 @@ void usage(const std::string &program)
     std::cerr << "-subbanding_dm_step ..." << std::endl;
     std::cerr << "\tStandard SNR: -snr_file" << std::endl;
     std::cerr << "\tMOMAD SNR: -max_file ... -mom_stepone_file ... -mom_steptwo_file ... -momad_file ..." << std::endl;
+    std::cerr << "\tMOMAD Sigma Cut: -nsigma ... -max_file ... -mom_stepone_file ... -mom_steptwo_file ..." << std::endl;
 #ifdef HAVE_HDF5
     std::cerr << "\tLOFAR: -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -batches ..." << std::endl;
