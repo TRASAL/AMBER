@@ -178,7 +178,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
               {
                   code = SNR::getMaxOpenCL<outputDataType>(*(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling() * *step, deviceOptions.padding.at(deviceOptions.deviceName));
               }
-              kernels.max.push_back(isa::OpenCL::compile("getMax_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
+              kernels.max.push_back(isa::OpenCL::compile("max_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
               kernels.max.at(stepNumber)->setArg(0, deviceMemory.integratedData);
               kernels.max.at(stepNumber)->setArg(1, deviceMemory.maxValues);
               kernels.max.at(stepNumber)->setArg(2, deviceMemory.maxIndices);
@@ -192,7 +192,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
           {
               code = SNR::getMaxOpenCL<outputDataType>(*(kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName));
           }
-          kernels.max.push_back(isa::OpenCL::compile("getMax_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
+          kernels.max.push_back(isa::OpenCL::compile("max_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
           kernels.max.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.dedispersedData);
           kernels.max.at(hostMemory.integrationSteps.size())->setArg(1, deviceMemory.maxValues);
           kernels.max.at(hostMemory.integrationSteps.size())->setArg(2, deviceMemory.maxIndices);
@@ -215,7 +215,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
               {
                   code = SNR::getMaxStdSigmaCutOpenCL<outputDataType>(*(kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling() * *step, deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
               }
-              kernels.maxStdSigmaCut.push_back(isa::OpenCL::compile("getMaxStdSigmaCut_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
+              kernels.maxStdSigmaCut.push_back(isa::OpenCL::compile("maxStdSigmaCut_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
               kernels.maxStdSigmaCut.at(stepNumber)->setArg(0, deviceMemory.integratedData);
               kernels.maxStdSigmaCut.at(stepNumber)->setArg(1, deviceMemory.maxValues);
               kernels.maxStdSigmaCut.at(stepNumber)->setArg(2, deviceMemory.maxIndices);
@@ -230,7 +230,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
           {
               code = SNR::getMaxStdSigmaCutOpenCL<outputDataType>(*(kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), SNR::DataOrdering::DMsSamples, outputDataName, observation, observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
           }
-          kernels.maxStdSigmaCut.push_back(isa::OpenCL::compile("getMaxStdSigmaCut_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
+          kernels.maxStdSigmaCut.push_back(isa::OpenCL::compile("maxStdSigmaCut_DMsSamples_" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
           kernels.maxStdSigmaCut.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.dedispersedData);
           kernels.maxStdSigmaCut.at(hostMemory.integrationSteps.size())->setArg(1, deviceMemory.maxValues);
           kernels.maxStdSigmaCut.at(hostMemory.integrationSteps.size())->setArg(2, deviceMemory.maxIndices);
