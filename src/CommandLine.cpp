@@ -43,7 +43,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         {
             options.snrMode = SNRMode::Momad;
         }
-        else if ( argumentList.getSwitch("-snr_momad_sigmacut") )
+        else if ( argumentList.getSwitch("-snr_mom_sigmacut") )
         {
             options.snrMode = SNRMode::MomSigmaCut;
         }
@@ -225,7 +225,7 @@ void usage(const std::string &program)
 {
     std::cerr << program << " [-debug] [-print] [-data_dump] -opencl_platform ... -opencl_device ... -device_name ... [-sync]";
     std::cerr << "  -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ...";
-    std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad | -snr_momad_sigmacut] [-downsampling]";
+    std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad | -snr_mom_sigmacut] [-downsampling]";
     std::cerr << " [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
 #ifdef HAVE_HDF5
     std::cerr << " [-lofar]";
@@ -242,7 +242,7 @@ void usage(const std::string &program)
     std::cerr << "-subbanding_dm_step ..." << std::endl;
     std::cerr << "\tStandard SNR: -snr_file" << std::endl;
     std::cerr << "\tMOMAD SNR: -max_file ... -mom_stepone_file ... -mom_steptwo_file ... -momad_file ..." << std::endl;
-    std::cerr << "\tMOMAD Sigma Cut: -nsigma ... -max_file ... -max_std_file ... -mom_stepone_file ... -mom_steptwo_file ..." << std::endl;
+    std::cerr << "\tMOM Sigma Cut SNR: -nsigma ... -max_file ... -max_std_file ... -mom_stepone_file ... -mom_steptwo_file ..." << std::endl;
 #ifdef HAVE_HDF5
     std::cerr << "\tLOFAR: -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -batches ..." << std::endl;
