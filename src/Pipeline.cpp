@@ -1114,7 +1114,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.medianOfMediansStepTwo, CL_TRUE, 0, hostMemory.medianOfMedians.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.medianOfMedians.data()), nullptr, &syncPoint);
                 syncPoint.wait();
                 timers.outputCopy.stop();
-                if (options.snrMode == SNRMode::MomSigmaCut)
+                if (options.snrMode == SNRMode::Momad)
                 {
                   // Median of medians absolute deviation first step
                   timers.medianOfMediansAbsoluteDeviationStepOne.start();
