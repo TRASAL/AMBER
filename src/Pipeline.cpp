@@ -851,7 +851,7 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const OpenCL
                 }
                 else if (options.snrMode == SNRMode::MomSigmaCut)
                 {
-                  // Max
+                  // MaxStdSigmaCut
                   timers.max.start();
                   openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.maxStdSigmaCut[hostMemory.integrationSteps.size()], cl::NullRange, kernelRunTimeConfigurations.maxStdSigmaCutGlobal[hostMemory.integrationSteps.size()], kernelRunTimeConfigurations.maxStdSigmaCutLocal[hostMemory.integrationSteps.size()], nullptr, &syncPoint);
                   syncPoint.wait();
@@ -1075,7 +1075,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                 }
                 else if (options.snrMode == SNRMode::MomSigmaCut)
                 {
-                  // Max
+                  // MaxStdSigmaCut
                   timers.max.start();
                   openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.maxStdSigmaCut[stepNumber], cl::NullRange, kernelRunTimeConfigurations.maxStdSigmaCutGlobal[stepNumber], kernelRunTimeConfigurations.maxStdSigmaCutLocal[stepNumber], nullptr, &syncPoint);
                   syncPoint.wait();
