@@ -349,6 +349,18 @@ int main(int argc, char *argv[])
         outputStats << timers.medianOfMediansAbsoluteDeviationStepTwo.getTotalTime() << " " << timers.medianOfMediansAbsoluteDeviationStepTwo.getAverageTime() << " ";
         outputStats << timers.medianOfMediansAbsoluteDeviationStepTwo.getStandardDeviation() << std::endl;
     }
+    else if (options.snrMode == SNRMode::MomSigmaCut)
+    {
+        outputStats << "# maxStdSigmaCutTotal maxAvg err" << std::endl;
+        outputStats << timers.max.getTotalTime() << " " << timers.max.getAverageTime() << " ";
+        outputStats << timers.max.getStandardDeviation() << std::endl;
+        outputStats << "# medianOfMediansStepOneTotal medianOfMediansStepOneAvg err" << std::endl;
+        outputStats << timers.medianOfMediansStepOne.getTotalTime() << " " << timers.medianOfMediansStepOne.getAverageTime() << " ";
+        outputStats << timers.medianOfMediansStepOne.getStandardDeviation() << std::endl;
+        outputStats << "# medianOfMediansStepTwoTotal medianOfMediansStepTwoAvg err" << std::endl;
+        outputStats << timers.medianOfMediansStepTwo.getTotalTime() << " " << timers.medianOfMediansStepTwo.getAverageTime() << " ";
+        outputStats << timers.medianOfMediansStepTwo.getStandardDeviation() << std::endl;
+    }
     outputStats << "# outputCopyTotal outputCopyAvg err" << std::endl;
     outputStats << timers.outputCopy.getTotalTime() << " " << timers.outputCopy.getAverageTime() << " ";
     outputStats << timers.outputCopy.getStandardDeviation() << std::endl;
