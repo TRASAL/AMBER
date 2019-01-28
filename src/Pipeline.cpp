@@ -35,12 +35,20 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
             {
                 hostMemory.medianOfMediansStepOne.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
             }
+            if ( options.snrMode == SNRMode::MomSigmaCut )
+            {
+                hostMemory.stdevs.resize(observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
+            }
         }
         else
         {
             if (options.snrMode == SNRMode::Momad || options.snrMode == SNRMode::MomSigmaCut)
             {
                 hostMemory.medianOfMediansStepOne.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
+            }
+            if ( options.snrMode == SNRMode::MomSigmaCut )
+            {
+                hostMemory.stdevs.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
             }
         }
         hostMemoryDumpFiles.dedispersedData.open(hostMemoryDumpFiles.dumpFilesPrefix + "dedispersedData.dump");
