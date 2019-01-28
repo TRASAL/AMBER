@@ -1257,7 +1257,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
     }
     catch (cl::Error &err)
     {
-        std::cerr << "SNR integration loop error -- Batch: " << std::to_string(batch) << ", Step: ";
+        std::cerr << "Integration loop error -- Batch: " << std::to_string(batch) << ", Step: ";
         std::cerr << std::to_string(step) << ", " << err.what() << " " << err.err() << std::endl;
         errorDetected = true;
     }
