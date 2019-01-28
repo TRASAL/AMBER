@@ -1383,14 +1383,10 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                 }
                 else if (options.snrMode == SNRMode::MomSigmaCut)
                 {
-                    hostMemoryDumpFiles.maxValuesData << std::endl
-                                                        << std::endl;
-                    hostMemoryDumpFiles.maxIndicesData << std::endl
-                                                        << std::endl;
-                    hostMemoryDumpFiles.stdevsData << std::endl
-                                                      << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansData << std::endl
-                                                            << std::endl;
+                    hostMemoryDumpFiles.maxValuesData << std::endl << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << std::endl << std::endl;
+                    hostMemoryDumpFiles.stdevsData << std::endl << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << std::endl << std::endl;
                 }
             }
         }
@@ -1427,8 +1423,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                     {
                         std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << std::endl;
                     }
-                    hostMemoryDumpFiles.integratedData << std::endl
-                                                        << std::endl;
+                    hostMemoryDumpFiles.integratedData << std::endl << std::endl;
                     if (options.snrMode == SNRMode::Standard)
                     {
                         hostMemoryDumpFiles.snrData << hostMemory.snrData.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
@@ -1476,14 +1471,10 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
                 }
                 else if (options.snrMode == SNRMode::MomSigmaCut)
                 {
-                    hostMemoryDumpFiles.maxValuesData << std::endl
-                                                        << std::endl;
-                    hostMemoryDumpFiles.maxIndicesData << std::endl
-                                                        << std::endl;
-                    hostMemoryDumpFiles.stdevsData << std::endl
-                                                      << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansData << std::endl
-                                                            << std::endl;
+                    hostMemoryDumpFiles.maxValuesData << std::endl << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << std::endl << std::endl;
+                    hostMemoryDumpFiles.stdevsData << std::endl << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << std::endl << std::endl;
                 }
             }
         }
