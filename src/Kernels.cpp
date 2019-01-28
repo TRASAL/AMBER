@@ -764,7 +764,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
                   if (options.debug)
                   {
                       std::cout << "MaxStdSigmaCut (" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step) + ")" << std::endl;
-                      std::cout << "\tConfiguration: " << kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->print() << std::endl;
+                      std::cout << "\tConfiguration: " << kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->print() << std::endl;
                       std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
                       std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
                       std::cout << std::endl;
