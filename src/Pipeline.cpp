@@ -194,7 +194,7 @@ void pipeline(const OpenCLRunTime &openclRunTime, const AstroData::Observation &
                 break;
             }
         }
-        // Cluster and print results
+        // Cluster (optional) and print results
         timers.trigger.start();
         if (options.compactResults)
         {
