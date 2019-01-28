@@ -45,6 +45,25 @@ struct Options
     */
     float nSigma = 3.0f;
     /**
+    ** @brief Correction Factor (MomSigmaCut)
+    **
+    ** Correction factor to compute SNR when the standard deviation is computed with a sigma cut.
+    ** nSigma : 1.25 = sigmaCorrectionFactor : 1.544
+    ** nSigma : 1.50 = sigmaCorrectionFactor : 1.350
+    ** nSigma : 1.75 = sigmaCorrectionFactor : 1.222
+    ** nSigma : 1.00 = sigmaCorrectionFactor : 1.853
+    ** nSigma : 2.00 = sigmaCorrectionFactor : 1.136
+    ** nSigma : 2.25 = sigmaCorrectionFactor : 1.082
+    ** nSigma : 2.50 = sigmaCorrectionFactor : 1.049
+    ** nSigma : 2.75 = sigmaCorrectionFactor : 1.027
+    ** nSigma : 3.00 = sigmaCorrectionFactor : 1.014
+    ** nSigma : 3.25 = sigmaCorrectionFactor : 1.006
+    ** nSigma : 3.50 = sigmaCorrectionFactor : 1.003
+    ** nSigma : 3.75 = sigmaCorrectionFactor : 1.001
+    ** nSigma : 4.00 = sigmaCorrectionFactor : 1.001
+    */
+    float sigmaCorrectionFactor = 1.014f;
+    /**
      ** @brief Data dumping mode.
      ** In this mode, all data are dumped to disk. Only intended for debug purpose.
      */
