@@ -131,8 +131,15 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             observation.setNrBeams(1);
             observation.setNrSynthesizedBeams(1);
             dataOptions.streamingMode = argumentList.getSwitch("-stream");
-            dataOptions.headerSizeSIGPROC = argumentList.getSwitchArgument<unsigned int>("-header");
             dataOptions.dataFile = argumentList.getSwitchArgument<std::string>("-data");
+            try
+            {
+                dataOptions.headerSizeSIGPROC = argumentList.getSwitchArgument<unsigned int>("-header");
+            }
+            catch( const isa::utils::SwitchNotFound &err )
+            {
+                dataOptions.headerSizeSIGPROC = AstroData::getSIGPROCHeaderSize(dataOptions.dataFile);
+            }
             observation.setNrBatches(argumentList.getSwitchArgument<unsigned int>("-batches"));
             if (options.subbandDedispersion)
             {
@@ -245,7 +252,7 @@ void usage(const std::string &program)
     std::cerr << "\tLOFAR: -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -batches ..." << std::endl;
 #endif // HAVE_HDF5
-    std::cerr << "\tSIGPROC: -sigproc [-stream] -header ... -data ... -batches ... -channels ... -min_freq ...";
+    std::cerr << "\tSIGPROC: -sigproc [-stream] [-header ...] -data ... -batches ... -channels ... -min_freq ...";
     std::cerr << "-channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
 #ifdef HAVE_PSRDADA
     std::cerr << "\tPSRDADA: -dada -dada_key ... -beams ... -synthesized_beams ... -batches ..." << std::endl;
