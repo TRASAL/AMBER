@@ -192,13 +192,10 @@ int main(int argc, char *argv[])
     }
 
     // Initialize OpenCL
-    openclRunTime.context = new cl::Context();
-    openclRunTime.platforms = new std::vector<cl::Platform>();
-    openclRunTime.devices = new std::vector<cl::Device>();
-    openclRunTime.queues = new std::vector<std::vector<cl::CommandQueue>>();
+    isa::OpenCL::OpenCLRunTime openCLRunTime;
     try
     {
-        isa::OpenCL::initializeOpenCL(deviceOptions.platformID, 1, openclRunTime.platforms, openclRunTime.context, openclRunTime.devices, openclRunTime.queues);
+        isa::OpenCL::initializeOpenCL(deviceOptions.platformID, 1, openclRunTime);
     }
     catch (isa::OpenCL::OpenCLError &err)
     {
