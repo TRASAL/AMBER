@@ -20,7 +20,7 @@
 /**
  * @brief Generate the OpenCL kernels according to the provided configurations.
  */
-void generateOpenCLKernels(const isa::OpenCL::isa::OpenCL::OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, const DeviceMemory & deviceMemory, Kernels & kernels);
+void generateOpenCLKernels(const isa::OpenCL::OpenCLRunTime & openclRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, const DeviceMemory & deviceMemory, Kernels & kernels);
 /**
  * @brief Generate the run-time configurations for the OpenCL kernels, according to the provided configurations.
  */
