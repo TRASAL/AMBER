@@ -180,7 +180,7 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
     }
 }
 
-void allocateDeviceMemory(const AstroData::Observation &observation, const OpenCLRunTime &openclRunTime, const Options &options, const DeviceOptions &deviceOptions, const HostMemory &hostMemory, DeviceMemory &deviceMemory)
+void allocateDeviceMemory(const AstroData::Observation &observation, const isa::OpenCL::OpenCLRunTime &openclRunTime, const Options &options, const DeviceOptions &deviceOptions, const HostMemory &hostMemory, DeviceMemory &deviceMemory)
 {
     if (!options.subbandDedispersion)
     {

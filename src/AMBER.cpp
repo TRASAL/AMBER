@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
     DeviceMemory deviceMemory{};
     HostMemoryDumpFiles hostMemoryDumpFiles{};
     // OpenCL kernels
-    OpenCLRunTime openclRunTime{};
+    isa::OpenCL::OpenCLRunTime openclRunTime{};
     KernelConfigurations kernelConfigurations{};
     Kernels kernels{};
     KernelRunTimeConfigurations kernelRunTimeConfigurations{};

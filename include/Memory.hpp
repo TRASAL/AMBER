@@ -22,4 +22,4 @@ void loadInput(AstroData::Observation & observation, const DeviceOptions & devic
 // Allocate host memory
 void allocateHostMemory(AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const DataOptions & dataOptions, const KernelConfigurations & kernelConfigurations, HostMemory & hostMemory);
 // Allocate device memory
-void allocateDeviceMemory(const AstroData::Observation & observation, const OpenCLRunTime & openclRunTime, const Options & options, const DeviceOptions & deviceOptions, const HostMemory & hostMemory, DeviceMemory & deviceMemory);
+void allocateDeviceMemory(const AstroData::Observation & observation, const isa::OpenCL::isa::OpenCL::OpenCLRunTime & openclRunTime, const Options & options, const DeviceOptions & deviceOptions, const HostMemory & hostMemory, DeviceMemory & deviceMemory);

@@ -18,7 +18,7 @@
 /**
  * @brief Generate the downsampling OpenCL kernel.
  */
-void generateDownsamplingOpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
+void generateDownsamplingOpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
 {
     std::string *code = nullptr;
     if ( options.subbandDedispersion )
@@ -37,7 +37,7 @@ void generateDownsamplingOpenCLKernels(const OpenCLRunTime &openclRunTime, const
 /**
  * @brief Generate the dedispersion OpenCL kernels.
  */
-void generateDedispersionOpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
+void generateDedispersionOpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
 {
     std::string *code = nullptr;
 
@@ -88,7 +88,7 @@ void generateDedispersionOpenCLKernels(const OpenCLRunTime &openclRunTime, const
 /**
  * @brief Generate the integration OpenCL kernels.
  */
-void generateIntegrationOpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
+void generateIntegrationOpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
 {
     std::string *code = nullptr;
 
@@ -119,7 +119,7 @@ void generateIntegrationOpenCLKernels(const OpenCLRunTime &openclRunTime, const 
 /**
  * @brief Generate the SNR OpenCL kernels.
  */
-void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
+void generateSNROpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
 {
     std::string *code = nullptr;
 
@@ -344,7 +344,7 @@ void generateSNROpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroDat
 /**
  * @brief Generate all OpenCL kernels.
  */
-void generateOpenCLKernels(const OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
+void generateOpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
 {
     if ( options.downsampling )
     {
