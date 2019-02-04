@@ -1,5 +1,4 @@
-// Copyright 2017 Netherlands Institute for Radio Astronomy (ASTRON)
-// Copyright 2017 Netherlands eScience Center
+// Copyright 2017 Netherlands eScience Center and Netherlands Institute for Radio Astronomy (ASTRON)
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
