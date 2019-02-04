@@ -411,11 +411,3 @@ struct CompactedEvent : TriggeredEvent
 
 using TriggeredEvents = std::vector<std::map<unsigned int, std::vector<TriggeredEvent>>>;
 using CompactedEvents = std::vector<std::vector<CompactedEvent>>;
-
-struct OpenCLRunTime
-{
-    cl::Context *context = nullptr;
-    std::vector<cl::Platform> *platforms = nullptr;
-    std::vector<cl::Device> *devices = nullptr;
-    std::vector<std::vector<cl::CommandQueue>> *queues = nullptr;
-};
