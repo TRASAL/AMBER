@@ -32,6 +32,7 @@
 #include <ReadData.hpp>
 #include <SynthesizedBeams.hpp>
 #include <Generator.hpp>
+#include <OpenCLTypes.hpp>
 #include <InitializeOpenCL.hpp>
 #include <Kernel.hpp>
 
