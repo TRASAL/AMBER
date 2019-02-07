@@ -36,6 +36,7 @@
 #include <InitializeOpenCL.hpp>
 #include <Kernel.hpp>
 
+#include <RFIm.hpp>
 #include <Shifts.hpp>
 #include <Dedispersion.hpp>
 #include <Integration.hpp>
