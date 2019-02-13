@@ -243,6 +243,8 @@ void usage(const std::string &program)
 #endif // HAVE_PSRDADA
     std::cerr << std::endl;
     std::cerr << "\tData dump: -dump_prefix ..." << std::endl;
+    std::cerr << "\tRFIm: [-time_domain_sigma_cut]" << std::endl;
+    std::cerr << "\t\tTime domain sigma cut: " << std::endl;
     std::cerr << "\tDownsampling: -downsampling_factor ... -downsampling_configuration ..." << std::endl;
     std::cerr << "\tDedispersion: -dedispersion_file ..." << std::endl;
     std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_stepone_file ...";
@@ -261,6 +263,6 @@ void usage(const std::string &program)
 #ifdef HAVE_PSRDADA
     std::cerr << "\tPSRDADA: -dada -dada_key ... -beams ... -synthesized_beams ... -batches ..." << std::endl;
 #endif // HAVE_PSRDADA
-    std::cerr << "\t Test: [-random] -width ... -dm ... -beams ... -synthesized_beams ... -batches ... -channels ...";
+    std::cerr << "\tTest data: [-random] -width ... -dm ... -beams ... -synthesized_beams ... -batches ... -channels ...";
     std::cerr << "-min_freq ... -channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
 }
