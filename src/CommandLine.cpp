@@ -232,7 +232,7 @@ void usage(const std::string &program)
     std::cerr << program << " [-debug] [-print] [-data_dump] -opencl_platform ... -opencl_device ... -device_name ... [-sync]";
     std::cerr << " [-rfim]";
     std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad | -snr_mom_sigmacut] [-downsampling]";
-    std::cerr << "  -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ...";
+    std::cerr << " -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ...";
     std::cerr << " [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ...";
     std::cerr << " [-sigproc]";
 #ifdef HAVE_HDF5
