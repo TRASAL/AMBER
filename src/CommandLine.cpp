@@ -26,6 +26,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         {
             hostMemoryDumpFiles.dumpFilesPrefix = argumentList.getSwitchArgument<std::string>("-dump_prefix");
         }
+        options.rfim = argumentList.getSwitch("-rfim");
         options.splitBatchesDedispersion = argumentList.getSwitch("-splitbatches_dedispersion");
         options.subbandDedispersion = argumentList.getSwitch("-subband_dedispersion");
         options.compactResults = argumentList.getSwitch("-compact_results");
@@ -229,9 +230,11 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
 void usage(const std::string &program)
 {
     std::cerr << program << " [-debug] [-print] [-data_dump] -opencl_platform ... -opencl_device ... -device_name ... [-sync]";
-    std::cerr << "  -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ...";
+    std::cerr << " [-rfim]";
     std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad | -snr_mom_sigmacut] [-downsampling]";
-    std::cerr << " [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ... [-sigproc]";
+    std::cerr << "  -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ...";
+    std::cerr << " [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ...";
+    std::cerr << " [-sigproc]";
 #ifdef HAVE_HDF5
     std::cerr << " [-lofar]";
 #endif // HAVE_HDF5
@@ -248,6 +251,7 @@ void usage(const std::string &program)
     std::cerr << "\tStandard SNR: -snr_file" << std::endl;
     std::cerr << "\tMOMAD SNR: -max_file ... -mom_stepone_file ... -mom_steptwo_file ... -momad_file ..." << std::endl;
     std::cerr << "\tMOM Sigma Cut SNR: -max_std_file ... -mom_stepone_file ... -mom_steptwo_file ..." << std::endl;
+    std::cerr << std::endl;
 #ifdef HAVE_HDF5
     std::cerr << "\tLOFAR: -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -batches ..." << std::endl;
@@ -257,6 +261,6 @@ void usage(const std::string &program)
 #ifdef HAVE_PSRDADA
     std::cerr << "\tPSRDADA: -dada -dada_key ... -beams ... -synthesized_beams ... -batches ..." << std::endl;
 #endif // HAVE_PSRDADA
-    std::cerr << "\t [-random] -width ... -dm ... -beams ... -synthesized_beams ... -batches ... -channels ...";
+    std::cerr << "\t Test: [-random] -width ... -dm ... -beams ... -synthesized_beams ... -batches ... -channels ...";
     std::cerr << "-min_freq ... -channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
 }
