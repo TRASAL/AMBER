@@ -58,6 +58,3 @@ const std::string intermediateDataName("float");
 typedef float outputDataType;
 // OpenCL data type for output data
 const std::string outputDataName("float");
-// Other data types
-#include "DataTypes.hpp"
-

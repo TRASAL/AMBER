@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include <configuration.hpp>
+#include <DataTypes.hpp>
 #include <CommandLine.hpp>
 #include <Kernels.hpp>
 #include <Memory.hpp>

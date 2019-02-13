@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "configuration.hpp"
+
 #pragma once
 
 typedef enum
