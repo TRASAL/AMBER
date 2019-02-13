@@ -150,6 +150,14 @@ int main(int argc, char *argv[])
         std::cout << std::to_string(deviceOptions.deviceID) + ")" << std::endl;
         std::cout << "Padding: " << deviceOptions.padding[deviceOptions.deviceName] << " bytes" << std::endl;
         std::cout << std::endl;
+        if ( options.rfim )
+        {
+            std::cout << "RFIm enabled" << std::endl;
+        }
+        else
+        {
+            std::cout << "RFIm disabled" << std::endl;
+        }
         std::cout << "Beams: " << observation.getNrBeams() << std::endl;
         std::cout << "Synthesized Beams: " << observation.getNrSynthesizedBeams() << std::endl;
         std::cout << "Batches: " << observation.getNrBatches() << std::endl;
@@ -296,6 +304,12 @@ int main(int argc, char *argv[])
     outputStats << "# inputCopyTotal inputCopyAvg err" << std::endl;
     outputStats << timers.inputCopy.getTotalTime() << " " << timers.inputCopy.getAverageTime() << " ";
     outputStats << timers.inputCopy.getStandardDeviation() << std::endl;
+    if ( options.rfim )
+    {
+        outputStats << "# timeDomainSigmaCutTotal timeDomainSigmaCutAvg err" << std::endl;
+        outputStats << timers.timeDomainSigmaCut.getTotalTime() << " " << timers.timeDomainSigmaCut.getAverageTime() << " ";
+        outputStats << timers.timeDomainSigmaCut.getStandardDeviation() << std::endl;
+    }
     if ( options.downsampling )
     {
         outputStats << "# downsamplingTotal downsamplingAvg err" << std::endl;
