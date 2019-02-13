@@ -278,6 +278,10 @@ struct DeviceMemory
 
 struct KernelConfigurations
 {
+    /**
+     ** @brief Configuration for the time domain sigma cut (RFIm)
+     */
+    RFIm::RFImConfigurations timeDomainSigmaCutParameters;
     // Configuration of downsampling kernel
     Integration::tunedIntegrationConf downsamplingParameters;
     // Configuration of single step dedispersion kernel
@@ -304,6 +308,10 @@ struct KernelConfigurations
 
 struct Kernels
 {
+    /**
+     ** @brief Time domain sigma cut kernels, one for each sigma value (RFIm)
+     */
+    std::vector<cl::Kernel *> timeDomainSigmaCut;
     // Downsampling kernel
     cl::Kernel *downsampling = nullptr;
     // Single step dedispersion kernel
@@ -330,6 +338,14 @@ struct Kernels
 
 struct KernelRunTimeConfigurations
 {
+    /**
+     ** @brief Global NDRange for time domain sigma cut (RFIm).
+     */
+    std::vector<cl::NDRange> timeDomainSigmaCutGlobal;
+    /**
+     ** @brief Local NDRange for time domain sigma cut (RFIm).
+     */
+    std::vector<cl::NDRange> timeDomainSigmaCutLocal;
     // Global NDRange for downsampling
     cl::NDRange downsamplingGlobal;
     // Local NDRange for downsampling
@@ -382,6 +398,10 @@ struct Timers
     isa::utils::Timer search;
     isa::utils::Timer inputHandling;
     isa::utils::Timer inputCopy;
+    /**
+     ** @brief Timer for time domain sigma cut.
+     */
+    isa::utils::Timer timeDomainSigmaCut;
     // Timer for downsampling
     isa::utils::Timer downsampling;
     isa::utils::Timer dedispersionSingleStep;
