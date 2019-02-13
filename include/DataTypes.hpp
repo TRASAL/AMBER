@@ -28,6 +28,10 @@ struct Options
     bool debug = false;
     // Print messages to standard output
     bool print = false;
+    /**
+     ** @brief Enable RFI mitigation
+     */
+    bool rfim = false;
     // Use subband dedispersion
     bool subbandDedispersion = false;
     // Avoid merging batches of dispersed data into contiguous memory
