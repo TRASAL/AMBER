@@ -363,7 +363,7 @@ void generateSNROpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, c
  */
 void generateOpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, const DeviceMemory &deviceMemory, Kernels &kernels)
 {
-    if ( options.rfim )
+    if ( options.rfimOptions.enable )
     {
         generateRFImKernels();
     }
