@@ -82,6 +82,10 @@ int main(int argc, char *argv[])
         {
             AstroData::readZappedChannels(observation, dataOptions.channelsFile, hostMemory.zappedChannels);
             AstroData::readIntegrationSteps(observation, dataOptions.integrationFile, hostMemory.integrationSteps);
+            if ( options.rfimOptions.timeDomainSigmaCut )
+            {
+                RFIm::readTimeDomainSigmaCutSteps(options.rfimOptions.timeDomainSigmaCutStepsFile, hostMemory.timeDomainSigmaCutSteps);
+            }
         }
         catch (AstroData::FileError &err)
         {
@@ -150,7 +154,7 @@ int main(int argc, char *argv[])
         std::cout << std::to_string(deviceOptions.deviceID) + ")" << std::endl;
         std::cout << "Padding: " << deviceOptions.padding[deviceOptions.deviceName] << " bytes" << std::endl;
         std::cout << std::endl;
-        if ( options.rfim )
+        if ( options.rfimOptions.enable )
         {
             std::cout << "RFIm enabled" << std::endl;
         }
@@ -304,7 +308,7 @@ int main(int argc, char *argv[])
     outputStats << "# inputCopyTotal inputCopyAvg err" << std::endl;
     outputStats << timers.inputCopy.getTotalTime() << " " << timers.inputCopy.getAverageTime() << " ";
     outputStats << timers.inputCopy.getStandardDeviation() << std::endl;
-    if ( options.rfim )
+    if ( options.rfimOptions.enable )
     {
         outputStats << "# timeDomainSigmaCutTotal timeDomainSigmaCutAvg err" << std::endl;
         outputStats << timers.timeDomainSigmaCut.getTotalTime() << " " << timers.timeDomainSigmaCut.getAverageTime() << " ";

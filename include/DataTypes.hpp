@@ -24,6 +24,25 @@ typedef enum
     MomSigmaCut
 } SNRMode;
 
+/**
+ ** @brief Store the options for the RFIm module.
+ */
+struct RFImOptions
+{
+    /**
+     ** @brief Enable RFI mitigation.
+     */
+    bool enable = false;
+    /**
+     ** @brief Control time domain sigma cut.
+     */
+    bool timeDomainSigmaCut = false;
+    /**
+     ** @brief name of the file containing the time domain sigma cut steps.
+     */
+    std::string timeDomainSigmaCutStepsFile{};
+};
+
 struct Options
 {
     // Debug mode
@@ -31,9 +50,9 @@ struct Options
     // Print messages to standard output
     bool print = false;
     /**
-     ** @brief Enable RFI mitigation
+     ** @brief RFI mitigation options (RFIm).
      */
-    bool rfim = false;
+    RFImOptions rfimOptions{};
     // Use subband dedispersion
     bool subbandDedispersion = false;
     // Avoid merging batches of dispersed data into contiguous memory
@@ -146,6 +165,10 @@ struct HostMemory
     std::vector<unsigned int> zappedChannels;
     // Integration steps
     std::set<unsigned int> integrationSteps;
+    /**
+     ** @brief Time domain sigma cut steps (RFIm).
+     */
+    std::set<float> timeDomainSigmaCutSteps;
     // Map to create synthesized beams
     std::vector<unsigned int> beamMapping;
     // Dispersed data

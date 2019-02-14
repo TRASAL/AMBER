@@ -26,7 +26,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         {
             hostMemoryDumpFiles.dumpFilesPrefix = argumentList.getSwitchArgument<std::string>("-dump_prefix");
         }
-        options.rfim = argumentList.getSwitch("-rfim");
+        options.rfimOptions.enable = argumentList.getSwitch("-rfim");
         options.splitBatchesDedispersion = argumentList.getSwitch("-splitbatches_dedispersion");
         options.subbandDedispersion = argumentList.getSwitch("-subband_dedispersion");
         options.compactResults = argumentList.getSwitch("-compact_results");
@@ -36,6 +36,14 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         deviceOptions.deviceName = argumentList.getSwitchArgument<std::string>("-device_name");
         deviceOptions.synchronized = argumentList.getSwitch("-sync");
         AstroData::readPaddingConf(deviceOptions.padding, argumentList.getSwitchArgument<std::string>("-padding_file"));
+        if ( options.rfimOptions.enable )
+        {
+            options.rfimOptions.timeDomainSigmaCut = argumentList.getSwitch("-time_domain_sigma_cut");
+            if ( options.rfimOptions.timeDomainSigmaCut )
+            {
+                options.rfimOptions.timeDomainSigmaCutStepsFile = argumentList.getSwitchArgument<std::string>("-time_domain_sigma_cut_steps");
+            }
+        }
         if (argumentList.getSwitch("-snr_standard"))
         {
             options.snrMode = SNRMode::Standard;
@@ -244,7 +252,7 @@ void usage(const std::string &program)
     std::cerr << std::endl;
     std::cerr << "\tData dump: -dump_prefix ..." << std::endl;
     std::cerr << "\tRFIm: [-time_domain_sigma_cut]" << std::endl;
-    std::cerr << "\t\tTime domain sigma cut: " << std::endl;
+    std::cerr << "\t\tTime domain sigma cut: -time_domain_sigma_cut_steps ..." << std::endl;
     std::cerr << "\tDownsampling: -downsampling_factor ... -downsampling_configuration ..." << std::endl;
     std::cerr << "\tDedispersion: -dedispersion_file ..." << std::endl;
     std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_stepone_file ...";
