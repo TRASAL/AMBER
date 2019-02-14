@@ -168,7 +168,7 @@ struct HostMemory
     /**
      ** @brief Time domain sigma cut steps (RFIm).
      */
-    std::set<float> timeDomainSigmaCutSteps;
+    std::vector<float> timeDomainSigmaCutSteps;
     // Map to create synthesized beams
     std::vector<unsigned int> beamMapping;
     // Dispersed data
