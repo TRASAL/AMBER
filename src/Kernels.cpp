@@ -389,6 +389,45 @@ void generateOpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, cons
     generateSNROpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
 }
 
+void generateTimeDomainSigmaCutOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, KernelRunTimeConfigurations & kernelRunTimeConfigurations)
+{
+    unsigned int global[3] = {0, 0, 0};
+    unsigned int local[3] = {0, 0, 0};
+    kernelRunTimeConfigurations.timeDomainSigmaCutGlobal.resize(hostMemory.timeDomainSigmaCutSteps.size());
+    kernelRunTimeConfigurations.timeDomainSigmaCutLocal.resize(hostMemory.timeDomainSigmaCutSteps.size());
+    for ( unsigned int stepID = 0; stepID < hostMemory.timeDomainSigmaCutSteps.size(); stepID++ )
+    {
+        auto step = hostMemory.timeDomainSigmaCutSteps.begin();
+        std::advance(step, stepID);
+        global[0] = kernelConfigurations.timeDomainSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(options.subbandDedispersion))->at(*step)->getNrThreadsD0();
+        global[1] = observation.getNrChannels();
+        global[2] = observation.getNrBeams();
+        kernelRunTimeConfigurations.timeDomainSigmaCutGlobal.at(stepID) = cl::NDRange(global[0], global[1], global[2]);
+        local[0] = kernelConfigurations.timeDomainSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(options.subbandDedispersion))->at(*step)->getNrThreadsD0();
+        local[1] = 1;
+        local[2] = 1;
+        kernelRunTimeConfigurations.timeDomainSigmaCutLocal.at(stepID) = cl::NDRange(local[0], local[1], local[2]);
+        if ( options.debug )
+        {
+            std::cout << "TimeDomainSigmaCut (" + std::to_string(*step) + ")" << std::endl;
+            std::cout << "\tConfiguration: ";
+            std::cout << kernelConfigurations.timeDomainSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(options.subbandDedispersion))->at(*step)->print() << std::endl;
+            std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+            std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+            std::cout << std::endl;
+        }
+    }
+
+}
+
+void generateRFImOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, KernelRunTimeConfigurations & kernelRunTimeConfigurations)
+{
+    if ( options.rfimOptions.timeDomainSigmaCut )
+    {
+        generateTimeDomainSigmaCutOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
+    }
+}
+
 void generateDownsamplingOpenCLRunTimeConfigurations(const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, KernelRunTimeConfigurations &kernelRunTimeConfigurations)
 {
     unsigned int global[3] = {0, 0, 0};
@@ -1091,6 +1130,10 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
  */
 void generateOpenCLRunTimeConfigurations(const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, const KernelConfigurations &kernelConfigurations, const HostMemory &hostMemory, KernelRunTimeConfigurations &kernelRunTimeConfigurations)
 {
+    if ( options.rfimOptions.enable )
+    {
+        generateRFImOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
+    }
     if ( options.downsampling )
     {
         generateDownsamplingOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
