@@ -19,17 +19,30 @@
 /**
  ** @brief Generate the time domain sigma cut OpenCL kernels.
  */
-void generateTimeDomainSigmaCutOpenCLKernels()
+void generateTimeDomainSigmaCutOpenCLKernels(const isa::OpenCL::OpenCLRunTime & openCLRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, const DeviceMemory & deviceMemory, Kernels & kernels)
 {
-
+    std::string * code = nullptr;
+    kernels.timeDomainSigmaCut.reserve(hostMemory.timeDomainSigmaCutSteps.size());
+    for ( unsigned int stepID = 0; stepID < hostMemory.timeDomainSigmaCutSteps.size(); stepID++ )
+    {
+        auto step = hostMemory.timeDomainSigmaCutSteps.begin();
+        std::advance(step, stepID);
+        code = RFIm::getTimeDomainSigmaCutOpenCL<inputDataType>(*(kernelConfigurations.timeDomainSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(options.subbandDedispersion))->at(*step)), options.rfimOptions.dataOrdering, options.rfimOptions.replacementStrategy, inputDataName, observation, *step, deviceOptions.padding.at(deviceOptions.deviceName));
+        kernels.timeDomainSigmaCut.push_back(isa::OpenCL::compile("timeDomainSigmaCut", *code, "-cl-mad-enable -Werror", *openCLRunTime.context, openCLRunTime.devices->at(deviceOptions.deviceID)));
+        kernels.timeDomainSigmaCut.at(stepID)->setArg(0, deviceMemory.dispersedData);
+        delete code;
+    }
 }
 
 /**
  ** @brief Generate RFIm kernels.
  */
-void generateRFImKernels()
+void generateRFImKernels(const isa::OpenCL::OpenCLRunTime & openCLRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, const DeviceMemory & deviceMemory, Kernels & kernels)
 {
-
+    if ( options.rfimOptions.timeDomainSigmaCut )
+    {
+        generateTimeDomainSigmaCutOpenCLKernels(openCLRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
+    }
 }
 
 /**
@@ -365,7 +378,7 @@ void generateOpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, cons
 {
     if ( options.rfimOptions.enable )
     {
-        generateRFImKernels();
+        generateRFImKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
     }
     if ( options.downsampling )
     {

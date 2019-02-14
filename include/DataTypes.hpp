@@ -34,6 +34,14 @@ struct RFImOptions
      */
     bool enable = false;
     /**
+     ** @brief Ordering of the input data.
+     */
+    RFIm::DataOrdering dataOrdering = RFIm::DataOrdering::FrequencyTime;
+    /**
+     ** @brief Replacement strategy.
+     */
+    RFIm::ReplacementStrategy replacementStrategy = RFIm::ReplacementStrategy::ReplaceWithMean;
+    /**
      ** @brief Control time domain sigma cut.
      */
     bool timeDomainSigmaCut = false;
