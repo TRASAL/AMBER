@@ -110,16 +110,16 @@ void pipeline(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::
             clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
             break;
         }
+        if (options.splitBatchesDedispersion && (batch < observation.getNrDelayBatches()))
+        {
+            // Not enough batches in the buffer to start the search
+            continue;
+        }
         status = copyInputToDevice(batch, openclRunTime, observation, options, deviceOptions, timers, hostMemory, deviceMemory);
         if (status != 0)
         {
             clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
             break;
-        }
-        if (options.splitBatchesDedispersion && (batch < observation.getNrDelayBatches()))
-        {
-            // Not enough batches in the buffer to start the search
-            continue;
         }
         // Prepare data dump files
         if (options.dataDump)
