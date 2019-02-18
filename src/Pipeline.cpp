@@ -156,6 +156,16 @@ void pipeline(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::
                 hostMemoryDumpFiles.medianOfMediansData << "# Batch: " << batch << std::endl;
             }
         }
+        // Optional RFI mitigation
+        if ( options.rfimOptions.enable )
+        {
+            status = rfim(batch, syncPoint, openclRunTime, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory);
+            if (status != 0)
+            {
+                clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
+                break;
+            }
+        }
         // Optional downsampling before dedispersion
         if ( options.downsampling )
         {
@@ -494,6 +504,51 @@ int copyInputToDevice(const unsigned int batch, const isa::OpenCL::OpenCLRunTime
     {
         std::cerr << "Input copy error -- Batch: " << std::to_string(batch) << ", " << err.what() << " " << err.err();
         std::cerr << std::endl;
+        return -1;
+    }
+    return 0;
+}
+
+int rfim(const unsigned int batch, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory)
+{
+    bool errorDetected = false;
+    if ( options.rfimOptions.timeDomainSigmaCut )
+    {
+        for ( unsigned int sigmaID = 0; sigmaID < hostMemory.timeDomainSigmaCutSteps.size(); sigmaID++ )
+        {
+            if ( deviceOptions.synchronized )
+            {
+                try
+                {
+                    timers.timeDomainSigmaCut.start();
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.timeDomainSigmaCut.at(sigmaID)), cl::NullRange, kernelRunTimeConfigurations.timeDomainSigmaCutGlobal.at(sigmaID), kernelRunTimeConfigurations.timeDomainSigmaCutLocal.at(sigmaID), nullptr, &syncPoint);
+                    syncPoint.wait();
+                    timers.timeDomainSigmaCut.stop();
+                }
+                catch ( cl::Error & err )
+                {
+                    std::cerr << "RFIm time domain sigma cut error -- Batch: " << std::to_string(batch) << ", sigma: " << std::to_string(hostMemory.timeDomainSigmaCutSteps.at(sigmaID)) << ", " << err.what() << " ";
+                    std::cerr << err.err() << std::endl;
+                    errorDetected = true;
+                }
+            }
+            else
+            {
+                try
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.timeDomainSigmaCut.at(sigmaID)), cl::NullRange, kernelRunTimeConfigurations.timeDomainSigmaCutGlobal.at(sigmaID), kernelRunTimeConfigurations.timeDomainSigmaCutLocal.at(sigmaID));
+                }
+                catch ( cl::Error & err )
+                {
+                    std::cerr << "RFIm time domain sigma cut error -- Batch: " << std::to_string(batch) << ", sigma: " << std::to_string(hostMemory.timeDomainSigmaCutSteps.at(sigmaID)) << ", " << err.what() << " ";
+                    std::cerr << err.err() << std::endl;
+                    errorDetected = true;
+                }
+            }
+        }
+    }
+    if ( errorDetected )
+    {
         return -1;
     }
     return 0;

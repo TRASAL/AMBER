@@ -65,6 +65,21 @@ int inputHandling(const unsigned int batch, const AstroData::Observation &observ
 int copyInputToDevice(const unsigned int batch, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, HostMemory &hostMemory, const DeviceMemory &deviceMemory);
 
 /**
+ ** @brief Radio Frequency Interference mitigation.
+ * 
+ * @param batch
+ * @param syncPoint
+ * @param openclRunTime
+ * @param options
+ * @param deviceOptions
+ * @param timers
+ * @param kernels
+ * @param kernelRunTimeConfigurations
+ * @param hostMemory
+ */
+int rfim(const unsigned int batch, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory);
+
+/**
  * @brief Downsampling input data in the time dimension.
  * 
  * @param batch
