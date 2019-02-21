@@ -42,6 +42,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             if ( options.rfimOptions.timeDomainSigmaCut )
             {
                 options.rfimOptions.timeDomainSigmaCutStepsFile = argumentList.getSwitchArgument<std::string>("-time_domain_sigma_cut_steps");
+                RFIm::readRFImConfig(kernelConfigurations.timeDomainSigmaCutParameters, argumentList.getSwitchArgument<std::string>("-time_domain_sigma_cut_configuration"));
             }
         }
         if (argumentList.getSwitch("-snr_standard"))
@@ -252,7 +253,7 @@ void usage(const std::string &program)
     std::cerr << std::endl;
     std::cerr << "\tData dump: -dump_prefix ..." << std::endl;
     std::cerr << "\tRFIm: [-time_domain_sigma_cut]" << std::endl;
-    std::cerr << "\t\tTime domain sigma cut: -time_domain_sigma_cut_steps ..." << std::endl;
+    std::cerr << "\t\tTime domain sigma cut: -time_domain_sigma_cut_steps ... -time_domain_sigma_cut_configuration ..." << std::endl;
     std::cerr << "\tDownsampling: -downsampling_factor ... -downsampling_configuration ..." << std::endl;
     std::cerr << "\tDedispersion: -dedispersion_file ..." << std::endl;
     std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_stepone_file ...";
