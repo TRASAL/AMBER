@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
             AstroData::readIntegrationSteps(observation, dataOptions.integrationFile, hostMemory.integrationSteps);
             if ( options.rfimOptions.timeDomainSigmaCut )
             {
-                RFIm::readTimeDomainSigmaCutSteps(options.rfimOptions.timeDomainSigmaCutStepsFile, hostMemory.timeDomainSigmaCutSteps);
+                RFIm::readSigmaSteps(options.rfimOptions.timeDomainSigmaCutStepsFile, hostMemory.timeDomainSigmaCutSteps);
             }
         }
         catch (AstroData::FileError &err)
