@@ -44,6 +44,12 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
                 options.rfimOptions.timeDomainSigmaCutStepsFile = argumentList.getSwitchArgument<std::string>("-time_domain_sigma_cut_steps");
                 RFIm::readRFImConfig(kernelConfigurations.timeDomainSigmaCutParameters, argumentList.getSwitchArgument<std::string>("-time_domain_sigma_cut_configuration"));
             }
+            options.rfimOptions.frequencyDomainSigmaCut = argumentList.getSwitch("-frequency_domain_sigma_cut");
+            if ( options.rfimOptions.frequencyDomainSigmaCut )
+            {
+                options.rfimOptions.frequencyDomainSigmaCutStepsFile = argumentList.getSwitchArgument<std::string>("-frequency_domain_sigma_cut_steps");
+                RFIm::readRFImConfig(kernelConfigurations.frequencyDomainSigmaCutParameters, argumentList.getSwitchArgument<std::string>("-frequency_domain_sigma_cut_configuration"));
+            }
         }
         if (argumentList.getSwitch("-snr_standard"))
         {
@@ -238,11 +244,11 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
 
 void usage(const std::string &program)
 {
-    std::cerr << program << " [-debug] [-print] [-data_dump] -opencl_platform ... -opencl_device ... -device_name ... [-sync]";
+    std::cerr << program << " [-debug] [-print] [-data_dump] -opencl_platform <int> -opencl_device <int> -device_name <string> [-sync]";
     std::cerr << " [-rfim]";
     std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad | -snr_mom_sigmacut] [-downsampling]";
-    std::cerr << " -padding_file ... -zapped_channels ... -integration_steps ... -integration_file ...";
-    std::cerr << " [-compact_results] -output ... -dms ... -dm_first ... -dm_step ... -threshold ...";
+    std::cerr << " -padding_file <string> -zapped_channels <string> -integration_steps <string> -integration_file <string>";
+    std::cerr << " [-compact_results] -output <string> -dms <int> -dm_first <float> -dm_step <float> -threshold <float>";
     std::cerr << " [-sigproc]";
 #ifdef HAVE_HDF5
     std::cerr << " [-lofar]";
@@ -251,27 +257,28 @@ void usage(const std::string &program)
     std::cerr << " [-dada]";
 #endif // HAVE_PSRDADA
     std::cerr << std::endl;
-    std::cerr << "\tData dump: -dump_prefix ..." << std::endl;
-    std::cerr << "\tRFIm: [-time_domain_sigma_cut]" << std::endl;
-    std::cerr << "\t\tTime domain sigma cut: -time_domain_sigma_cut_steps ... -time_domain_sigma_cut_configuration ..." << std::endl;
-    std::cerr << "\tDownsampling: -downsampling_factor ... -downsampling_configuration ..." << std::endl;
-    std::cerr << "\tDedispersion: -dedispersion_file ..." << std::endl;
-    std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_stepone_file ...";
-    std::cerr << "-dedispersion_steptwo_file ... -subbands ... -subbanding_dms ... -subbanding_dm_first ...";
-    std::cerr << "-subbanding_dm_step ..." << std::endl;
-    std::cerr << "\tStandard SNR: -snr_file" << std::endl;
-    std::cerr << "\tMOMAD SNR: -max_file ... -mom_stepone_file ... -mom_steptwo_file ... -momad_file ..." << std::endl;
-    std::cerr << "\tMOM Sigma Cut SNR: -max_std_file ... -mom_stepone_file ... -mom_steptwo_file ..." << std::endl;
+    std::cerr << "\tData dump: -dump_prefix <string>" << std::endl;
+    std::cerr << "\tRFIm: [-time_domain_sigma_cut] [-frequency_domain_sigma_cut]" << std::endl;
+    std::cerr << "\t\tTime domain sigma cut: -time_domain_sigma_cut_steps <string> -time_domain_sigma_cut_configuration <string>" << std::endl;
+    std::cerr << "\t\tFrequency domain sigma cut: -time_domain_sigma_cut_steps <string> -time_domain_sigma_cut_configuration <string>" << std::endl;
+    std::cerr << "\tDownsampling: -downsampling_factor <int> -downsampling_configuration <string>" << std::endl;
+    std::cerr << "\tDedispersion: -dedispersion_file <string>" << std::endl;
+    std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_stepone_file <string>";
+    std::cerr << "-dedispersion_steptwo_file <string> -subbands <int> -subbanding_dms <int> -subbanding_dm_first <float>";
+    std::cerr << "-subbanding_dm_step <float>" << std::endl;
+    std::cerr << "\tStandard SNR: -snr_file <string>" << std::endl;
+    std::cerr << "\tMOMAD SNR: -max_file <string> -mom_stepone_file <string> -mom_steptwo_file <string> -momad_file <string>" << std::endl;
+    std::cerr << "\tMOM Sigma Cut SNR: -max_std_file <string> -mom_stepone_file <string> -mom_steptwo_file <string>" << std::endl;
     std::cerr << std::endl;
 #ifdef HAVE_HDF5
-    std::cerr << "\tLOFAR: -lofar -header ... -data ... [-limit]" << std::endl;
-    std::cerr << "\t\t -limit -batches ..." << std::endl;
+    std::cerr << "\tLOFAR: -lofar -header <string> -data <string> [-limit]" << std::endl;
+    std::cerr << "\t\t -limit -batches <int>" << std::endl;
 #endif // HAVE_HDF5
-    std::cerr << "\tSIGPROC: -sigproc [-stream] [-header ...] -data ... -batches ... -channels ... -min_freq ...";
-    std::cerr << "-channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
+    std::cerr << "\tSIGPROC: -sigproc [-stream] [-header <int>] -data <string> -batches <int> -channels <int> -min_freq <float>";
+    std::cerr << "-channel_bandwidth <float> -samples <int> -sampling_time <float>" << std::endl;
 #ifdef HAVE_PSRDADA
-    std::cerr << "\tPSRDADA: -dada -dada_key ... -beams ... -synthesized_beams ... -batches ..." << std::endl;
+    std::cerr << "\tPSRDADA: -dada -dada_key <string> -beams <int> -synthesized_beams <int> -batches <int>" << std::endl;
 #endif // HAVE_PSRDADA
-    std::cerr << "\tTest data: [-random] -width ... -dm ... -beams ... -synthesized_beams ... -batches ... -channels ...";
-    std::cerr << "-min_freq ... -channel_bandwidth ... -samples ... -sampling_time ..." << std::endl;
+    std::cerr << "\tTest data: [-random] -width <int> -dm <float> -beams <int> -synthesized_beams <int> -batches <int> -channels <int>";
+    std::cerr << "-min_freq <float> -channel_bandwidth <float> -samples <int> -sampling_time <float>" << std::endl;
 }

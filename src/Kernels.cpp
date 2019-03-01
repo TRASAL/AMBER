@@ -35,6 +35,24 @@ void generateTimeDomainSigmaCutOpenCLKernels(const isa::OpenCL::OpenCLRunTime & 
 }
 
 /**
+ ** @brief Generate the frequency domain sigma cut OpenCL kernels.
+ */
+void generateFrequencyDomainSigmaCutOpenCLKernels(const isa::OpenCL::OpenCLRunTime & openCLRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, const DeviceMemory & deviceMemory, Kernels & kernels)
+{
+    std::string * code = nullptr;
+    kernels.frequencyDomainSigmaCut.reserve(hostMemory.frequencyDomainSigmaCutSteps.size());
+    for ( unsigned int stepID = 0; stepID < hostMemory.frequencyDomainSigmaCutSteps.size(); stepID++ )
+    {
+        auto step = hostMemory.frequencyDomainSigmaCutSteps.begin();
+        std::advance(step, stepID);
+        code = RFIm::getFrequencyDomainSigmaCutOpenCL<inputDataType>(*(kernelConfigurations.frequencyDomainSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(options.subbandDedispersion))->at(*step)), options.rfimOptions.dataOrdering, options.rfimOptions.replacementStrategy, inputDataName, observation, *step, deviceOptions.padding.at(deviceOptions.deviceName));
+        kernels.frequencyDomainSigmaCut.push_back(isa::OpenCL::compile("frequencyDomainSigmaCut", *code, "-cl-mad-enable -Werror", *openCLRunTime.context, openCLRunTime.devices->at(deviceOptions.deviceID)));
+        kernels.frequencyDomainSigmaCut.at(stepID)->setArg(0, deviceMemory.dispersedData);
+        delete code;
+    }
+}
+
+/**
  ** @brief Generate RFIm kernels.
  */
 void generateRFImKernels(const isa::OpenCL::OpenCLRunTime & openCLRunTime, const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, const DeviceMemory & deviceMemory, Kernels & kernels)
@@ -42,6 +60,10 @@ void generateRFImKernels(const isa::OpenCL::OpenCLRunTime & openCLRunTime, const
     if ( options.rfimOptions.timeDomainSigmaCut )
     {
         generateTimeDomainSigmaCutOpenCLKernels(openCLRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
+    }
+    if ( options.rfimOptions.frequencyDomainSigmaCut )
+    {
+        generateFrequencyDomainSigmaCutOpenCLKernels(openCLRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
     }
 }
 
@@ -389,6 +411,9 @@ void generateOpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, cons
     generateSNROpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
 }
 
+/**
+ * @brief Generate the run-time configuration for the time domain sigma cut (RFIm) OpenCL kernels.
+ */
 void generateTimeDomainSigmaCutOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, KernelRunTimeConfigurations & kernelRunTimeConfigurations)
 {
     unsigned int global[3] = {0, 0, 0};
@@ -417,14 +442,53 @@ void generateTimeDomainSigmaCutOpenCLRunTimeConfigurations(const AstroData::Obse
             std::cout << std::endl;
         }
     }
-
 }
 
+/**
+ * @brief Generate the run-time configuration for the frequency domain sigma cut (RFIm) OpenCL kernels.
+ */
+void generateFrequencyDomainSigmaCutOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, KernelRunTimeConfigurations & kernelRunTimeConfigurations)
+{
+    unsigned int global[3] = {0, 0, 0};
+    unsigned int local[3] = {0, 0, 0};
+    kernelRunTimeConfigurations.frequencyDomainSigmaCutGlobal.resize(hostMemory.frequencyDomainSigmaCutSteps.size());
+    kernelRunTimeConfigurations.frequencyDomainSigmaCutLocal.resize(hostMemory.frequencyDomainSigmaCutSteps.size());
+    for ( unsigned int stepID = 0; stepID < hostMemory.frequencyDomainSigmaCutSteps.size(); stepID++ )
+    {
+        auto step = hostMemory.frequencyDomainSigmaCutSteps.begin();
+        std::advance(step, stepID);
+        global[0] = isa::utils::pad(observation.getNrSamplesPerDispersedBatch(options.subbandDedispersion), kernelConfigurations.frequencyDomainSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(options.subbandDedispersion))->at(*step)->getNrThreadsD0());
+        global[1] = 1;
+        global[2] = observation.getNrBeams();
+        kernelRunTimeConfigurations.frequencyDomainSigmaCutGlobal.at(stepID) = cl::NDRange(global[0], global[1], global[2]);
+        local[0] = kernelConfigurations.frequencyDomainSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(options.subbandDedispersion))->at(*step)->getNrThreadsD0();
+        local[1] = 1;
+        local[2] = 1;
+        kernelRunTimeConfigurations.frequencyDomainSigmaCutLocal.at(stepID) = cl::NDRange(local[0], local[1], local[2]);
+        if ( options.debug )
+        {
+            std::cout << "FrequencyDomainSigmaCut (" + std::to_string(*step) + ")" << std::endl;
+            std::cout << "\tConfiguration: ";
+            std::cout << kernelConfigurations.frequencyDomainSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(options.subbandDedispersion))->at(*step)->print() << std::endl;
+            std::cout << "\tGlobal: " << global[0] << " " << global[1] << " " << global[2] << std::endl;
+            std::cout << "\tLocal: " << local[0] << " " << local[1] << " " << local[2] << std::endl;
+            std::cout << std::endl;
+        }
+    }
+}
+
+/**
+ * @brief Generate the run-time configuration for the RFIm OpenCL kernels.
+ */
 void generateRFImOpenCLRunTimeConfigurations(const AstroData::Observation & observation, const Options & options, const DeviceOptions & deviceOptions, const KernelConfigurations & kernelConfigurations, const HostMemory & hostMemory, KernelRunTimeConfigurations & kernelRunTimeConfigurations)
 {
     if ( options.rfimOptions.timeDomainSigmaCut )
     {
         generateTimeDomainSigmaCutOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
+    }
+    if ( options.rfimOptions.frequencyDomainSigmaCut )
+    {
+        generateFrequencyDomainSigmaCutOpenCLRunTimeConfigurations(observation, options, deviceOptions, kernelConfigurations, hostMemory, kernelRunTimeConfigurations);
     }
 }
 

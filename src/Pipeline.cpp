@@ -512,6 +512,7 @@ int copyInputToDevice(const unsigned int batch, const isa::OpenCL::OpenCLRunTime
 int rfim(const unsigned int batch, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory)
 {
     bool errorDetected = false;
+    // Time domain sigma cut
     if ( options.rfimOptions.timeDomainSigmaCut )
     {
         for ( unsigned int sigmaID = 0; sigmaID < hostMemory.timeDomainSigmaCutSteps.size(); sigmaID++ )
@@ -541,6 +542,42 @@ int rfim(const unsigned int batch, cl::Event &syncPoint, const isa::OpenCL::Open
                 catch ( cl::Error & err )
                 {
                     std::cerr << "RFIm time domain sigma cut error -- Batch: " << std::to_string(batch) << ", sigma: " << std::to_string(hostMemory.timeDomainSigmaCutSteps.at(sigmaID)) << ", " << err.what() << " ";
+                    std::cerr << err.err() << std::endl;
+                    errorDetected = true;
+                }
+            }
+        }
+    }
+    // Frequency domain sigma cut
+    if ( options.rfimOptions.frequencyDomainSigmaCut )
+    {
+        for ( unsigned int sigmaID = 0; sigmaID < hostMemory.frequencyDomainSigmaCutSteps.size(); sigmaID++ )
+        {
+            if ( deviceOptions.synchronized )
+            {
+                try
+                {
+                    timers.frequencyDomainSigmaCut.start();
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.frequencyDomainSigmaCut.at(sigmaID)), cl::NullRange, kernelRunTimeConfigurations.frequencyDomainSigmaCutGlobal.at(sigmaID), kernelRunTimeConfigurations.frequencyDomainSigmaCutLocal.at(sigmaID), nullptr, &syncPoint);
+                    syncPoint.wait();
+                    timers.frequencyDomainSigmaCut.stop();
+                }
+                catch ( cl::Error & err )
+                {
+                    std::cerr << "RFIm frequency domain sigma cut error -- Batch: " << std::to_string(batch) << ", sigma: " << std::to_string(hostMemory.frequencyDomainSigmaCutSteps.at(sigmaID)) << ", " << err.what() << " ";
+                    std::cerr << err.err() << std::endl;
+                    errorDetected = true;
+                }
+            }
+            else
+            {
+                try
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.frequencyDomainSigmaCut.at(sigmaID)), cl::NullRange, kernelRunTimeConfigurations.frequencyDomainSigmaCutGlobal.at(sigmaID), kernelRunTimeConfigurations.frequencyDomainSigmaCutLocal.at(sigmaID));
+                }
+                catch ( cl::Error & err )
+                {
+                    std::cerr << "RFIm frequency domain sigma cut error -- Batch: " << std::to_string(batch) << ", sigma: " << std::to_string(hostMemory.frequencyDomainSigmaCutSteps.at(sigmaID)) << ", " << err.what() << " ";
                     std::cerr << err.err() << std::endl;
                     errorDetected = true;
                 }

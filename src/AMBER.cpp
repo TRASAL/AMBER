@@ -86,6 +86,10 @@ int main(int argc, char *argv[])
             {
                 RFIm::readSigmaSteps(options.rfimOptions.timeDomainSigmaCutStepsFile, hostMemory.timeDomainSigmaCutSteps);
             }
+            if ( options.rfimOptions.frequencyDomainSigmaCut )
+            {
+                RFIm::readSigmaSteps(options.rfimOptions.frequencyDomainSigmaCutStepsFile, hostMemory.frequencyDomainSigmaCutSteps);
+            }
         }
         catch (AstroData::FileError &err)
         {

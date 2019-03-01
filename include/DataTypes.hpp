@@ -46,9 +46,17 @@ struct RFImOptions
      */
     bool timeDomainSigmaCut = false;
     /**
-     ** @brief name of the file containing the time domain sigma cut steps.
+     ** @brief Name of the file containing the time domain sigma cut steps.
      */
     std::string timeDomainSigmaCutStepsFile{};
+    /**
+     ** @brief Control frequency domain sigma cut.
+     */
+    bool frequencyDomainSigmaCut = false;
+    /**
+     ** @brief Name of the file containing the frequency domain sigma cut steps.
+     */
+    std::string frequencyDomainSigmaCutStepsFile{};
 };
 
 struct Options
@@ -177,6 +185,10 @@ struct HostMemory
      ** @brief Time domain sigma cut steps (RFIm).
      */
     std::vector<float> timeDomainSigmaCutSteps;
+    /**
+     ** @brief Frequency domain sigma cut steps (RFIm).
+     */
+    std::vector<float> frequencyDomainSigmaCutSteps;
     // Map to create synthesized beams
     std::vector<unsigned int> beamMapping;
     // Dispersed data
@@ -315,6 +327,10 @@ struct KernelConfigurations
      ** @brief Configuration for the time domain sigma cut (RFIm)
      */
     RFIm::RFImConfigurations timeDomainSigmaCutParameters;
+    /**
+     ** @brief Configuration for the frequency domain sigma cut (RFIm)
+     */
+    RFIm::RFImConfigurations frequencyDomainSigmaCutParameters;
     // Configuration of downsampling kernel
     Integration::tunedIntegrationConf downsamplingParameters;
     // Configuration of single step dedispersion kernel
@@ -345,6 +361,10 @@ struct Kernels
      ** @brief Time domain sigma cut kernels, one for each sigma value (RFIm)
      */
     std::vector<cl::Kernel *> timeDomainSigmaCut;
+    /**
+     ** @brief Frequency domain sigma cut kernels, one for each sigma value (RFIm)
+     */
+    std::vector<cl::Kernel *> frequencyDomainSigmaCut;
     // Downsampling kernel
     cl::Kernel *downsampling = nullptr;
     // Single step dedispersion kernel
@@ -379,6 +399,14 @@ struct KernelRunTimeConfigurations
      ** @brief Local NDRange for time domain sigma cut (RFIm).
      */
     std::vector<cl::NDRange> timeDomainSigmaCutLocal;
+    /**
+     ** @brief Global NDRange for frequency domain sigma cut (RFIm).
+     */
+    std::vector<cl::NDRange> frequencyDomainSigmaCutGlobal;
+    /**
+     ** @brief Local NDRange for frequency domain sigma cut (RFIm).
+     */
+    std::vector<cl::NDRange> frequencyDomainSigmaCutLocal;
     // Global NDRange for downsampling
     cl::NDRange downsamplingGlobal;
     // Local NDRange for downsampling
@@ -435,6 +463,10 @@ struct Timers
      ** @brief Timer for time domain sigma cut.
      */
     isa::utils::Timer timeDomainSigmaCut;
+    /**
+     ** @brief Timer for frequency domain sigma cut.
+     */
+    isa::utils::Timer frequencyDomainSigmaCut;
     // Timer for downsampling
     isa::utils::Timer downsampling;
     isa::utils::Timer dedispersionSingleStep;
