@@ -322,9 +322,18 @@ int main(int argc, char *argv[])
     outputStats << timers.inputCopy.getStandardDeviation() << std::endl;
     if ( options.rfimOptions.enable )
     {
-        outputStats << "# timeDomainSigmaCutTotal timeDomainSigmaCutAvg err" << std::endl;
-        outputStats << timers.timeDomainSigmaCut.getTotalTime() << " " << timers.timeDomainSigmaCut.getAverageTime() << " ";
-        outputStats << timers.timeDomainSigmaCut.getStandardDeviation() << std::endl;
+        if ( options.rfimOptions.timeDomainSigmaCut )
+        {
+            outputStats << "# timeDomainSigmaCutTotal timeDomainSigmaCutAvg err" << std::endl;
+            outputStats << timers.timeDomainSigmaCut.getTotalTime() << " " << timers.timeDomainSigmaCut.getAverageTime() << " ";
+            outputStats << timers.timeDomainSigmaCut.getStandardDeviation() << std::endl;
+        }
+        if ( options.rfimOptions.frequencyDomainSigmaCut )
+        {
+            outputStats << "# frequencyDomainSigmaCutTotal frequencyDomainSigmaCutAvg err" << std::endl;
+            outputStats << timers.frequencyDomainSigmaCut.getTotalTime() << " " << timers.frequencyDomainSigmaCut.getAverageTime() << " ";
+            outputStats << timers.frequencyDomainSigmaCut.getStandardDeviation() << std::endl;
+        }
     }
     if ( options.downsampling )
     {
