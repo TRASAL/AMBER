@@ -175,6 +175,7 @@ int main(int argc, char *argv[])
         }
         std::cout << "Beams: " << observation.getNrBeams() << std::endl;
         std::cout << "Synthesized Beams: " << observation.getNrSynthesizedBeams() << std::endl;
+        std::cout << "Synthesized Beams (per chunk): " << options.nrSynthesizedBeamsPerChunk << std::endl;
         std::cout << "Batches: " << observation.getNrBatches() << std::endl;
         if ( options.subbandDedispersion )
         {
