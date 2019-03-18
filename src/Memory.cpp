@@ -227,13 +227,13 @@ void allocateDeviceMemory(const AstroData::Observation &observation, const isa::
         }
         if (!options.subbandDedispersion)
         {
-            deviceMemory.medianOfMediansStepOne = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType), 0, 0);
-            deviceMemory.medianOfMediansStepTwo = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, observation.getNrSynthesizedBeams() * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType), 0, 0);
+            deviceMemory.medianOfMediansStepOne = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, options.nrSynthesizedBeamsPerChunk * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType), 0, 0);
+            deviceMemory.medianOfMediansStepTwo = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, options.nrSynthesizedBeamsPerChunk * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType), 0, 0);
         }
         else
         {
-            deviceMemory.medianOfMediansStepOne = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType), 0, 0);
-            deviceMemory.medianOfMediansStepTwo = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, observation.getNrSynthesizedBeams() * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType), 0, 0);
+            deviceMemory.medianOfMediansStepOne = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, options.nrSynthesizedBeamsPerChunk * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType), 0, 0);
+            deviceMemory.medianOfMediansStepTwo = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, options.nrSynthesizedBeamsPerChunk * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType), 0, 0);
         }
     }
     openclRunTime.queues->at(deviceOptions.deviceID).at(0).finish();
