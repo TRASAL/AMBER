@@ -150,7 +150,14 @@ int main(int argc, char *argv[])
         hostMemory.shiftsSingleStep = Dedispersion::getShifts(observation, deviceOptions.padding.at(deviceOptions.deviceName));
         hostMemory.beamMapping.resize(observation.getNrSynthesizedBeams() * observation.getNrChannels(deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
     }
-    AstroData::generateBeamMapping(observation, hostMemory.beamMapping, deviceOptions.padding.at(deviceOptions.deviceName), options.subbandDedispersion);
+    if ( dataOptions.synthesizedBeamsFile.empty() )
+    {
+        AstroData::generateBeamMapping(observation, hostMemory.beamMapping, deviceOptions.padding.at(deviceOptions.deviceName), options.subbandDedispersion);
+    }
+    else
+    {
+        AstroData::readBeamMapping(observation, dataOptions.synthesizedBeamsFile, hostMemory.beamMapping, deviceOptions.padding.at(deviceOptions.deviceName), options.subbandDedispersion);
+    }
     // Print message with observation and search information
     if (options.print)
     {

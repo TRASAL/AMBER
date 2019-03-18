@@ -100,6 +100,14 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             throw std::exception();
         }
         dataOptions.channelsFile = argumentList.getSwitchArgument<std::string>("-zapped_channels");
+        try
+        {
+            dataOptions.synthesizedBeamsFile = argumentList.getSwitchArgument<std::string>("-synthesized_beams_file");
+        }
+        catch ( isa::utils::SwitchNotFound & err )
+        {
+            // If not specified, do nothing.
+        }
         dataOptions.integrationFile = argumentList.getSwitchArgument<std::string>("-integration_steps");
         if (!options.subbandDedispersion)
         {
@@ -247,7 +255,7 @@ void usage(const std::string &program)
     std::cerr << program << " [-debug] [-print] [-data_dump] -opencl_platform <int> -opencl_device <int> -device_name <string> [-sync]";
     std::cerr << " [-rfim]";
     std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad | -snr_mom_sigmacut] [-downsampling]";
-    std::cerr << " -padding_file <string> -zapped_channels <string> -integration_steps <string> -integration_file <string>";
+    std::cerr << " -padding_file <string> -zapped_channels <string> [-synthesized_beams_file <string>] -integration_steps <string> -integration_file <string>";
     std::cerr << " [-compact_results] -output <string> -dms <int> -dm_first <float> -dm_step <float> -threshold <float>";
     std::cerr << " [-sigproc]";
 #ifdef HAVE_HDF5

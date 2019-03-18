@@ -147,6 +147,10 @@ struct DataOptions
     std::string outputFile{};
     // Name of the file containing the zapped channels
     std::string channelsFile{};
+    /**
+     ** Name of the file containing the mapping between input and synthesized beams.
+     */
+    std::string synthesizedBeamsFile{};
     // Name of the file containing the integration steps
     std::string integrationFile{};
 #ifdef HAVE_HDF5
