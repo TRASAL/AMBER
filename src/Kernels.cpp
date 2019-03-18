@@ -547,7 +547,7 @@ void generateDedispersionOpenCLRunTimeConfigurations(const AstroData::Observatio
     {
         global[0] = isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0());
         global[1] = observation.getNrDMs() / kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1();
-        global[2] = observation.getNrSynthesizedBeams();
+        global[2] = options.nrSynthesizedBeamsPerChunk;
         kernelRunTimeConfigurations.dedispersionSingleStepGlobal = cl::NDRange(global[0], global[1], global[2]);
         local[0] = kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0();
         local[1] = kernelConfigurations.dedispersionSingleStepParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD1();
@@ -582,7 +582,7 @@ void generateDedispersionOpenCLRunTimeConfigurations(const AstroData::Observatio
         }
         global[0] = isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD0(), kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0());
         global[1] = observation.getNrDMs() / kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrItemsD1();
-        global[2] = observation.getNrSynthesizedBeams() * observation.getNrDMs(true);
+        global[2] = options.nrSynthesizedBeamsPerChunk * observation.getNrDMs(true);
         kernelRunTimeConfigurations.dedispersionStepTwoGlobal = cl::NDRange(global[0], global[1], global[2]);
         local[0] = kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD0();
         local[1] = kernelConfigurations.dedispersionStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->getNrThreadsD1();
