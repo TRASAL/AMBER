@@ -69,6 +69,10 @@ struct Options
      ** @brief RFI mitigation options (RFIm).
      */
     RFImOptions rfimOptions{};
+    /**
+     ** @brief Number of synthesized beams in a chunk.
+     */
+    unsigned int nrSynthesizedBeamsPerChunk = 1;
     // Use subband dedispersion
     bool subbandDedispersion = false;
     // Avoid merging batches of dispersed data into contiguous memory
