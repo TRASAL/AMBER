@@ -195,6 +195,14 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             }
             observation.setNrBeams(argumentList.getSwitchArgument<unsigned int>("-beams"));
             observation.setNrSynthesizedBeams(argumentList.getSwitchArgument<unsigned int>("-synthesized_beams"));
+            try
+            {
+                options.nrSynthesizedBeamsPerChunk = argumentList.getSwitchArgument<unsigned int>("-synthesized_beams_chunk");
+            }
+            catch ( isa::utils::SwitchNotFound & err )
+            {
+                options.nrSynthesizedBeamsPerChunk = observation.getNrSynthesizedBeams();
+            }
             observation.setNrBatches(argumentList.getSwitchArgument<unsigned int>("-batches"));
 #endif // HAVE_PSRDADA
         }
@@ -202,6 +210,14 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         {
             observation.setNrBeams(argumentList.getSwitchArgument<unsigned int>("-beams"));
             observation.setNrSynthesizedBeams(argumentList.getSwitchArgument<unsigned int>("-synthesized_beams"));
+            try
+            {
+                options.nrSynthesizedBeamsPerChunk = argumentList.getSwitchArgument<unsigned int>("-synthesized_beams_chunk");
+            }
+            catch ( isa::utils::SwitchNotFound & err )
+            {
+                options.nrSynthesizedBeamsPerChunk = observation.getNrSynthesizedBeams();
+            }
             observation.setNrBatches(argumentList.getSwitchArgument<unsigned int>("-batches"));
             if (options.subbandDedispersion)
             {
@@ -285,8 +301,8 @@ void usage(const std::string &program)
     std::cerr << "\tSIGPROC: -sigproc [-stream] [-header <int>] -data <string> -batches <int> -channels <int> -min_freq <float>";
     std::cerr << "-channel_bandwidth <float> -samples <int> -sampling_time <float>" << std::endl;
 #ifdef HAVE_PSRDADA
-    std::cerr << "\tPSRDADA: -dada -dada_key <string> -beams <int> -synthesized_beams <int> -batches <int>" << std::endl;
+    std::cerr << "\tPSRDADA: -dada -dada_key <string> -beams <int> -synthesized_beams <int> [-synthesized_beams_chunk <int>] -batches <int>" << std::endl;
 #endif // HAVE_PSRDADA
-    std::cerr << "\tTest data: [-random] -width <int> -dm <float> -beams <int> -synthesized_beams <int> -batches <int> -channels <int>";
+    std::cerr << "\tTest data: [-random] -width <int> -dm <float> -beams <int> -synthesized_beams <int> [-synthesized_beams_chunk <int>] -batches <int> -channels <int>";
     std::cerr << "-min_freq <float> -channel_bandwidth <float> -samples <int> -sampling_time <float>" << std::endl;
 }
