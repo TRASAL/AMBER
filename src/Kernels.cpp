@@ -45,7 +45,7 @@ void generateFrequencyDomainSigmaCutOpenCLKernels(const isa::OpenCL::OpenCLRunTi
     {
         auto step = hostMemory.frequencyDomainSigmaCutSteps.begin();
         std::advance(step, stepID);
-        code = RFIm::getFrequencyDomainSigmaCutOpenCL<inputDataType>(*(kernelConfigurations.frequencyDomainSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(options.subbandDedispersion))->at(*step)), options.rfimOptions.dataOrdering, options.rfimOptions.replacementStrategy, inputDataName, observation, *step, deviceOptions.padding.at(deviceOptions.deviceName));
+        code = RFIm::getFrequencyDomainSigmaCutOpenCL<inputDataType>(*(kernelConfigurations.frequencyDomainSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrSamplesPerDispersedBatch(options.subbandDedispersion))->at(*step)), options.rfimOptions.dataOrdering, options.rfimOptions.replacementStrategy, inputDataName, observation, options.rfimOptions.nrBins, *step, deviceOptions.padding.at(deviceOptions.deviceName));
         kernels.frequencyDomainSigmaCut.push_back(isa::OpenCL::compile("frequencyDomainSigmaCut", *code, "-cl-mad-enable -Werror", *openCLRunTime.context, openCLRunTime.devices->at(deviceOptions.deviceID)));
         kernels.frequencyDomainSigmaCut.at(stepID)->setArg(0, deviceMemory.dispersedData);
         delete code;
