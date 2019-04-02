@@ -167,7 +167,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
  * @param compactedEvents
  * @param outputTrigger
  */
-int printResults(const unsigned int batch, const AstroData::Observation &observation, const Options &options, const DataOptions &dataOptions, Timers &timers, TriggeredEvents &triggeredEvents, CompactedEvents &compactedEvents, std::ofstream &outputTrigger);
+int printResults(const unsigned int batch, const unsigned int firstSynthesizedBeam, const AstroData::Observation &observation, const Options &options, const DataOptions &dataOptions, Timers &timers, TriggeredEvents &triggeredEvents, CompactedEvents &compactedEvents, std::ofstream &outputTrigger);
 
 /**
  * @brief Close output files and buffers.
