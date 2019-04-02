@@ -177,46 +177,50 @@ void pipeline(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::
                 break;
             }
         }
-        // Dedispersion step
-        status = dedispersion(batch, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles);
-        if (status != 0)
+        // Search all synthesized beams in chunks
+        for ( unsigned int firstSynthesizedBeam = 0; firstSynthesizedBeam < observation.getNrSynthesizedBeams(); firstSynthesizedBeam += options.nrSynthesizedBeamsPerChunk )
         {
-            clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
-            break;
-        }
-        // SNR of dedispersed data
-        status = dedispersionSNR(batch, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles, triggeredEvents);
-        if (status != 0)
-        {
-            clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
-            break;
-        }
-        // Search for pulses of different widths
-        for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
-        {
-            auto step = hostMemory.integrationSteps.begin();
-
-            std::advance(step, stepNumber);
-            status = pulseWidthSearch(batch, stepNumber, *step, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles, triggeredEvents);
+            // Dedispersion step
+            status = dedispersion(batch, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles);
             if (status != 0)
             {
                 clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
                 break;
             }
+            // SNR of dedispersed data
+            status = dedispersionSNR(batch, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles, triggeredEvents);
+            if (status != 0)
+            {
+                clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
+                break;
+            }
+            // Search for pulses of different widths
+            for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+            {
+                auto step = hostMemory.integrationSteps.begin();
+
+                std::advance(step, stepNumber);
+                status = pulseWidthSearch(batch, stepNumber, *step, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles, triggeredEvents);
+                if (status != 0)
+                {
+                    clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
+                    break;
+                }
+            }
+            // Cluster (optional) and print results
+            timers.trigger.start();
+            if (options.compactResults)
+            {
+                compact(observation, triggeredEvents, compactedEvents);
+            }
+            status = printResults(batch, firstSynthesizedBeam, observation, options, dataOptions, timers, triggeredEvents, compactedEvents, outputTrigger);
+            if (status != 0)
+            {
+                clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
+                break;
+            }
+            timers.trigger.stop();
         }
-        // Cluster (optional) and print results
-        timers.trigger.start();
-        if (options.compactResults)
-        {
-            compact(observation, triggeredEvents, compactedEvents);
-        }
-        status = printResults(batch, observation, options, dataOptions, timers, triggeredEvents, compactedEvents, outputTrigger);
-        if (status != 0)
-        {
-            clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
-            break;
-        }
-        timers.trigger.stop();
     }
     // Close all open files and buffers.
     clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
@@ -1578,7 +1582,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
     return 0;
 }
 
-int printResults(const unsigned int batch, const AstroData::Observation &observation, const Options &options, const DataOptions &dataOptions, Timers &timers, TriggeredEvents &triggeredEvents, CompactedEvents &compactedEvents, std::ofstream &outputTrigger)
+int printResults(const unsigned int batch, const unsigned int firstSynthesizedBeam, const AstroData::Observation &observation, const Options &options, const DataOptions &dataOptions, Timers &timers, TriggeredEvents &triggeredEvents, CompactedEvents &compactedEvents, std::ofstream &outputTrigger)
 {
     bool errorDetected = false;
     timers.trigger.start();
@@ -1618,7 +1622,7 @@ int printResults(const unsigned int batch, const AstroData::Observation &observa
                 }
                 if (dataOptions.dataPSRDADA || dataOptions.streamingMode)
                 {
-                    outputTrigger << event.beam << " " << (batch - delay) << " " << event.sample << " ";
+                    outputTrigger << firstSynthesizedBeam + event.beam << " " << (batch - delay) << " " << event.sample << " ";
                     outputTrigger << integration << " " << event.compactedIntegration << " ";
                     outputTrigger << (((batch - delay) * observation.getNrSamplesPerBatch()) + (event.sample * observation.getDownsampling() * integration)) * observation.getSamplingTime() << " ";
                     outputTrigger << event.DM << " " << firstDM + (event.DM * observation.getDMStep()) << " ";
@@ -1626,7 +1630,7 @@ int printResults(const unsigned int batch, const AstroData::Observation &observa
                 }
                 else
                 {
-                    outputTrigger << event.beam << " " << batch << " " << event.sample << " ";
+                    outputTrigger << firstSynthesizedBeam + event.beam << " " << batch << " " << event.sample << " ";
                     outputTrigger << integration << " " <<  event.compactedIntegration << " ";
                     outputTrigger << ((batch * observation.getNrSamplesPerBatch()) + (event.sample * observation.getDownsampling() * integration)) * observation.getSamplingTime() << " ";
                     outputTrigger << event.DM << " " << firstDM + (event.DM * observation.getDMStep()) << " " << event.compactedDMs << " ";
