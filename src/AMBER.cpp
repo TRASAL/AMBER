@@ -164,18 +164,25 @@ int main(int argc, char *argv[])
         std::cout << "Device: " << deviceOptions.deviceName << " (" + std::to_string(deviceOptions.platformID) + ", ";
         std::cout << std::to_string(deviceOptions.deviceID) + ")" << std::endl;
         std::cout << "Padding: " << deviceOptions.padding[deviceOptions.deviceName] << " bytes" << std::endl;
-        std::cout << std::endl;
+        std::cout << "Beams: " << observation.getNrBeams() << std::endl;
+        std::cout << "Synthesized Beams: " << observation.getNrSynthesizedBeams() << std::endl;
+        std::cout << "Batches: " << observation.getNrBatches() << std::endl;
         if ( options.rfimOptions.enable )
         {
             std::cout << "RFIm enabled" << std::endl;
+            if ( options.rfimOptions.timeDomainSigmaCut )
+            {
+                std::cout << "Time Domain Sigma Cut steps: " << hostMemory.timeDomainSigmaCutSteps.size() << std::endl;
+            }
+            if ( options.rfimOptions.frequencyDomainSigmaCut )
+            {
+                std::cout << "Frequency Domain Sigma Cut steps: " << hostMemory.frequencyDomainSigmaCutSteps.size() << std::endl;
+            }
         }
         else
         {
             std::cout << "RFIm disabled" << std::endl;
         }
-        std::cout << "Beams: " << observation.getNrBeams() << std::endl;
-        std::cout << "Synthesized Beams: " << observation.getNrSynthesizedBeams() << std::endl;
-        std::cout << "Batches: " << observation.getNrBatches() << std::endl;
         if ( options.subbandDedispersion )
         {
             std::cout << "Max Delay (in Batches): " << observation.getNrDelayBatches(true) << std::endl;
