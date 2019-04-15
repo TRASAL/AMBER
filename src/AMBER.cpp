@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     {
         processCommandLineOptions(args, options, deviceOptions, dataOptions, hostMemoryDumpFiles, kernelConfigurations, generatorOptions, observation);
     }
-    catch (std::exception &err)
+    catch (std::exception & err)
     {
         return 1;
     }
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
         {
             hostMemory.zappedChannels.resize(observation.getNrChannels(deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
         }
-        catch (std::out_of_range &err)
+        catch (std::out_of_range & err)
         {
             std::cerr << "No padding specified for " << deviceOptions.deviceName << "." << std::endl;
             return 1;
@@ -91,13 +91,13 @@ int main(int argc, char *argv[])
                 RFIm::readSigmaSteps(options.rfimOptions.frequencyDomainSigmaCutStepsFile, hostMemory.frequencyDomainSigmaCutSteps);
             }
         }
-        catch (AstroData::FileError &err)
+        catch (AstroData::FileError & err)
         {
             std::cerr << err.what() << std::endl;
             return 1;
         }
     }
-    catch (std::exception &err)
+    catch (std::exception & err)
     {
         std::cerr << err.what() << std::endl;
         return 1;
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
     {
         isa::OpenCL::initializeOpenCL(deviceOptions.platformID, 1, openclRunTime);
     }
-    catch (isa::OpenCL::OpenCLError &err)
+    catch (isa::OpenCL::OpenCLError & err)
     {
         std::cerr << err.what() << std::endl;
         return 1;
@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
     {
         allocateDeviceMemory(observation, openclRunTime, options, deviceOptions, hostMemory, deviceMemory);
     }
-    catch (cl::Error &err)
+    catch (cl::Error & err)
     {
         std::cerr << "Memory error: " << err.what() << " " << err.err() << std::endl;
         return 1;
@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
     {
         generateOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
     }
-    catch (std::exception &err)
+    catch (std::exception & err)
     {
         std::cerr << "OpenCL code generation error: " << err.what() << std::endl;
         return 1;
