@@ -17,6 +17,9 @@
 
 #pragma once
 
+/***
+ ** @ brief Algorithm to compute the Signal to Noise Ratio (SNR).
+ */
 typedef enum
 {
     Standard,
@@ -70,7 +73,7 @@ struct Options
      */
     RFImOptions rfimOptions{};
     /**
-     ** @brief Number of synthesized beams in a chunk.
+     ** @brief Number of synthesized beams processed per chunk.
      */
     unsigned int nrSynthesizedBeamsPerChunk = 1;
     // Use subband dedispersion
