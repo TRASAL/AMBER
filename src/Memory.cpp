@@ -184,56 +184,56 @@ void allocateDeviceMemory(const AstroData::Observation &observation, const isa::
 {
     if (!options.subbandDedispersion)
     {
-        deviceMemory.shiftsSingleStep = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.shiftsSingleStep->size() * sizeof(float), 0, 0);
+        deviceMemory.shiftsSingleStep = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.shiftsSingleStep->size() * sizeof(float));
         openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.shiftsSingleStep, CL_FALSE, 0, hostMemory.shiftsSingleStep->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsSingleStep->data()));
     }
     else
     {
-        deviceMemory.shiftsStepOne = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.shiftsStepOne->size() * sizeof(float), 0, 0);
+        deviceMemory.shiftsStepOne = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.shiftsStepOne->size() * sizeof(float));
         openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.shiftsStepOne, CL_FALSE, 0, hostMemory.shiftsStepOne->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsStepOne->data()));
-        deviceMemory.shiftsStepTwo = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.shiftsStepTwo->size() * sizeof(float), 0, 0);
+        deviceMemory.shiftsStepTwo = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.shiftsStepTwo->size() * sizeof(float));
         openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.shiftsStepTwo, CL_FALSE, 0, hostMemory.shiftsStepTwo->size() * sizeof(float), reinterpret_cast<void *>(hostMemory.shiftsStepTwo->data()));
-        deviceMemory.subbandedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.subbandedData.size() * sizeof(outputDataType), 0, 0);
+        deviceMemory.subbandedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.subbandedData.size() * sizeof(outputDataType));
     }
-    deviceMemory.zappedChannels = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.zappedChannels.size() * sizeof(unsigned int), 0, 0);
+    deviceMemory.zappedChannels = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.zappedChannels.size() * sizeof(unsigned int));
     openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.zappedChannels, CL_FALSE, 0, hostMemory.zappedChannels.size() * sizeof(unsigned int), reinterpret_cast<const void *>(hostMemory.zappedChannels.data()));
-    deviceMemory.beamMapping = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.beamMapping.size() * sizeof(unsigned int), 0, 0);
+    deviceMemory.beamMapping = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.beamMapping.size() * sizeof(unsigned int));
     openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueWriteBuffer(deviceMemory.beamMapping, CL_FALSE, 0, hostMemory.beamMapping.size() * sizeof(unsigned int), reinterpret_cast<const void *>(hostMemory.beamMapping.data()));
     if ( options.downsampling )
     {
-        deviceMemory.dispersedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.dispersedData.size() * sizeof(inputDataType), 0, 0);
+        deviceMemory.dispersedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.dispersedData.size() * sizeof(inputDataType));
     }
     else
     {
-        deviceMemory.dispersedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.dispersedData.size() * sizeof(inputDataType), 0, 0);
+        deviceMemory.dispersedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_ONLY, hostMemory.dispersedData.size() * sizeof(inputDataType));
     }
-    deviceMemory.dedispersedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.dedispersedData.size() * sizeof(outputDataType), 0, 0);
+    deviceMemory.dedispersedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.dedispersedData.size() * sizeof(outputDataType));
     if (hostMemory.integrationSteps.size() > 0)
     {
-        deviceMemory.integratedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.integratedData.size() * sizeof(outputDataType), 0, 0);
+        deviceMemory.integratedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.integratedData.size() * sizeof(outputDataType));
     }
     if (options.snrMode == SNRMode::Standard)
     {
-        deviceMemory.snrData = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.snrData.size() * sizeof(float), 0, 0);
-        deviceMemory.snrSamples = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.snrSamples.size() * sizeof(unsigned int), 0, 0);
+        deviceMemory.snrData = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.snrData.size() * sizeof(float));
+        deviceMemory.snrSamples = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.snrSamples.size() * sizeof(unsigned int));
     }
     else if (options.snrMode == SNRMode::Momad || options.snrMode == SNRMode::MomSigmaCut)
     {
-        deviceMemory.maxValues = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.maxValues.size() * sizeof(outputDataType), 0, 0);
-        deviceMemory.maxIndices = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.maxIndices.size() * sizeof(unsigned int), 0, 0);
+        deviceMemory.maxValues = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.maxValues.size() * sizeof(outputDataType));
+        deviceMemory.maxIndices = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.maxIndices.size() * sizeof(unsigned int));
         if (options.snrMode == SNRMode::MomSigmaCut)
         {
-          deviceMemory.stdevs = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.stdevs.size() * sizeof(outputDataType), 0, 0);
+          deviceMemory.stdevs = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.stdevs.size() * sizeof(outputDataType));
         }
         if (!options.subbandDedispersion)
         {
-            deviceMemory.medianOfMediansStepOne = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, options.nrSynthesizedBeamsPerChunk * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType), 0, 0);
-            deviceMemory.medianOfMediansStepTwo = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, options.nrSynthesizedBeamsPerChunk * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType), 0, 0);
+            deviceMemory.medianOfMediansStepOne = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, options.nrSynthesizedBeamsPerChunk * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType));
+            deviceMemory.medianOfMediansStepTwo = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, options.nrSynthesizedBeamsPerChunk * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType));
         }
         else
         {
-            deviceMemory.medianOfMediansStepOne = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, options.nrSynthesizedBeamsPerChunk * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType), 0, 0);
-            deviceMemory.medianOfMediansStepTwo = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, options.nrSynthesizedBeamsPerChunk * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType), 0, 0);
+            deviceMemory.medianOfMediansStepOne = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, options.nrSynthesizedBeamsPerChunk * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType));
+            deviceMemory.medianOfMediansStepTwo = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, options.nrSynthesizedBeamsPerChunk * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)) * sizeof(outputDataType));
         }
     }
     openclRunTime.queues->at(deviceOptions.deviceID).at(0).finish();
