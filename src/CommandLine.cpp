@@ -47,6 +47,7 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             options.rfimOptions.frequencyDomainSigmaCut = argumentList.getSwitch("-frequency_domain_sigma_cut");
             if ( options.rfimOptions.frequencyDomainSigmaCut )
             {
+                options.rfimOptions.nrBins = argumentList.getSwitchArgument<unsigned int>("-nr_bins");
                 options.rfimOptions.frequencyDomainSigmaCutStepsFile = argumentList.getSwitchArgument<std::string>("-frequency_domain_sigma_cut_steps");
                 RFIm::readRFImConfig(kernelConfigurations.frequencyDomainSigmaCutParameters, argumentList.getSwitchArgument<std::string>("-frequency_domain_sigma_cut_configuration"));
             }
@@ -284,7 +285,7 @@ void usage(const std::string &program)
     std::cerr << "\tData dump: -dump_prefix <string>" << std::endl;
     std::cerr << "\tRFIm: [-time_domain_sigma_cut] [-frequency_domain_sigma_cut]" << std::endl;
     std::cerr << "\t\tTime domain sigma cut: -time_domain_sigma_cut_steps <string> -time_domain_sigma_cut_configuration <string>" << std::endl;
-    std::cerr << "\t\tFrequency domain sigma cut: -frequency_domain_sigma_cut_steps <string> -frequency_domain_sigma_cut_configuration <string>" << std::endl;
+    std::cerr << "\t\tFrequency domain sigma cut: -nr_bins <int> -frequency_domain_sigma_cut_steps <string> -frequency_domain_sigma_cut_configuration <string>" << std::endl;
     std::cerr << "\tDownsampling: -downsampling_factor <int> -downsampling_configuration <string>" << std::endl;
     std::cerr << "\tDedispersion: -dedispersion_file <string>" << std::endl;
     std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_stepone_file <string>";

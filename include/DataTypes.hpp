@@ -57,6 +57,10 @@ struct RFImOptions
      */
     bool frequencyDomainSigmaCut = false;
     /**
+     ** @brief Number of bins for the bandpass.
+     */
+    unsigned int nrBins = 0;
+    /**
      ** @brief Name of the file containing the frequency domain sigma cut steps.
      */
     std::string frequencyDomainSigmaCutStepsFile{};
