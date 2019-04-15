@@ -100,7 +100,7 @@ void pipeline(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::
 
         if ( options.debug )
         {
-            std::cout << "\rProcessing batch " << batch << std::flush;
+            std::cout << "\rProcessing batch " << batch << " " << std::flush;
         }
         status = inputHandling(batch, observation, options, deviceOptions, dataOptions, timers, hostMemory, deviceMemory);
         if (status == 1)
