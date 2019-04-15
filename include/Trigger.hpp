@@ -18,5 +18,5 @@
 
 #pragma once
 
-void trigger(const Options &options, const unsigned int padding, const unsigned int integration, const AstroData::Observation &observation, const HostMemory &hostMemory, TriggeredEvents &triggeredEvents);
+void trigger(const unsigned int firstSynthesizedBeam, const Options &options, const unsigned int padding, const unsigned int integration, const AstroData::Observation &observation, const HostMemory &hostMemory, TriggeredEvents &triggeredEvents);
 void compact(const AstroData::Observation &observation, const TriggeredEvents &triggeredEvents, CompactedEvents &compactedEvents);

@@ -15,7 +15,7 @@
 
 #include <Trigger.hpp>
 
-void trigger(const Options &options, const unsigned int padding, const unsigned int integration, const AstroData::Observation &observation, const HostMemory &hostMemory, TriggeredEvents &triggeredEvents)
+void trigger(const unsigned int firstSynthesizedBeam, const Options &options, const unsigned int padding, const unsigned int integration, const AstroData::Observation &observation, const HostMemory &hostMemory, TriggeredEvents &triggeredEvents)
 {
     unsigned int nrDMs = 0;
 
@@ -27,7 +27,7 @@ void trigger(const Options &options, const unsigned int padding, const unsigned 
     {
         nrDMs = observation.getNrDMs();
     }
-    for (unsigned int beam = 0; beam < observation.getNrSynthesizedBeams(); beam++)
+    for (unsigned int beam = 0; beam < options.nrSynthesizedBeamsPerChunk; beam++)
     {
         for (unsigned int dm = 0; dm < nrDMs; dm++)
         {
@@ -54,7 +54,7 @@ void trigger(const Options &options, const unsigned int padding, const unsigned 
             if ( (std::isnormal(maxSNR)) && (maxSNR >= options.threshold) )
             {
                 TriggeredEvent event;
-                event.beam = beam;
+                event.beam = firstSynthesizedBeam + beam;
                 event.sample = maxIndex;
                 event.integration = integration;
                 event.DM = dm;
