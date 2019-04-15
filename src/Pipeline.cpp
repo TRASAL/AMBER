@@ -98,10 +98,6 @@ void pipeline(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::
         TriggeredEvents triggeredEvents(observation.getNrSynthesizedBeams());
         CompactedEvents compactedEvents(observation.getNrSynthesizedBeams());
 
-        if ( options.debug )
-        {
-            std::cout << "\rProcessing batch " << batch << " " << std::flush;
-        }
         status = inputHandling(batch, observation, options, deviceOptions, dataOptions, timers, hostMemory, deviceMemory);
         if (status == 1)
         {
@@ -184,6 +180,10 @@ void pipeline(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::
         // Search all synthesized beams in chunks
         for ( unsigned int firstSynthesizedBeam = 0; firstSynthesizedBeam < observation.getNrSynthesizedBeams(); firstSynthesizedBeam += options.nrSynthesizedBeamsPerChunk )
         {
+            if ( options.debug )
+            {
+                std::cout << "\rSearching: batch " << batch << " / chunk " << firstSynthesizedBeam / options.nrSynthesizedBeamsPerChunk << " " << std::flush;
+            }
             // Dedispersion step
             status = dedispersion(batch, firstSynthesizedBeam, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles);
             if (status != 0)
