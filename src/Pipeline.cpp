@@ -98,6 +98,11 @@ void pipeline(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::
         TriggeredEvents triggeredEvents(observation.getNrSynthesizedBeams());
         CompactedEvents compactedEvents(observation.getNrSynthesizedBeams());
 
+        if ( options.debug )
+        {
+            std::cout << "Processing batch " << batch;
+            std::cout.flush();
+        }
         status = inputHandling(batch, observation, options, deviceOptions, dataOptions, timers, hostMemory, deviceMemory);
         if (status == 1)
         {
