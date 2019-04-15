@@ -101,6 +101,7 @@ int downsampling(const unsigned int batch, cl::Event &syncPoint, const isa::Open
  * @brief Dedispersion step.
  * 
  * @param batch
+ * @param firstSynthesizedBeam
  * @param syncPoint
  * @param openclRunTime
  * @param observation
@@ -113,12 +114,13 @@ int downsampling(const unsigned int batch, cl::Event &syncPoint, const isa::Open
  * @param deviceMemory
  * @param hostMemoryDumpFiles
  */
-int dedispersion(const unsigned int batch, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles);
+int dedispersion(const unsigned int batch, const unsigned int firstSynthesizedBeam, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles);
 
 /**
  * @brief Compute the SNR of dedispersed time series.
  * 
  * @param batch
+ * @param firstSynthesizedBeam
  * @param syncPoint
  * @param openclRunTime
  * @param observation
@@ -132,12 +134,13 @@ int dedispersion(const unsigned int batch, cl::Event &syncPoint, const isa::Open
  * @param hostMemoryDumpFiles
  * @param triggeredEvents
  */
-int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, TriggeredEvents &triggeredEvents);
+int dedispersionSNR(const unsigned int batch, const unsigned int firstSynthesizedBeam, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, TriggeredEvents &triggeredEvents);
 
 /**
  * @brief Search dedispersed time series for pulses of different widths.
  * 
  * @param batch
+ * @param firstSynthesizedBeam
  * @param stepNumber
  * @param step
  * @param syncPoint
@@ -153,12 +156,13 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const isa::O
  * @param hostMemoryDumpFiles
  * @param triggeredEvents
  */
-int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, const unsigned int step, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, TriggeredEvents &triggeredEvents);
+int pulseWidthSearch(const unsigned int batch, const unsigned int firstSynthesizedBeam, const unsigned int stepNumber, const unsigned int step, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, TriggeredEvents &triggeredEvents);
 
 /**
  * @brief Write the results to a trigger file.
  * 
  * @param batch
+ * @param firstSynthesizedBeam
  * @param observation
  * @param options
  * @param dataOptions

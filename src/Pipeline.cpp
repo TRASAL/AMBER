@@ -181,14 +181,14 @@ void pipeline(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::
         for ( unsigned int firstSynthesizedBeam = 0; firstSynthesizedBeam < observation.getNrSynthesizedBeams(); firstSynthesizedBeam += options.nrSynthesizedBeamsPerChunk )
         {
             // Dedispersion step
-            status = dedispersion(batch, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles);
+            status = dedispersion(batch, firstSynthesizedBeam, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles);
             if (status != 0)
             {
                 clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
                 break;
             }
             // SNR of dedispersed data
-            status = dedispersionSNR(batch, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles, triggeredEvents);
+            status = dedispersionSNR(batch, firstSynthesizedBeam, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles, triggeredEvents);
             if (status != 0)
             {
                 clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
@@ -200,7 +200,7 @@ void pipeline(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::
                 auto step = hostMemory.integrationSteps.begin();
 
                 std::advance(step, stepNumber);
-                status = pulseWidthSearch(batch, stepNumber, *step, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles, triggeredEvents);
+                status = pulseWidthSearch(batch, firstSynthesizedBeam, stepNumber, *step, syncPoint, openclRunTime, observation, options, deviceOptions, timers, kernels, kernelRunTimeConfigurations, hostMemory, deviceMemory, hostMemoryDumpFiles, triggeredEvents);
                 if (status != 0)
                 {
                     clean(options, dataOptions, hostMemory, hostMemoryDumpFiles, outputTrigger);
@@ -673,32 +673,37 @@ int downsampling(const unsigned int batch, cl::Event &syncPoint, const isa::Open
     return 0;
 }
 
-int dedispersion(const unsigned int batch, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles)
+int dedispersion(const unsigned int batch, const unsigned int firstSynthesizedBeam, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles)
 {
     bool errorDetected = false;
     if (options.subbandDedispersion)
     {
+        kernels.dedispersionStepTwo->setArg(4, firstSynthesizedBeam);
         if (options.splitBatchesDedispersion)
         {
             // TODO: implement or remove splitBatches mode
         }
         if (deviceOptions.synchronized)
         {
+            if ( firstSynthesizedBeam == 0 )
+            {
+                try
+                {
+                    timers.dedispersionStepOne.start();
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, nullptr, &syncPoint);
+                    syncPoint.wait();
+                    timers.dedispersionStepOne.stop();
+                }
+                catch (cl::Error &err)
+                {
+                    std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
+                    std::cerr << err.err() << std::endl;
+                    errorDetected = true;
+                }
+            }
             try
             {
-                timers.dedispersionStepOne.start();
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, nullptr, &syncPoint);
-                syncPoint.wait();
-                timers.dedispersionStepOne.stop();
-            }
-            catch (cl::Error &err)
-            {
-                std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
-                std::cerr << err.err() << std::endl;
-                errorDetected = true;
-            }
-            try
-            {
+                
                 timers.dedispersionStepTwo.start();
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, nullptr, &syncPoint);
                 syncPoint.wait();
@@ -713,15 +718,18 @@ int dedispersion(const unsigned int batch, cl::Event &syncPoint, const isa::Open
         }
         else
         {
-            try
+            if ( firstSynthesizedBeam == 0 )
             {
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, nullptr, nullptr);
-            }
-            catch (cl::Error &err)
-            {
-                std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
-                std::cerr << err.err() << std::endl;
-                errorDetected = true;
+                try
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, nullptr, nullptr);
+                }
+                catch (cl::Error &err)
+                {
+                    std::cerr << "Dedispersion Step One error -- Batch: " << std::to_string(batch) << ", " << err.what() << " ";
+                    std::cerr << err.err() << std::endl;
+                    errorDetected = true;
+                }
             }
             try
             {
@@ -739,6 +747,7 @@ int dedispersion(const unsigned int batch, cl::Event &syncPoint, const isa::Open
     {
         try
         {
+            kernels.dedispersionSingleStep->setArg(5, firstSynthesizedBeam);
             if (options.splitBatchesDedispersion)
             {
                 // TODO: implement or remove splitBatches mode
@@ -790,9 +799,9 @@ int dedispersion(const unsigned int batch, cl::Event &syncPoint, const isa::Open
                         }
                     }
                 }
-                for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
+                for (unsigned int sBeam = 0; sBeam < options.nrSynthesizedBeamsPerChunk; sBeam++)
                 {
-                    hostMemoryDumpFiles.dedispersedData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.dedispersedData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     for (unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++)
                     {
                         for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
@@ -821,9 +830,9 @@ int dedispersion(const unsigned int batch, cl::Event &syncPoint, const isa::Open
             {
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.dedispersedData, CL_TRUE, 0, hostMemory.dedispersedData.size() * sizeof(outputDataType), reinterpret_cast<void *>(hostMemory.dedispersedData.data()), nullptr, &syncPoint);
                 syncPoint.wait();
-                for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
+                for (unsigned int sBeam = 0; sBeam < options.nrSynthesizedBeamsPerChunk; sBeam++)
                 {
-                    hostMemoryDumpFiles.dedispersedData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.dedispersedData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
                     {
                         hostMemoryDumpFiles.dedispersedData << "# DM: " << dm << std::endl;
@@ -851,7 +860,7 @@ int dedispersion(const unsigned int batch, cl::Event &syncPoint, const isa::Open
     return 0;
 }
 
-int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, TriggeredEvents &triggeredEvents)
+int dedispersionSNR(const unsigned int batch, const unsigned int firstSynthesizedBeam, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, TriggeredEvents &triggeredEvents)
 {
     bool errorDetected = false;
     if (options.snrMode == SNRMode::Standard)
@@ -892,9 +901,9 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const isa::O
         {
             if (options.subbandDedispersion)
             {
-                for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
+                for (unsigned int sBeam = 0; sBeam < options.nrSynthesizedBeamsPerChunk; sBeam++)
                 {
-                    hostMemoryDumpFiles.snrData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.snrData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     hostMemoryDumpFiles.snrSamplesData << "# Synthesized Beam: " << sBeam << std::endl;
                     for (unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++)
                     {
@@ -912,9 +921,9 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const isa::O
             }
             else
             {
-                for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
+                for (unsigned int sBeam = 0; sBeam < options.nrSynthesizedBeamsPerChunk; sBeam++)
                 {
-                    hostMemoryDumpFiles.snrData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.snrData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     hostMemoryDumpFiles.snrSamplesData << "# Synthesized Beam: " << sBeam << std::endl;
                     for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
                     {
@@ -1075,19 +1084,19 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const isa::O
         {
             if (options.subbandDedispersion)
             {
-                for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
+                for (unsigned int sBeam = 0; sBeam < options.nrSynthesizedBeamsPerChunk; sBeam++)
                 {
-                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     if ( options.snrMode == SNRMode::MomSigmaCut )
                     {
-                        hostMemoryDumpFiles.stdevsData << "# Synthesized Beam: " << sBeam << std::endl;
+                        hostMemoryDumpFiles.stdevsData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     }
                     hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     if ( options.snrMode == SNRMode::Momad )
                     {
-                        hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Synthesized Beam: " << sBeam << std::endl;
+                        hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     }
                     for (unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++)
                     {
@@ -1133,19 +1142,19 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const isa::O
             }
             else
             {
-                for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
+                for (unsigned int sBeam = 0; sBeam < options.nrSynthesizedBeamsPerChunk; sBeam++)
                 {
-                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     if ( options.snrMode == SNRMode::MomSigmaCut )
                     {
-                        hostMemoryDumpFiles.stdevsData << "# Synthesized Beam: " << sBeam << std::endl;
+                        hostMemoryDumpFiles.stdevsData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     }
-                    hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     if ( options.snrMode == SNRMode::Momad )
                     {
-                        hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Synthesized Beam: " << sBeam << std::endl;
+                        hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     }
                     for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
                     {
@@ -1194,7 +1203,7 @@ int dedispersionSNR(const unsigned int batch, cl::Event &syncPoint, const isa::O
     return 0;
 }
 
-int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, const unsigned int step, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, TriggeredEvents &triggeredEvents)
+int pulseWidthSearch(const unsigned int batch, const unsigned int firstSynthesizedBeam, const unsigned int stepNumber, const unsigned int step, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, TriggeredEvents &triggeredEvents)
 {
     bool errorDetected = false;
     try
@@ -1397,29 +1406,29 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
         }
         if (options.subbandDedispersion)
         {
-            for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
+            for (unsigned int sBeam = 0; sBeam < options.nrSynthesizedBeamsPerChunk; sBeam++)
             {
-                hostMemoryDumpFiles.integratedData << "# Synthesized Beam: " << sBeam << std::endl;
+                hostMemoryDumpFiles.integratedData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                 if (options.snrMode == SNRMode::Standard)
                 {
-                    hostMemoryDumpFiles.snrData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.snrSamplesData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.snrData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.snrSamplesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                 }
                 else if (options.snrMode == SNRMode::Momad)
                 {
-                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                 }
                 else if (options.snrMode == SNRMode::MomSigmaCut)
                 {
-                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.stdevsData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.stdevsData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                 }
                 for (unsigned int subbandingDM = 0; subbandingDM < observation.getNrDMs(true); subbandingDM++)
                 {
@@ -1488,29 +1497,29 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int stepNumber, co
         }
         else
         {
-            for (unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++)
+            for (unsigned int sBeam = 0; sBeam < options.nrSynthesizedBeamsPerChunk; sBeam++)
             {
-                hostMemoryDumpFiles.integratedData << "# Synthesized Beam: " << sBeam << std::endl;
+                hostMemoryDumpFiles.integratedData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                 if (options.snrMode == SNRMode::Standard)
                 {
-                    hostMemoryDumpFiles.snrData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.snrSamplesData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.snrData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.snrSamplesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                 }
                 else if (options.snrMode == SNRMode::Momad)
                 {
-                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansAbsoluteDeviationData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                 }
                 else if (options.snrMode == SNRMode::MomSigmaCut)
                 {
-                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.stdevsData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << sBeam << std::endl;
-                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << sBeam << std::endl;
+                    hostMemoryDumpFiles.maxValuesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.maxIndicesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.stdevsData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansStepOneData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
+                    hostMemoryDumpFiles.medianOfMediansData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                 }
                 for (unsigned int dm = 0; dm < observation.getNrDMs(); dm++)
                 {
