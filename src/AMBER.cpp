@@ -224,7 +224,6 @@ int main(int argc, char *argv[])
     }
 
     // Initialize OpenCL
-    isa::OpenCL::OpenCLRunTime openCLRunTime;
     try
     {
         isa::OpenCL::initializeOpenCL(deviceOptions.platformID, 1, openclRunTime);
