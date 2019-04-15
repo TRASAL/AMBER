@@ -62,7 +62,7 @@ void trigger(const unsigned int firstSynthesizedBeam, const Options &options, co
                 try
                 {
                     // Add event to its existing list
-                    triggeredEvents.at(beam).at(dm).push_back(event);
+                    triggeredEvents.at(firstSynthesizedBeam + beam).at(dm).push_back(event);
                 }
                 catch (std::out_of_range &err)
                 {
@@ -70,7 +70,7 @@ void trigger(const unsigned int firstSynthesizedBeam, const Options &options, co
                     std::vector<TriggeredEvent> events;
 
                     events.push_back(event);
-                    triggeredEvents.at(beam).insert(std::pair<unsigned int, std::vector<TriggeredEvent>>(dm, events));
+                    triggeredEvents.at(firstSynthesizedBeam + beam).insert(std::pair<unsigned int, std::vector<TriggeredEvent>>(dm, events));
                 }
             }
         }
