@@ -618,7 +618,7 @@ void generateIntegrationOpenCLRunTimeConfigurations(const AstroData::Observation
         {
             global[0] = kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(*step)->getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step) / kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(*step)->getNrItemsD0());
             global[1] = observation.getNrDMs();
-            global[2] = observation.getNrSynthesizedBeams();
+            global[2] = options.nrSynthesizedBeamsPerChunk;
             kernelRunTimeConfigurations.integrationGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
             local[0] = kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(*step)->getNrThreadsD0();
             local[1] = 1;
@@ -637,7 +637,7 @@ void generateIntegrationOpenCLRunTimeConfigurations(const AstroData::Observation
         {
             global[0] = kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrThreadsD0() * ((observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step) / kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrItemsD0());
             global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-            global[2] = observation.getNrSynthesizedBeams();
+            global[2] = options.nrSynthesizedBeamsPerChunk;
             kernelRunTimeConfigurations.integrationGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
             local[0] = kernelConfigurations.integrationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(*step)->getNrThreadsD0();
             local[1] = 1;
@@ -671,7 +671,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
         {
             global[0] = kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
             global[1] = observation.getNrDMs();
-            global[2] = observation.getNrSynthesizedBeams();
+            global[2] = options.nrSynthesizedBeamsPerChunk;
             kernelRunTimeConfigurations.snrGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
             local[0] = kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch())->getNrThreadsD0();
             local[1] = 1;
@@ -690,7 +690,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
         {
             global[0] = kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
             global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-            global[2] = observation.getNrSynthesizedBeams();
+            global[2] = options.nrSynthesizedBeamsPerChunk;
             kernelRunTimeConfigurations.snrGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
             local[0] = kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
             local[1] = 1;
@@ -714,7 +714,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             {
                 global[0] = kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                 global[1] = observation.getNrDMs();
-                global[2] = observation.getNrSynthesizedBeams();
+                global[2] = options.nrSynthesizedBeamsPerChunk;
                 kernelRunTimeConfigurations.snrGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
                 local[0] = kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                 local[1] = 1;
@@ -733,7 +733,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             {
                 global[0] = kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                 global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-                global[2] = observation.getNrSynthesizedBeams();
+                global[2] = options.nrSynthesizedBeamsPerChunk;
                 kernelRunTimeConfigurations.snrGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
                 local[0] = kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                 local[1] = 1;
@@ -761,7 +761,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
           {
               global[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
               global[1] = observation.getNrDMs();
-              global[2] = observation.getNrSynthesizedBeams();
+              global[2] = options.nrSynthesizedBeamsPerChunk;
               kernelRunTimeConfigurations.maxGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
               local[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
               local[1] = 1;
@@ -780,7 +780,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
           {
               global[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
               global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-              global[2] = observation.getNrSynthesizedBeams();
+              global[2] = options.nrSynthesizedBeamsPerChunk;
               kernelRunTimeConfigurations.maxGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
               local[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
               local[1] = 1;
@@ -804,7 +804,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
               {
                   global[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                   global[1] = observation.getNrDMs();
-                  global[2] = observation.getNrSynthesizedBeams();
+                  global[2] = options.nrSynthesizedBeamsPerChunk;
                   kernelRunTimeConfigurations.maxGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
                   local[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                   local[1] = 1;
@@ -823,7 +823,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
               {
                   global[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                   global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-                  global[2] = observation.getNrSynthesizedBeams();
+                  global[2] = options.nrSynthesizedBeamsPerChunk;
                   kernelRunTimeConfigurations.maxGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
                   local[0] = kernelConfigurations.maxParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                   local[1] = 1;
@@ -849,7 +849,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
           {
               global[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
               global[1] = observation.getNrDMs();
-              global[2] = observation.getNrSynthesizedBeams();
+              global[2] = options.nrSynthesizedBeamsPerChunk;
               kernelRunTimeConfigurations.maxStdSigmaCutGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
               local[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
               local[1] = 1;
@@ -868,7 +868,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
           {
               global[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
               global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-              global[2] = observation.getNrSynthesizedBeams();
+              global[2] = options.nrSynthesizedBeamsPerChunk;
               kernelRunTimeConfigurations.maxStdSigmaCutGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
               local[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
               local[1] = 1;
@@ -892,7 +892,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
               {
                   global[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                   global[1] = observation.getNrDMs();
-                  global[2] = observation.getNrSynthesizedBeams();
+                  global[2] = options.nrSynthesizedBeamsPerChunk;
                   kernelRunTimeConfigurations.maxStdSigmaCutGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
                   local[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                   local[1] = 1;
@@ -911,7 +911,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
               {
                   global[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                   global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-                  global[2] = observation.getNrSynthesizedBeams();
+                  global[2] = options.nrSynthesizedBeamsPerChunk;
                   kernelRunTimeConfigurations.maxStdSigmaCutGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
                   local[0] = kernelConfigurations.maxStdSigmaCutParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                   local[1] = 1;
@@ -935,7 +935,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
         {
             global[0] = kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize);
             global[1] = observation.getNrDMs();
-            global[2] = observation.getNrSynthesizedBeams();
+            global[2] = options.nrSynthesizedBeamsPerChunk;
             kernelRunTimeConfigurations.medianOfMediansStepOneGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
             local[0] = kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
             local[1] = 1;
@@ -954,7 +954,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
         {
             global[0] = kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize);
             global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-            global[2] = observation.getNrSynthesizedBeams();
+            global[2] = options.nrSynthesizedBeamsPerChunk;
             kernelRunTimeConfigurations.medianOfMediansStepOneGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
             local[0] = kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
             local[1] = 1;
@@ -978,7 +978,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             {
                 global[0] = kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step / options.medianStepSize);
                 global[1] = observation.getNrDMs();
-                global[2] = observation.getNrSynthesizedBeams();
+                global[2] = options.nrSynthesizedBeamsPerChunk;
                 kernelRunTimeConfigurations.medianOfMediansStepOneGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
                 local[0] = kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                 local[1] = 1;
@@ -997,7 +997,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             {
                 global[0] = kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step / options.medianStepSize);
                 global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-                global[2] = observation.getNrSynthesizedBeams();
+                global[2] = options.nrSynthesizedBeamsPerChunk;
                 kernelRunTimeConfigurations.medianOfMediansStepOneGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
                 local[0] = kernelConfigurations.medianOfMediansStepOneParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                 local[1] = 1;
@@ -1020,7 +1020,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
         {
             global[0] = kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize)->getNrThreadsD0();
             global[1] = observation.getNrDMs();
-            global[2] = observation.getNrSynthesizedBeams();
+            global[2] = options.nrSynthesizedBeamsPerChunk;
             kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
             local[0] = kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize)->getNrThreadsD0();
             local[1] = 1;
@@ -1039,7 +1039,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
         {
             global[0] = kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize)->getNrThreadsD0();
             global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-            global[2] = observation.getNrSynthesizedBeams();
+            global[2] = options.nrSynthesizedBeamsPerChunk;
             kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
             local[0] = kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize)->getNrThreadsD0();
             local[1] = 1;
@@ -1063,7 +1063,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             {
                 global[0] = kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step / options.medianStepSize)->getNrThreadsD0();
                 global[1] = observation.getNrDMs();
-                global[2] = observation.getNrSynthesizedBeams();
+                global[2] = options.nrSynthesizedBeamsPerChunk;
                 kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
                 local[0] = kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step / options.medianStepSize)->getNrThreadsD0();
                 local[1] = 1;
@@ -1082,7 +1082,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
             {
                 global[0] = kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step / options.medianStepSize)->getNrThreadsD0();
                 global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-                global[2] = observation.getNrSynthesizedBeams();
+                global[2] = options.nrSynthesizedBeamsPerChunk;
                 kernelRunTimeConfigurations.medianOfMediansStepTwoGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
                 local[0] = kernelConfigurations.medianOfMediansStepTwoParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step / options.medianStepSize)->getNrThreadsD0();
                 local[1] = 1;
@@ -1107,7 +1107,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
           {
               global[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize);
               global[1] = observation.getNrDMs();
-              global[2] = observation.getNrSynthesizedBeams();
+              global[2] = options.nrSynthesizedBeamsPerChunk;
               kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
               local[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
               local[1] = 1;
@@ -1126,7 +1126,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
           {
               global[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / options.medianStepSize);
               global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-              global[2] = observation.getNrSynthesizedBeams();
+              global[2] = options.nrSynthesizedBeamsPerChunk;
               kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(hostMemory.integrationSteps.size()) = cl::NDRange(global[0], global[1], global[2]);
               local[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())->getNrThreadsD0();
               local[1] = 1;
@@ -1150,7 +1150,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
               {
                   global[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step / options.medianStepSize);
                   global[1] = observation.getNrDMs();
-                  global[2] = observation.getNrSynthesizedBeams();
+                  global[2] = options.nrSynthesizedBeamsPerChunk;
                   kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
                   local[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                   local[1] = 1;
@@ -1169,7 +1169,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
               {
                   global[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0() * (observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step / options.medianStepSize);
                   global[1] = observation.getNrDMs(true) * observation.getNrDMs();
-                  global[2] = observation.getNrSynthesizedBeams();
+                  global[2] = options.nrSynthesizedBeamsPerChunk;
                   kernelRunTimeConfigurations.medianOfMediansAbsoluteDeviationGlobal.at(stepNumber) = cl::NDRange(global[0], global[1], global[2]);
                   local[0] = kernelConfigurations.medianOfMediansAbsoluteDeviationParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)->getNrThreadsD0();
                   local[1] = 1;
