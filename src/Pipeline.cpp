@@ -708,7 +708,14 @@ int dedispersion(const unsigned int batch, const unsigned int firstSynthesizedBe
             try
             {
                 timers.dedispersionStepTwo.start();
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, nullptr, &syncPoint);
+                if ( (observation.getNrSynthesizedBeams() - firstSynthesizedBeam) >= options.nrSynthesizedBeamsPerChunk )
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal.at(0), kernelRunTimeConfigurations.dedispersionStepTwoLocal, nullptr, &syncPoint);
+                }
+                else
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal.at(1), kernelRunTimeConfigurations.dedispersionStepTwoLocal, nullptr, &syncPoint);
+                }
                 syncPoint.wait();
                 timers.dedispersionStepTwo.stop();
             }
@@ -725,7 +732,7 @@ int dedispersion(const unsigned int batch, const unsigned int firstSynthesizedBe
             {
                 try
                 {
-                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal, nullptr, nullptr);
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepOne), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepOneGlobal, kernelRunTimeConfigurations.dedispersionStepOneLocal);
                 }
                 catch (cl::Error &err)
                 {
@@ -736,7 +743,14 @@ int dedispersion(const unsigned int batch, const unsigned int firstSynthesizedBe
             }
             try
             {
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, nullptr, nullptr);
+                if ( (observation.getNrSynthesizedBeams() - firstSynthesizedBeam) >= options.nrSynthesizedBeamsPerChunk )
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal.at(0), kernelRunTimeConfigurations.dedispersionStepTwoLocal);
+                }
+                else
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal.at(1), kernelRunTimeConfigurations.dedispersionStepTwoLocal);
+                }
             }
             catch (cl::Error &err)
             {
@@ -758,13 +772,27 @@ int dedispersion(const unsigned int batch, const unsigned int firstSynthesizedBe
             if (deviceOptions.synchronized)
             {
                 timers.dedispersionSingleStep.start();
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal, nullptr, &syncPoint);
+                if ( (observation.getNrSynthesizedBeams() - firstSynthesizedBeam) >= options.nrSynthesizedBeamsPerChunk )
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal.at(0), kernelRunTimeConfigurations.dedispersionSingleStepLocal, nullptr, &syncPoint);
+                }
+                else
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal.at(1), kernelRunTimeConfigurations.dedispersionSingleStepLocal, nullptr, &syncPoint);
+                }
                 syncPoint.wait();
                 timers.dedispersionSingleStep.stop();
             }
             else
             {
-                openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal, kernelRunTimeConfigurations.dedispersionSingleStepLocal);
+                if ( (observation.getNrSynthesizedBeams() - firstSynthesizedBeam) >= options.nrSynthesizedBeamsPerChunk )
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal.at(0), kernelRunTimeConfigurations.dedispersionSingleStepLocal);
+                }
+                else
+                {
+                    openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionSingleStep), cl::NullRange, kernelRunTimeConfigurations.dedispersionSingleStepGlobal.at(1), kernelRunTimeConfigurations.dedispersionSingleStepLocal);
+                }
             }
         }
         catch (cl::Error &err)

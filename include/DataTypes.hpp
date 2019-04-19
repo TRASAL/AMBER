@@ -427,7 +427,7 @@ struct KernelRunTimeConfigurations
     // Local NDRange for downsampling
     cl::NDRange downsamplingLocal;
     // Global NDrange for single step dedispersion
-    cl::NDRange dedispersionSingleStepGlobal;
+    std::vector<cl::NDRange> dedispersionSingleStepGlobal;
     // Local NDRange for single step dedispersion
     cl::NDRange dedispersionSingleStepLocal;
     // Global NDRange for subbanding dedispersion step one
@@ -435,7 +435,7 @@ struct KernelRunTimeConfigurations
     // Local NDRange for subbanding dedispersion step one
     cl::NDRange dedispersionStepOneLocal;
     // Global NDRange for subbanding dedispersion step two
-    cl::NDRange dedispersionStepTwoGlobal;
+    std::vector<cl::NDRange> dedispersionStepTwoGlobal;
     // Local NDRange for subbanding dedispersion step two
     cl::NDRange dedispersionStepTwoLocal;
     // Global NDRange for integration
