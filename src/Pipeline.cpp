@@ -707,7 +707,6 @@ int dedispersion(const unsigned int batch, const unsigned int firstSynthesizedBe
             }
             try
             {
-                
                 timers.dedispersionStepTwo.start();
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*(kernels.dedispersionStepTwo), cl::NullRange, kernelRunTimeConfigurations.dedispersionStepTwoGlobal, kernelRunTimeConfigurations.dedispersionStepTwoLocal, nullptr, &syncPoint);
                 syncPoint.wait();
