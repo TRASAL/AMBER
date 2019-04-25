@@ -29,6 +29,11 @@ void trigger(const unsigned int firstSynthesizedBeam, const Options &options, co
     }
     for (unsigned int beam = 0; beam < options.nrSynthesizedBeamsPerChunk; beam++)
     {
+        // If there are remaining synthesized beams in the last chunk, skip
+        if ( firstSynthesizedBeam + beam >= observation.getNrSynthesizedBeams() )
+        {
+            break;
+        }
         for (unsigned int dm = 0; dm < nrDMs; dm++)
         {
             unsigned int maxIndex = 0;
