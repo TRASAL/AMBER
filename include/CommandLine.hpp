@@ -18,7 +18,22 @@
 
 #pragma once
 
-// Function to process the command line options
+/**
+ ** @brief Process the command line options.
+ **
+ ** @param argumentList List of command line arguments.
+ ** @param options AMBER options.
+ ** @param deviceOptions Device specific options.
+ ** @param dataOptions Data specific options.
+ ** @param hostMemoryDumpFiles Files for dumping intermediate data products for debugging.
+ ** @param kernelConfigurations The configuration of the different kernels.
+ ** @param generatorOptions Data generation options.
+ ** @param observation Object containing the observation.
+ */
 void processCommandLineOptions(isa::utils::ArgumentList & argumentList, Options & options, DeviceOptions & deviceOptions, DataOptions & dataOptions, HostMemoryDumpFiles & hostMemoryDumpFiles, KernelConfigurations & kernelConfigurations, GeneratorOptions & generatorOptions, AstroData::Observation & observation);
-// Function to print the usage message
+/**
+ ** @brief Print the usage message.
+ **
+ ** @param program The executable name.
+ */
 void usage(const std::string & program);
