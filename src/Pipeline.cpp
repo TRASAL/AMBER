@@ -53,7 +53,7 @@ void pipeline(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::
         }
         hostMemoryDumpFiles.dedispersedData.open(hostMemoryDumpFiles.dumpFilesPrefix + "dedispersedData.dump");
         hostMemoryDumpFiles.integratedData.open(hostMemoryDumpFiles.dumpFilesPrefix + "integratedData.dump");
-        if (options.snrMode == SNRMode::Standard)
+        if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
         {
             hostMemoryDumpFiles.snrData.open(hostMemoryDumpFiles.dumpFilesPrefix + "snrData.dump");
             hostMemoryDumpFiles.snrSamplesData.open(hostMemoryDumpFiles.dumpFilesPrefix + "snrSamplesData.dump");
@@ -134,7 +134,7 @@ void pipeline(const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::
             }
             hostMemoryDumpFiles.dedispersedData << "# Batch: " << batch << std::endl;
             hostMemoryDumpFiles.integratedData << "# Batch: " << batch << std::endl;
-            if (options.snrMode == SNRMode::Standard)
+            if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
             {
                 hostMemoryDumpFiles.snrData << "# Batch: " << batch << std::endl;
                 hostMemoryDumpFiles.snrSamplesData << "# Batch: " << batch << std::endl;
@@ -894,7 +894,7 @@ int dedispersion(const unsigned int batch, const unsigned int firstSynthesizedBe
 int dedispersionSNR(const unsigned int batch, const unsigned int firstSynthesizedBeam, cl::Event &syncPoint, const isa::OpenCL::OpenCLRunTime &openclRunTime, const AstroData::Observation &observation, const Options &options, const DeviceOptions &deviceOptions, Timers &timers, const Kernels &kernels, const KernelRunTimeConfigurations &kernelRunTimeConfigurations, HostMemory &hostMemory, const DeviceMemory &deviceMemory, HostMemoryDumpFiles &hostMemoryDumpFiles, TriggeredEvents &triggeredEvents)
 {
     bool errorDetected = false;
-    if (options.snrMode == SNRMode::Standard)
+    if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
     {
         try
         {
@@ -1245,7 +1245,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int firstSynthesiz
             openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber], nullptr, &syncPoint);
             syncPoint.wait();
             timers.integration.stop();
-            if (options.snrMode == SNRMode::Standard)
+            if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
             {
                 timers.snr.start();
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[stepNumber], kernelRunTimeConfigurations.snrLocal[stepNumber], nullptr, &syncPoint);
@@ -1340,7 +1340,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int firstSynthesiz
         else
         {
             openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.integration[stepNumber], cl::NullRange, kernelRunTimeConfigurations.integrationGlobal[stepNumber], kernelRunTimeConfigurations.integrationLocal[stepNumber]);
-            if (options.snrMode == SNRMode::Standard)
+            if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
             {
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueNDRangeKernel(*kernels.snr[stepNumber], cl::NullRange, kernelRunTimeConfigurations.snrGlobal[stepNumber], kernelRunTimeConfigurations.snrLocal[stepNumber]);
                 openclRunTime.queues->at(deviceOptions.deviceID).at(0).enqueueReadBuffer(deviceMemory.snrData, CL_FALSE, 0, hostMemory.snrData.size() * sizeof(float), reinterpret_cast<void *>(hostMemory.snrData.data()));
@@ -1414,7 +1414,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int firstSynthesiz
             errorDetected = true;
         }
         hostMemoryDumpFiles.integratedData << "# Integration: " << step << std::endl;
-        if (options.snrMode == SNRMode::Standard)
+        if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
         {
             hostMemoryDumpFiles.snrData << "# Integration: " << step << std::endl;
             hostMemoryDumpFiles.snrSamplesData << "# Integration: " << step << std::endl;
@@ -1440,7 +1440,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int firstSynthesiz
             for (unsigned int sBeam = 0; sBeam < options.nrSynthesizedBeamsPerChunk; sBeam++)
             {
                 hostMemoryDumpFiles.integratedData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
-                if (options.snrMode == SNRMode::Standard)
+                if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
                 {
                     hostMemoryDumpFiles.snrData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     hostMemoryDumpFiles.snrSamplesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
@@ -1471,7 +1471,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int firstSynthesiz
                             hostMemoryDumpFiles.integratedData << hostMemory.integratedData.at((sBeam * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (subbandingDM * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << std::endl;
                         }
                         hostMemoryDumpFiles.integratedData << std::endl << std::endl;
-                        if (options.snrMode == SNRMode::Standard)
+                        if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
                         {
                             hostMemoryDumpFiles.snrData << hostMemory.snrData.at((sBeam * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + (subbandingDM * observation.getNrDMs()) + dm);
                             hostMemoryDumpFiles.snrData << std::endl;
@@ -1505,7 +1505,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int firstSynthesiz
                         }
                     }
                 }
-                if (options.snrMode == SNRMode::Standard)
+                if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
                 {
                     hostMemoryDumpFiles.snrData << std::endl << std::endl;
                     hostMemoryDumpFiles.snrSamplesData << std::endl << std::endl;
@@ -1531,7 +1531,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int firstSynthesiz
             for (unsigned int sBeam = 0; sBeam < options.nrSynthesizedBeamsPerChunk; sBeam++)
             {
                 hostMemoryDumpFiles.integratedData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
-                if (options.snrMode == SNRMode::Standard)
+                if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
                 {
                     hostMemoryDumpFiles.snrData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
                     hostMemoryDumpFiles.snrSamplesData << "# Synthesized Beam: " << firstSynthesizedBeam + sBeam << std::endl;
@@ -1560,7 +1560,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int firstSynthesiz
                         std::cerr << hostMemory.integratedData.at((sBeam * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + (dm * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType))) + sample) << std::endl;
                     }
                     hostMemoryDumpFiles.integratedData << std::endl << std::endl;
-                    if (options.snrMode == SNRMode::Standard)
+                    if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
                     {
                         hostMemoryDumpFiles.snrData << hostMemory.snrData.at((sBeam * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float))) + dm);
                         hostMemoryDumpFiles.snrData << std::endl;
@@ -1593,7 +1593,7 @@ int pulseWidthSearch(const unsigned int batch, const unsigned int firstSynthesiz
                         hostMemoryDumpFiles.medianOfMediansStepOneData << std::endl << std::endl;
                     }
                 }
-                if (options.snrMode == SNRMode::Standard)
+                if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
                 {
                     hostMemoryDumpFiles.snrData << std::endl << std::endl;
                     hostMemoryDumpFiles.snrSamplesData << std::endl << std::endl;
@@ -1764,7 +1764,7 @@ void clean(const Options &options, const DataOptions &dataOptions, HostMemory &h
         }
         hostMemoryDumpFiles.dedispersedData.close();
         hostMemoryDumpFiles.integratedData.close();
-        if (options.snrMode == SNRMode::Standard)
+        if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
         {
             hostMemoryDumpFiles.snrData.close();
             hostMemoryDumpFiles.snrSamplesData.close();

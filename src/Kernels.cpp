@@ -211,6 +211,42 @@ void generateSNROpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, c
         kernels.snr.at(hostMemory.integrationSteps.size())->setArg(2, deviceMemory.snrSamples);
         delete code;
     }
+    else if ( options.snrMode == SNRMode::SigmaCut )
+    {
+        kernels.snr.reserve(hostMemory.integrationSteps.size() + 1);
+        for (unsigned int stepNumber = 0; stepNumber < hostMemory.integrationSteps.size(); stepNumber++)
+        {
+            auto step = hostMemory.integrationSteps.begin();
+
+            std::advance(step, stepNumber);
+            if (options.subbandDedispersion)
+            {
+                code = SNR::getSNRSigmaCutDMsSamplesOpenCL<outputDataType>(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step, deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
+            }
+            else
+            {
+                code = SNR::getSNRSigmaCutDMsSamplesOpenCL<outputDataType>(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step, deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
+            }
+            kernels.snr.push_back(isa::OpenCL::compile("snrSigmaCutDMsSamples" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
+            kernels.snr.at(stepNumber)->setArg(0, deviceMemory.integratedData);
+            kernels.snr.at(stepNumber)->setArg(1, deviceMemory.snrData);
+            kernels.snr.at(stepNumber)->setArg(2, deviceMemory.snrSamples);
+            delete code;
+        }
+        if (!options.subbandDedispersion)
+        {
+            code = SNR::getSNRSigmaCutDMsSamplesOpenCL<outputDataType>(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), outputDataName, observation, observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
+        }
+        else
+        {
+            code = SNR::getSNRSigmaCutDMsSamplesOpenCL<outputDataType>(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), outputDataName, observation, observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
+        }
+        kernels.snr.push_back(isa::OpenCL::compile("snrSigmaCutDMsSamples" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
+        kernels.snr.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.dedispersedData);
+        kernels.snr.at(hostMemory.integrationSteps.size())->setArg(1, deviceMemory.snrData);
+        kernels.snr.at(hostMemory.integrationSteps.size())->setArg(2, deviceMemory.snrSamples);
+        delete code;
+    }
     else if (options.snrMode == SNRMode::Momad || options.snrMode == SNRMode::MomSigmaCut)
     {
         if (options.snrMode == SNRMode::Momad)
@@ -689,7 +725,7 @@ void generateSNROpenCLRunTimeConfigurations(const AstroData::Observation &observ
     unsigned int global[3] = {0, 0, 0};
     unsigned int local[3] = {0, 0, 0};
 
-    if (options.snrMode == SNRMode::Standard)
+    if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
     {
         kernelRunTimeConfigurations.snrGlobal.resize(hostMemory.integrationSteps.size() + 1);
         kernelRunTimeConfigurations.snrLocal.resize(hostMemory.integrationSteps.size() + 1);

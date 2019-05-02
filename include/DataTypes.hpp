@@ -23,6 +23,7 @@
 typedef enum
 {
     Standard,
+    SigmaCut,
     Momad,
     MomSigmaCut
 } SNRMode;

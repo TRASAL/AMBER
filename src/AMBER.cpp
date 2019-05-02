@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
         hostMemorySize += hostMemory.subbandedData.size() * sizeof(outputDataType);
         hostMemorySize += hostMemory.dedispersedData.size() * sizeof(outputDataType);
         hostMemorySize += hostMemory.integratedData.size() * sizeof(outputDataType);
-        if ( options.snrMode == SNRMode::Standard )
+        if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
         {
             hostMemorySize += hostMemory.snrData.size() * sizeof(float);
             hostMemorySize += hostMemory.snrSamples.size() * sizeof(unsigned int);
@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
     outputStats << "# integrationTotal integrationAvg err" << std::endl;
     outputStats << timers.integration.getTotalTime() << " " << timers.integration.getAverageTime() << " ";
     outputStats << timers.integration.getStandardDeviation() << std::endl;
-    if (options.snrMode == SNRMode::Standard)
+    if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
     {
         outputStats << "# snrTotal snrAvg err" << std::endl;
         outputStats << timers.snr.getTotalTime() << " " << timers.snr.getAverageTime() << " ";

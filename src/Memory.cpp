@@ -99,7 +99,7 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
         {
             hostMemory.integratedData.resize(options.nrSynthesizedBeamsPerChunk * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
         }
-        if (options.snrMode == SNRMode::Standard)
+        if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
         {
             hostMemory.snrData.resize(options.nrSynthesizedBeamsPerChunk * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float)));
             hostMemory.snrSamples.resize(options.nrSynthesizedBeamsPerChunk * observation.getNrDMs(false, deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
@@ -158,7 +158,7 @@ void allocateHostMemory(AstroData::Observation &observation, const Options &opti
         {
             hostMemory.integratedData.resize(options.nrSynthesizedBeamsPerChunk * observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *(hostMemory.integrationSteps.begin()), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(outputDataType)));
         }
-        if (options.snrMode == SNRMode::Standard)
+        if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
         {
             hostMemory.snrData.resize(options.nrSynthesizedBeamsPerChunk * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(float)));
             hostMemory.snrSamples.resize(options.nrSynthesizedBeamsPerChunk * isa::utils::pad(observation.getNrDMs(true) * observation.getNrDMs(), deviceOptions.padding.at(deviceOptions.deviceName) / sizeof(unsigned int)));
@@ -212,7 +212,7 @@ void allocateDeviceMemory(const AstroData::Observation &observation, const isa::
     {
         deviceMemory.integratedData = cl::Buffer(*openclRunTime.context, CL_MEM_READ_WRITE, hostMemory.integratedData.size() * sizeof(outputDataType));
     }
-    if (options.snrMode == SNRMode::Standard)
+    if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
     {
         deviceMemory.snrData = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.snrData.size() * sizeof(float));
         deviceMemory.snrSamples = cl::Buffer(*openclRunTime.context, CL_MEM_WRITE_ONLY, hostMemory.snrSamples.size() * sizeof(unsigned int));

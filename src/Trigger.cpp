@@ -40,7 +40,7 @@ void trigger(const unsigned int firstSynthesizedBeam, const Options &options, co
             outputDataType maxSNR = 0;
             // outputDataType maxSNR_mad = 0;
 
-            if (options.snrMode == SNRMode::Standard)
+            if ( options.snrMode == SNRMode::Standard || options.snrMode == SNRMode::SigmaCut )
             {
                 maxSNR = hostMemory.snrData.at((beam * isa::utils::pad(nrDMs, padding / sizeof(float))) + dm);
                 maxIndex = hostMemory.snrSamples.at((beam * isa::utils::pad(nrDMs, padding / sizeof(unsigned int))) + dm);

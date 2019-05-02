@@ -56,6 +56,10 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         {
             options.snrMode = SNRMode::Standard;
         }
+        else if ( argumentList.getSwitch("-snr_sc") )
+        {
+            options.snrMode = SNRMode::SigmaCut;
+        }
         else if (argumentList.getSwitch("-snr_momad"))
         {
             options.snrMode = SNRMode::Momad;
@@ -123,6 +127,11 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         if (options.snrMode == SNRMode::Standard)
         {
             SNR::readTunedSNRConf(kernelConfigurations.snrParameters, argumentList.getSwitchArgument<std::string>("-snr_file"));
+        }
+        else if ( options.snrMode == SNRMode::SigmaCut )
+        {
+            SNR::readTunedSNRConf(kernelConfigurations.snrParameters, argumentList.getSwitchArgument<std::string>("-snr_file"));
+            options.nSigma = argumentList.getSwitchArgument<float>("-nsigma");
         }
         else if (options.snrMode == SNRMode::Momad)
         {
@@ -271,7 +280,7 @@ void usage(const std::string &program)
 {
     std::cerr << program << " [-debug] [-print] [-data_dump] -opencl_platform <int> -opencl_device <int> -device_name <string> [-sync]";
     std::cerr << " [-rfim]";
-    std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_momad | -snr_mom_sigmacut] [-downsampling]";
+    std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_sc | -snr_momad | -snr_mom_sigmacut] [-downsampling]";
     std::cerr << " -padding_file <string> -zapped_channels <string> [-synthesized_beams_file <string>] -integration_steps <string> -integration_file <string>";
     std::cerr << " [-compact_results] -output <string> -dms <int> -dm_first <float> -dm_step <float> -threshold <float>";
     std::cerr << " [-sigproc]";
@@ -292,6 +301,7 @@ void usage(const std::string &program)
     std::cerr << "-dedispersion_steptwo_file <string> -subbands <int> -subbanding_dms <int> -subbanding_dm_first <float>";
     std::cerr << "-subbanding_dm_step <float>" << std::endl;
     std::cerr << "\tStandard SNR: -snr_file <string>" << std::endl;
+    std::cerr << "\tSNR with Sigma Cut: -snr_file <string> -nsigma <float>" << std::endl;
     std::cerr << "\tMOMAD SNR: -max_file <string> -mom_stepone_file <string> -mom_steptwo_file <string> -momad_file <string>" << std::endl;
     std::cerr << "\tMOM Sigma Cut SNR: -max_std_file <string> -mom_stepone_file <string> -mom_steptwo_file <string>" << std::endl;
     std::cerr << std::endl;
