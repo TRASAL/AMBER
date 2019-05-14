@@ -108,12 +108,12 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         try
         {
             dataOptions.synthesizedBeamsFile = argumentList.getSwitchArgument<std::string>("-synthesized_beams_file");
+            dataOptions.integrationFile = argumentList.getSwitchArgument<std::string>("-integration_steps");
         }
         catch ( isa::utils::SwitchNotFound & err )
         {
             // If not specified, do nothing.
         }
-        dataOptions.integrationFile = argumentList.getSwitchArgument<std::string>("-integration_steps");
         if (!options.subbandDedispersion)
         {
             Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionSingleStepParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_file"));
@@ -123,7 +123,10 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionStepOneParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_stepone_file"));
             Dedispersion::readTunedDedispersionConf(kernelConfigurations.dedispersionStepTwoParameters, argumentList.getSwitchArgument<std::string>("-dedispersion_steptwo_file"));
         }
-        Integration::readTunedIntegrationConf(kernelConfigurations.integrationParameters, argumentList.getSwitchArgument<std::string>("-integration_file"));
+        if ( dataOptions.integrationFile.size() > 1 )
+        {
+            Integration::readTunedIntegrationConf(kernelConfigurations.integrationParameters, argumentList.getSwitchArgument<std::string>("-integration_file"));
+        }
         if (options.snrMode == SNRMode::Standard)
         {
             SNR::readTunedSNRConf(kernelConfigurations.snrParameters, argumentList.getSwitchArgument<std::string>("-snr_file"));
@@ -281,7 +284,7 @@ void usage(const std::string &program)
     std::cerr << program << " [-debug] [-print] [-data_dump] -opencl_platform <int> -opencl_device <int> -device_name <string> [-sync]";
     std::cerr << " [-rfim]";
     std::cerr << " [-splitbatches_dedispersion] [-subband_dedispersion] [-snr_standard | -snr_sc | -snr_momad | -snr_mom_sigmacut] [-downsampling]";
-    std::cerr << " -padding_file <string> -zapped_channels <string> [-synthesized_beams_file <string>] -integration_steps <string> -integration_file <string>";
+    std::cerr << " -padding_file <string> -zapped_channels <string> [-synthesized_beams_file <string>] [-integration_steps <string>]";
     std::cerr << " [-compact_results] -output <string> -dms <int> -dm_first <float> -dm_step <float> -threshold <float>";
     std::cerr << " [-sigproc]";
 #ifdef HAVE_HDF5
@@ -300,6 +303,7 @@ void usage(const std::string &program)
     std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_stepone_file <string>";
     std::cerr << "-dedispersion_steptwo_file <string> -subbands <int> -subbanding_dms <int> -subbanding_dm_first <float>";
     std::cerr << "-subbanding_dm_step <float>" << std::endl;
+    std::cerr << "\tIntegration Steps: -integration_file <string>" << std::endl;
     std::cerr << "\tStandard SNR: -snr_file <string>" << std::endl;
     std::cerr << "\tSNR with Sigma Cut: -snr_file <string> -nsigma <float>" << std::endl;
     std::cerr << "\tMOMAD SNR: -max_file <string> -mom_stepone_file <string> -mom_steptwo_file <string> -momad_file <string>" << std::endl;
