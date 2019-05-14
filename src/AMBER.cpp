@@ -81,7 +81,10 @@ int main(int argc, char *argv[])
         try
         {
             AstroData::readZappedChannels(observation, dataOptions.channelsFile, hostMemory.zappedChannels);
-            AstroData::readIntegrationSteps(observation, dataOptions.integrationFile, hostMemory.integrationSteps);
+            if ( dataOptions.integrationFile.size() > 1 )
+            {
+                AstroData::readIntegrationSteps(observation, dataOptions.integrationFile, hostMemory.integrationSteps);
+            }
             if ( options.rfimOptions.timeDomainSigmaCut )
             {
                 RFIm::readSigmaSteps(options.rfimOptions.timeDomainSigmaCutStepsFile, hostMemory.timeDomainSigmaCutSteps);
