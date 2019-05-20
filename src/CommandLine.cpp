@@ -135,6 +135,14 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         {
             SNR::readTunedSNRConf(kernelConfigurations.snrParameters, argumentList.getSwitchArgument<std::string>("-snr_file"));
             options.nSigma = argumentList.getSwitchArgument<float>("-nsigma");
+            try
+            {
+                options.sigmaCorrectionFactor = argumentList.getSwitchArgument<float>("-correction_factor");
+            }
+            catch ( isa::utils::SwitchNotFound &err )
+            {
+                options.sigmaCorrectionFactor = 1.0f;
+            }
         }
         else if (options.snrMode == SNRMode::Momad)
         {
@@ -305,7 +313,7 @@ void usage(const std::string &program)
     std::cerr << "-subbanding_dm_step <float>" << std::endl;
     std::cerr << "\tIntegration Steps: -integration_file <string>" << std::endl;
     std::cerr << "\tStandard SNR: -snr_file <string>" << std::endl;
-    std::cerr << "\tSNR with Sigma Cut: -snr_file <string> -nsigma <float>" << std::endl;
+    std::cerr << "\tSNR with Sigma Cut: -snr_file <string> -nsigma <float> -correction_factor <float>" << std::endl;
     std::cerr << "\tMOMAD SNR: -max_file <string> -mom_stepone_file <string> -mom_steptwo_file <string> -momad_file <string>" << std::endl;
     std::cerr << "\tMOM Sigma Cut SNR: -max_std_file <string> -mom_stepone_file <string> -mom_steptwo_file <string>" << std::endl;
     std::cerr << std::endl;
