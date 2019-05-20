@@ -221,11 +221,11 @@ void generateSNROpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, c
             std::advance(step, stepNumber);
             if (options.subbandDedispersion)
             {
-                code = SNR::getSNRSigmaCutDMsSamplesOpenCL<outputDataType>(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step, deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
+                code = SNR::getSNRSigmaCutDMsSamplesOpenCL<outputDataType>(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step, deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma, options.sigmaCorrectionFactor);
             }
             else
             {
-                code = SNR::getSNRSigmaCutDMsSamplesOpenCL<outputDataType>(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step, deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
+                code = SNR::getSNRSigmaCutDMsSamplesOpenCL<outputDataType>(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step)), outputDataName, observation, observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step, deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma, options.sigmaCorrectionFactor);
             }
             kernels.snr.push_back(isa::OpenCL::compile("snrSigmaCutDMsSamples" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling() / *step), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
             kernels.snr.at(stepNumber)->setArg(0, deviceMemory.integratedData);
@@ -235,11 +235,11 @@ void generateSNROpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, c
         }
         if (!options.subbandDedispersion)
         {
-            code = SNR::getSNRSigmaCutDMsSamplesOpenCL<outputDataType>(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), outputDataName, observation, observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
+            code = SNR::getSNRSigmaCutDMsSamplesOpenCL<outputDataType>(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), outputDataName, observation, observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma, options.sigmaCorrectionFactor);
         }
         else
         {
-            code = SNR::getSNRSigmaCutDMsSamplesOpenCL<outputDataType>(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), outputDataName, observation, observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma);
+            code = SNR::getSNRSigmaCutDMsSamplesOpenCL<outputDataType>(*(kernelConfigurations.snrParameters.at(deviceOptions.deviceName)->at(observation.getNrDMs(true) * observation.getNrDMs())->at(observation.getNrSamplesPerBatch() / observation.getDownsampling())), outputDataName, observation, observation.getNrSamplesPerBatch() / observation.getDownsampling(), deviceOptions.padding.at(deviceOptions.deviceName), options.nSigma, options.sigmaCorrectionFactor);
         }
         kernels.snr.push_back(isa::OpenCL::compile("snrSigmaCutDMsSamples" + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()), *code, "-cl-mad-enable -Werror", *openclRunTime.context, openclRunTime.devices->at(deviceOptions.deviceID)));
         kernels.snr.at(hostMemory.integrationSteps.size())->setArg(0, deviceMemory.dedispersedData);
