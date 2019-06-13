@@ -309,8 +309,8 @@ void usage(const std::string &program)
     std::cerr << "\tDownsampling: -downsampling_factor <int> -downsampling_configuration <string>" << std::endl;
     std::cerr << "\tDedispersion: -dedispersion_file <string>" << std::endl;
     std::cerr << "\tSubband Dedispersion: -subband_dedispersion -dedispersion_stepone_file <string>";
-    std::cerr << " -dedispersion_steptwo_file <string> -subbands <int> -subbanding_dms <int> -subbanding_dm_first <float>";
-    std::cerr << " -subbanding_dm_step <float>" << std::endl;
+    std::cerr << "\t\t-dedispersion_steptwo_file <string> -subbands <int> -subbanding_dms <int> -subbanding_dm_first <float>";
+    std::cerr << "\t\t-subbanding_dm_step <float>" << std::endl;
     std::cerr << "\tIntegration Steps: -integration_file <string>" << std::endl;
     std::cerr << "\tStandard SNR: -snr_file <string>" << std::endl;
     std::cerr << "\tSNR with Sigma Cut: -snr_file <string> -nsigma <float> -correction_factor <float>" << std::endl;
@@ -319,13 +319,13 @@ void usage(const std::string &program)
     std::cerr << std::endl;
 #ifdef HAVE_HDF5
     std::cerr << "\tLOFAR: -lofar -header <string> -data <string> [-limit]" << std::endl;
-    std::cerr << "\t\t -limit -batches <int>" << std::endl;
+    std::cerr << "\t\t-limit -batches <int>" << std::endl;
 #endif // HAVE_HDF5
     std::cerr << "\tSIGPROC: -sigproc [-stream] [-header <int>] -data <string> -batches <int> -channels <int> -min_freq <float>";
-    std::cerr << " -channel_bandwidth <float> -samples <int> -sampling_time <float>" << std::endl;
+    std::cerr << "\t\t-channel_bandwidth <float> -samples <int> -sampling_time <float>" << std::endl;
 #ifdef HAVE_PSRDADA
     std::cerr << "\tPSRDADA: -dada -dada_key <string> -beams <int> -synthesized_beams <int> [-synthesized_beams_chunk <int>] -batches <int>" << std::endl;
 #endif // HAVE_PSRDADA
     std::cerr << "\tTest data: [-random] -width <int> -dm <float> -beams <int> -synthesized_beams <int> [-synthesized_beams_chunk <int>] -batches <int> -channels <int>";
-    std::cerr << " -min_freq <float> -channel_bandwidth <float> -samples <int> -sampling_time <float>" << std::endl;
+    std::cerr << "\t\t-min_freq <float> -channel_bandwidth <float> -samples <int> -sampling_time <float>" << std::endl;
 }
