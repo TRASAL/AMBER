@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
                 return 1;
             }
         }
-        std::this_thread::sleep_for(3s);
+        std::this_thread::sleep_for(std::chrono::seconds(3));
     } 
 
     // Memory allocation
