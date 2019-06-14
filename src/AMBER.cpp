@@ -227,15 +227,23 @@ int main(int argc, char *argv[])
     }
 
     // Initialize OpenCL
-    try
+    for ( unsigned int attempt = 0; attempt < deviceOptions.initializationAttempts; attempt++ )
     {
-        isa::OpenCL::initializeOpenCL(deviceOptions.platformID, 1, openclRunTime);
-    }
-    catch (isa::OpenCL::OpenCLError & err)
-    {
-        std::cerr << err.what() << std::endl;
-        return 1;
-    }
+        try
+        {
+            isa::OpenCL::initializeOpenCL(deviceOptions.platformID, 1, openclRunTime);
+            break;
+        }
+        catch (isa::OpenCL::OpenCLError & err)
+        {
+            std::cerr << err.what() << std::endl;
+            if ( attempt == deviceOptions.initializationAttempts - 1 )
+            {
+                return 1;
+            }
+        }
+        std::this_thread::sleep_for(3s);
+    } 
 
     // Memory allocation
     allocateHostMemory(observation, options, deviceOptions, dataOptions, kernelConfigurations, hostMemory);

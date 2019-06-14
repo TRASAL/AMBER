@@ -23,6 +23,8 @@
 #include <cmath>
 #include <chrono>
 #include <iterator>
+#include <thread>
+#include <chrono>
 
 #include <ArgumentList.hpp>
 #include <utils.hpp>

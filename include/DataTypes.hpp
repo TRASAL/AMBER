@@ -139,6 +139,10 @@ struct DeviceOptions
     std::string deviceName{};
     // Padding of OpenCL devices
     AstroData::paddingConf padding{};
+    /**
+     ** @brief Number of times the software tries to initialize the OpenCL subsystem.
+     */
+    unsigned int initializationAttempts = 5;
 };
 
 struct DataOptions
