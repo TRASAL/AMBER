@@ -108,6 +108,13 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
         try
         {
             dataOptions.synthesizedBeamsFile = argumentList.getSwitchArgument<std::string>("-synthesized_beams_file");
+        }
+        catch ( isa::utils::SwitchNotFound & err )
+        {
+            // If not specified, do nothing.
+        }
+        try
+        {
             dataOptions.integrationFile = argumentList.getSwitchArgument<std::string>("-integration_steps");
         }
         catch ( isa::utils::SwitchNotFound & err )
