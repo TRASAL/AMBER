@@ -184,30 +184,20 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             observation.setNrSynthesizedBeams(1);
             dataOptions.streamingMode = argumentList.getSwitch("-stream");
             dataOptions.dataFile = argumentList.getSwitchArgument<std::string>("-data");
-            try
-            {
-                dataOptions.headerSizeSIGPROC = argumentList.getSwitchArgument<unsigned int>("-header");
-            }
-            catch( const isa::utils::SwitchNotFound &err )
-            {
-                dataOptions.headerSizeSIGPROC = AstroData::getSIGPROCHeaderSize(dataOptions.dataFile);
-            }
+            dataOptions.headerSizeSIGPROC = AstroData::getSIGPROCHeaderSize(dataOptions.dataFile);
             observation.setNrBatches(argumentList.getSwitchArgument<unsigned int>("-batches"));
             if (options.subbandDedispersion)
             {
-                observation.setFrequencyRange(argumentList.getSwitchArgument<unsigned int>("-subbands"),
-                                              argumentList.getSwitchArgument<unsigned int>("-channels"),
-                                              argumentList.getSwitchArgument<float>("-min_freq"),
-                                              argumentList.getSwitchArgument<float>("-channel_bandwidth"));
+                AstroData::readSIGPROCHeader(dataOptions.headerSizeSIGPROC, observation, dataOptions.dataFile, argumentList.getSwitchArgument<unsigned int>("-subbands"));
             }
             else
             {
-                observation.setFrequencyRange(1, argumentList.getSwitchArgument<unsigned int>("-channels"),
-                                              argumentList.getSwitchArgument<float>("-min_freq"),
-                                              argumentList.getSwitchArgument<float>("-channel_bandwidth"));
+                AstroData::readSIGPROCHeader(dataOptions.headerSizeSIGPROC, observation, dataOptions.dataFile);
             }
-            observation.setNrSamplesPerBatch(argumentList.getSwitchArgument<unsigned int>("-samples"));
-            observation.setSamplingTime(argumentList.getSwitchArgument<float>("-sampling_time"));
+            if ( observation.getNrSamplesPerBatch() == 0 )
+            {
+                observation.setNrSamplesPerBatch(argumentList.getSwitchArgument<unsigned int>("-samples"));
+            }
         }
         else if (dataOptions.dataPSRDADA)
         {
@@ -328,8 +318,7 @@ void usage(const std::string &program)
     std::cerr << "\tLOFAR: -lofar -header <string> -data <string> [-limit]" << std::endl;
     std::cerr << "\t\t-limit -batches <int>" << std::endl;
 #endif // HAVE_HDF5
-    std::cerr << "\tSIGPROC: -sigproc [-stream] [-header <int>] -data <string> -batches <int> -channels <int> -min_freq <float>" << std::endl;
-    std::cerr << "\t\t-channel_bandwidth <float> -samples <int> -sampling_time <float>" << std::endl;
+    std::cerr << "\tSIGPROC: -sigproc [-stream] -data <string> -batches <int> -samples <int>" << std::endl;
 #ifdef HAVE_PSRDADA
     std::cerr << "\tPSRDADA: -dada -dada_key <string> -beams <int> -synthesized_beams <int> [-synthesized_beams_chunk <int>] -batches <int>" << std::endl;
 #endif // HAVE_PSRDADA
