@@ -194,6 +194,10 @@ void processCommandLineOptions(isa::utils::ArgumentList &argumentList, Options &
             {
                 AstroData::readSIGPROCHeader(dataOptions.headerSizeSIGPROC, observation, dataOptions.dataFile);
             }
+            if ( observation.getNrSamplesPerBatch() == 0 )
+            {
+                observation.setNrSamplesPerBatch(argumentList.getSwitchArgument<unsigned int>("-samples"));
+            }
         }
         else if (dataOptions.dataPSRDADA)
         {
@@ -314,7 +318,7 @@ void usage(const std::string &program)
     std::cerr << "\tLOFAR: -lofar -header <string> -data <string> [-limit]" << std::endl;
     std::cerr << "\t\t-limit -batches <int>" << std::endl;
 #endif // HAVE_HDF5
-    std::cerr << "\tSIGPROC: -sigproc [-stream] -data <string> -batches <int>" << std::endl;
+    std::cerr << "\tSIGPROC: -sigproc [-stream] -data <string> -batches <int> -samples <int>" << std::endl;
 #ifdef HAVE_PSRDADA
     std::cerr << "\tPSRDADA: -dada -dada_key <string> -beams <int> -synthesized_beams <int> [-synthesized_beams_chunk <int>] -batches <int>" << std::endl;
 #endif // HAVE_PSRDADA
