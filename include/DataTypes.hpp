@@ -475,6 +475,22 @@ struct KernelRunTimeConfigurations
 
 struct Timers
 {
+    /**
+     ** @brief Timer for command line arguments processing.
+    */
+    isa::utils::Timer commandLine;
+    /**
+     ** @brief Timer for OpenCL initialization.
+    */
+    isa::utils::Timer openclInitialization;
+    /**
+     ** @brief Timer for memory allocation.
+    */
+    isa::utils::Timer memoryAllocation;
+    /**
+     ** @brief Timer for OpenCL kernel generation.
+    */
+    isa::utils::Timer kernelGeneration;
     isa::utils::Timer inputLoad;
     isa::utils::Timer search;
     isa::utils::Timer inputHandling;

@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
 
     // Process command line arguments
     isa::utils::ArgumentList args(argc, argv);
+    timers.commandLine.start();
     try
     {
         processCommandLineOptions(args, options, deviceOptions, dataOptions, hostMemoryDumpFiles, kernelConfigurations, generatorOptions, observation);
@@ -50,6 +51,11 @@ int main(int argc, char *argv[])
     catch (std::exception & err)
     {
         return 1;
+    }
+    timers.commandLine.stop();
+    if ( options.debug )
+    {
+        std::cout << "Command line processing time: " << timers.commandLine.getTotalTime() << " seconds." << std::endl;
     }
 
     // Load or generate input data
@@ -227,6 +233,7 @@ int main(int argc, char *argv[])
     }
 
     // Initialize OpenCL
+    timers.openclInitialization.start();
     for ( unsigned int attempt = 0; attempt < deviceOptions.initializationAttempts; attempt++ )
     {
         try
@@ -243,9 +250,15 @@ int main(int argc, char *argv[])
             }
         }
         std::this_thread::sleep_for(std::chrono::seconds(3));
-    } 
+    }
+    timers.openclInitialization.stop();
+    if ( options.debug )
+    {
+        std::cout << "OpenCL initialization time: " << timers.openclInitialization.getTotalTime() << " seconds." << std::endl;
+    }
 
     // Memory allocation
+    timers.memoryAllocation.start();
     allocateHostMemory(observation, options, deviceOptions, dataOptions, kernelConfigurations, hostMemory);
     if (observation.getNrDelayBatches() > observation.getNrBatches())
     {
@@ -296,8 +309,14 @@ int main(int argc, char *argv[])
         std::cout << "Allocated memory: " << isa::utils::giga(hostMemorySize) << " GB" << std::endl;
         std::cout << std::endl;
     }
+    timers.memoryAllocation.stop();
+    if ( options.debug )
+    {
+        std::cout << "Memory allocation time: " << timers.memoryAllocation.getTotalTime() << " seconds." << std::endl;
+    }
 
     // Generate OpenCL kernels
+    timers.kernelGeneration.start();
     try
     {
         generateOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
@@ -306,6 +325,11 @@ int main(int argc, char *argv[])
     {
         std::cerr << "OpenCL code generation error: " << err.what() << std::endl;
         return 1;
+    }
+    timers.kernelGeneration.stop();
+    if ( options.debug )
+    {
+        std::cout << "OpenCL kernel generation time: " << timers.kernelGeneration.getTotalTime() << " seconds." << std::endl;
     }
 
     // Generate run time configurations for the OpenCL kernels
