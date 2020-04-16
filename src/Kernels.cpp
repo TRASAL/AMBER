@@ -437,14 +437,35 @@ void generateOpenCLKernels(const isa::OpenCL::OpenCLRunTime &openclRunTime, cons
     if ( options.rfimOptions.enable )
     {
         generateRFImKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
+        if ( options.debug )
+        {
+            std::cout << "RFIm kernels generated." << std::endl;
+        }
     }
     if ( options.downsampling )
     {
         generateDownsamplingOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
+        if ( options.debug )
+        {
+            std::cout << "Downsampling kernels generated." << std::endl;
+        }
     }
     generateDedispersionOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
+    if ( options.debug )
+    {
+        std::cout << "Dedispersion kernels generated." << std::endl;
+    }
     generateIntegrationOpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
+    if ( options.debug )
+    {
+        std::cout << "Integration kernels generated." << std::endl;
+    }
     generateSNROpenCLKernels(openclRunTime, observation, options, deviceOptions, kernelConfigurations, hostMemory, deviceMemory, kernels);
+    if ( options.debug )
+    {
+        std::cout << "SNR kernels generated." << std::endl;
+        std::cout << std::endl;
+    }
 }
 
 /**
