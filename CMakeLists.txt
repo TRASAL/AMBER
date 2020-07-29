@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.8)
 project(AMBER)
 
 # Version
-set(PROJECT_VERSION_MAJOR 2)
-set(PROJECT_VERSION_MINOR 1)
+set(PROJECT_VERSION_MAJOR 3)
+set(PROJECT_VERSION_MINOR 0)
 set(PROJECT_VERSION_PATCH 0)
 
 # Includes
