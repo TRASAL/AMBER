@@ -1,6 +1,8 @@
 
 ![AMBER](doc/Amber-Logo-h200.png)
 
+[![DOI](https://zenodo.org/badge/32992365.svg)](https://zenodo.org/badge/latestdoi/32992365)
+
 # AMBER: a Fast Radio Burst real-time pipeline
 
 AMBER is a many-core accelerated and fully auto-tuned pipeline for detecting Fast Radio Bursts and other single pulse radio transients.
