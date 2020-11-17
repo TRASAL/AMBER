@@ -9,7 +9,7 @@ AMBER is a many-core accelerated and fully auto-tuned pipeline for detecting Fas
 
 ## Installation
 
-The easiest way to install AMBER is by using the [AMBER_setup](https://github.com/AA-ALERT/AMBER_setup) script.
+The easiest way to install AMBER is by using the [AMBER_setup](https://github.com/TRASAL/AMBER_setup) script.
 
 ## Publications
 
@@ -21,11 +21,11 @@ The easiest way to install AMBER is by using the [AMBER_setup](https://github.co
 * [Google Test](https://github.com/google/googletest)
 * [utils](https://github.com/isazi/utils)
 * [OpenCL](https://github.com/isazi/OpenCL)
-* [AstroData](https://github.com/AA-ALERT/AstroData)
-* [Dedispersion](https://github.com/AA-ALERT/Dedispersion)
-* [Integration](https://github.com/AA-ALERT/Integration)
-* [SNR](https://github.com/AA-ALERT/SNR)
-* [RFIm](https://github.com/AA-ALERT/RFIm)
+* [AstroData](https://github.com/TRASAL/AstroData)
+* [Dedispersion](https://github.com/TRASAL/Dedispersion)
+* [Integration](https://github.com/TRASAL/Integration)
+* [SNR](https://github.com/TRASAL/SNR)
+* [RFIm](https://github.com/TRASAL/RFIm)
 
 ## License
 
